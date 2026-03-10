@@ -1,0 +1,65 @@
+import { createRouter, createWebHistory } from 'vue-router'
+import Home from '../views/Home.vue'
+import Interview from '../views/Interview.vue'
+import Profile from '../views/Profile.vue'
+import Matching from '../views/Matching.vue'
+import Growth from '../views/Growth.vue'
+import Community from '../views/Community.vue'
+import Knowledge from '../views/Knowledge.vue'
+
+const routes = [
+  {
+    path: '/',
+    name: 'Home',
+    component: Home,
+    meta: { title: '首页', hideSidebar: true }
+  },
+  {
+    path: '/interview',
+    name: 'Interview',
+    component: Interview,
+    meta: { title: '面试实战' }
+  },
+  {
+    path: '/matching',
+    name: 'Matching',
+    component: Matching,
+    meta: { title: '岗位匹配' }
+  },
+  {
+    path: '/growth',
+    name: 'Growth',
+    component: Growth,
+    meta: { title: '能力提升' }
+  },
+  {
+    path: '/community',
+    name: 'Community',
+    component: Community,
+    meta: { title: '面试社区' }
+  },
+  {
+    path: '/knowledge',
+    name: 'Knowledge',
+    component: Knowledge,
+    meta: { title: '知识库' }
+  },
+  {
+    path: '/profile',
+    name: 'Profile',
+    component: Profile,
+    meta: { title: '个人中心' }
+  }
+]
+
+const router = createRouter({
+  history: createWebHistory(),
+  routes
+})
+
+router.beforeEach((to, _from, next) => {
+  document.title = `${to.meta.title} | AI面试管家`
+  next()
+})
+
+export default router
