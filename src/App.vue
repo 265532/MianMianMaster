@@ -60,7 +60,7 @@ const navigateTo = (path: string) => {
         <div class="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center flex-shrink-0">
           <Bot :size="20" class="text-white" />
         </div>
-        <span v-if="isSidebarOpen" class="font-bold text-xl text-neutral-title whitespace-nowrap">AI面试管家</span>
+        <span v-if="isSidebarOpen" class="font-bold text-xl text-neutral-title whitespace-nowrap">面面俱到</span>
       </div>
 
       <div class="flex-1 py-6 px-3 space-y-2 overflow-y-auto overflow-x-hidden">
@@ -165,7 +165,7 @@ const navigateTo = (path: string) => {
             <div class="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center">
               <Bot :size="20" class="text-white" />
             </div>
-            <span class="font-bold text-xl text-neutral-title">AI面试管家</span>
+            <span class="font-bold text-xl text-neutral-title">面面俱到</span>
           </div>
           <button @click="toggleMobileMenu" class="p-2 text-neutral-helper">
             <X :size="24" />
