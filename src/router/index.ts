@@ -1,65 +1,73 @@
-import { createRouter, createWebHistory } from 'vue-router'
-import Home from '../views/Home.vue'
-import Interview from '../views/Interview.vue'
-import Profile from '../views/Profile.vue'
-import Matching from '../views/Matching.vue'
-import Growth from '../views/Growth.vue'
-import Community from '../views/Community.vue'
-import Knowledge from '../views/Knowledge.vue'
+import { createRouter, createWebHistory } from "vue-router";
+import Home from "../views/Home.vue";
+import Interview from "../views/Interview.vue";
+import Profile from "../views/Profile.vue";
+import Matching from "../views/Matching.vue";
+import Growth from "../views/Growth.vue";
+import Community from "../views/Community.vue";
+import Knowledge from "../views/Knowledge.vue";
+import { useUserStore } from "../stores/user";
 
 const routes = [
   {
-    path: '/',
-    name: 'Home',
+    path: "/",
+    name: "Home",
     component: Home,
-    meta: { title: '首页', hideSidebar: true }
+    meta: { title: "首页", hideSidebar: true },
   },
   {
-    path: '/interview',
-    name: 'Interview',
+    path: "/interview",
+    name: "Interview",
     component: Interview,
-    meta: { title: '面试实战' }
+    meta: { title: "面试实战" },
   },
   {
-    path: '/matching',
-    name: 'Matching',
+    path: "/matching",
+    name: "Matching",
     component: Matching,
-    meta: { title: '岗位匹配' }
+    meta: { title: "岗位匹配" },
   },
   {
-    path: '/growth',
-    name: 'Growth',
+    path: "/growth",
+    name: "Growth",
     component: Growth,
-    meta: { title: '能力提升' }
+    meta: { title: "能力提升" },
   },
   {
-    path: '/community',
-    name: 'Community',
+    path: "/community",
+    name: "Community",
     component: Community,
-    meta: { title: '面试社区' }
+    meta: { title: "面试社区" },
   },
   {
-    path: '/knowledge',
-    name: 'Knowledge',
+    path: "/knowledge",
+    name: "Knowledge",
     component: Knowledge,
-    meta: { title: '知识库' }
+    meta: { title: "知识库" },
   },
   {
-    path: '/profile',
-    name: 'Profile',
+    path: "/profile",
+    name: "Profile",
     component: Profile,
-    meta: { title: '个人中心' }
-  }
-]
+    meta: { title: "个人中心" },
+  },
+];
 
 const router = createRouter({
   history: createWebHistory(),
-  routes
-})
+  routes,
+});
 
-router.beforeEach((to, _from, next) => {
-  document.title = `${to.meta.title} | 面面俱到`
-  next()
-})
+router.beforeEach((to, from, next) => {
+  const userStore = useUserStore();
+  
+  const requiresAuth = to.meta.requiresAuth || false;
 
-export default router
+  if (requiresAuth && !userStore.isLoggedIn) {
+    next("/login");
+  } else {
+    document.title = `${to.meta.title} | 面面俱到`;
+    next();
+  }
+});
+export default router;
