@@ -34,7 +34,7 @@ pnpm install
 | 环境变量 | 描述 | 默认值 |
 |---------|------|--------|
 | VITE_API_BASE_URL | API 基础路径 | http://localhost:3000 |
-| VITE_APP_TITLE | 应用标题 | AI面试管家 |
+| VITE_APP_TITLE | 应用标题 | 面面俱到 |
 | VITE_APP_VERSION | 应用版本 | 1.0.0 |
 
 ### 4. 开发环境运行

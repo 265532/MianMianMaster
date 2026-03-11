@@ -283,7 +283,7 @@ const toggleFaq = (index) => {
         <div class="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center">
           <Bot :size="20" class="text-white" />
         </div>
-        <span class="font-bold text-xl tracking-tight" :class="isScrolled ? 'text-[#333]' : 'text-neutral-title'">xxxx</span>
+        <span class="font-bold text-xl tracking-tight" :class="isScrolled ? 'text-[#333]' : 'text-neutral-title'">面面俱到</span>
       </div>
 
       <!-- Desktop Links -->
@@ -498,7 +498,7 @@ const toggleFaq = (index) => {
     <section id="core-function" class="py-24 bg-neutral-bg/50 px-6 md:px-12">
       <div class="max-w-7xl mx-auto space-y-20">
         <div class="max-w-2xl space-y-4">
-          <h2 class="text-4xl font-black text-neutral-title tracking-tight italic">xxxx</h2>
+          <h2 class="text-4xl font-black text-neutral-title tracking-tight italic">面面俱到</h2>
           <p class="text-neutral-body leading-relaxed">
             面向学生与企业双端，提供 AI 面试模拟、能力测评、招聘管理一体化解决方案。以智能技术赋能求职与人才选拔，让每一次面试都有价值。
           </p>
@@ -804,7 +804,7 @@ const toggleFaq = (index) => {
               <div class="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-primary shadow-xl">
                 <Bot :size="24" />
               </div>
-              <span class="font-black text-3xl italic tracking-tighter">xxxx</span>
+              <span class="font-black text-3xl italic tracking-tighter">面面俱到</span>
             </div>
             <p class="text-white/60 text-sm leading-relaxed max-w-xs">
                 助力每一位学子成就职场梦想。AI 驱动的面试数字化与人才评估平台。
@@ -843,7 +843,7 @@ const toggleFaq = (index) => {
         </div>
 
         <div class="pt-12 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-6 text-xs" style="color: #B2EBF2;">
-          <p>© 2024 xxxx 版权所有</p>
+          <p>© 2026 面面俱到 版权所有</p>
           <div class="flex items-center gap-6">
             <a href="#" class="transition-colors hover:text-white" style="color: #B2EBF2;">隐私权政策</a>
             <a href="#" class="transition-colors hover:text-white" style="color: #B2EBF2;">法律协议</a>
