@@ -31,7 +31,7 @@ export const useUserStore = defineStore('user', () => {
   const hasSkills = computed(() => user.value.skills.length > 0)
   
   // 方法
-  function login(email: string, password: string) {
+  function login(email: string, _password: string) {
     loading.value = true
     error.value = null
     

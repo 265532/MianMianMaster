@@ -6,6 +6,13 @@ import Matching from "../views/Matching.vue";
 import Growth from "../views/Growth.vue";
 import Community from "../views/Community.vue";
 import Knowledge from "../views/Knowledge.vue";
+import GameInterview from "../views/GameInterview.vue";
+import LevelDetail from "../views/LevelDetail.vue";
+import LevelChallenge from "../views/LevelChallenge.vue";
+import Report from "../views/Report.vue";
+import JobSpecificQuestionBank from "../views/JobSpecificQuestionBank.vue";
+import Practice from "../views/Practice.vue";
+import PathPractice from "../views/PathPractice.vue";
 import { useUserStore } from "../stores/user";
 
 const routes = [
@@ -20,6 +27,30 @@ const routes = [
     name: "Interview",
     component: Interview,
     meta: { title: "面试实战" },
+  },
+  {
+    path: "/job-specific-question-bank",
+    name: "JobSpecificQuestionBank",
+    component: JobSpecificQuestionBank,
+    meta: { title: "岗位专属题库" },
+  },
+  {
+    path: "/game-interview",
+    name: "GameInterview",
+    component: GameInterview,
+    meta: { title: "游戏式面试" },
+  },
+  {
+    path: "/game-interview/level/:id/detail",
+    name: "LevelDetail",
+    component: LevelDetail,
+    meta: { title: "关卡详情" },
+  },
+  {
+    path: "/game-interview/level/:id",
+    name: "LevelChallenge",
+    component: LevelChallenge,
+    meta: { title: "关卡挑战" },
   },
   {
     path: "/matching",
@@ -51,6 +82,24 @@ const routes = [
     component: Profile,
     meta: { title: "个人中心" },
   },
+  {
+    path: "/report",
+    name: "Report",
+    component: Report,
+    meta: { title: "面试报告" },
+  },
+  {
+    path: "/practice/:id",
+    name: "Practice",
+    component: Practice,
+    meta: { title: "练习" },
+  },
+  {
+    path: "/path-practice",
+    name: "PathPractice",
+    component: PathPractice,
+    meta: { title: "专项通关路径" },
+  },
 ];
 
 const router = createRouter({
@@ -58,7 +107,7 @@ const router = createRouter({
   routes,
 });
 
-router.beforeEach((to, from, next) => {
+router.beforeEach((to, _from, next) => {
   const userStore = useUserStore();
   
   const requiresAuth = to.meta.requiresAuth || false;

@@ -7,7 +7,6 @@ import {
   Menu, 
   X,
   Bot,
-  LayoutDashboard,
   UserCircle,
   TrendingUp,
   MessageSquare,
@@ -17,7 +16,7 @@ import {
   Target,
   Zap,
   BookOpen,
-  PieChart
+  Gamepad2
 } from 'lucide-vue-next'
 
 const router = useRouter()
@@ -27,6 +26,7 @@ const isMobileMenuOpen = ref(false)
 
 const navItems = [
   { name: '面试实战', path: '/interview', icon: Zap },
+  { name: '游戏式面试', path: '/game-interview', icon: Gamepad2 },
   { name: '岗位匹配', path: '/matching', icon: Target },
   { name: '能力提升', path: '/growth', icon: TrendingUp },
   { name: '面试社区', path: '/community', icon: MessageSquare },
@@ -53,7 +53,7 @@ const navigateTo = (path: string) => {
     <!-- Sidebar (Desktop) -->
     <aside 
       v-if="!route.meta.hideSidebar"
-      class="hidden md:flex flex-col bg-white border-r border-neutral-border transition-all duration-300 z-50"
+      class="hidden md:flex flex-col bg-white border-r border-neutral-border transition-all duration-300 z-50 fixed left-0 top-0 bottom-0"
       :class="isSidebarOpen ? 'w-64' : 'w-20'"
     >
       <div class="h-16 flex items-center px-6 gap-3 border-b border-neutral-border cursor-pointer" @click="navigateTo('/')">
@@ -99,7 +99,7 @@ const navigateTo = (path: string) => {
     </aside>
 
     <!-- Main Content Area -->
-    <div class="flex-1 flex flex-col min-w-0">
+    <div class="flex-1 flex flex-col min-w-0" :class="!route.meta.hideSidebar ? (isSidebarOpen ? 'md:ml-64' : 'md:ml-20') : ''">
       <!-- Header -->
       <header 
         v-if="!route.meta.hideSidebar"

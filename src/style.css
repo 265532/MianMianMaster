@@ -44,6 +44,22 @@ h6 {
   @apply text-neutral-title;
 }
 
+/* 确保深色背景上的标题显示为白色 */
+.bg-neutral-title h2,
+.bg-neutral-title h3 {
+  color: white !important;
+}
+
+.gradient-primary h2,
+.gradient-primary h3 {
+  color: white !important;
+}
+
+.gradient-yellow-orange h2,
+.gradient-yellow-orange h3 {
+  color: white !important;
+}
+
 /* Custom UI Utility Classes */
 .gradient-primary {
   background: var(--background-gradient-primary);

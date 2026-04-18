@@ -5,20 +5,12 @@ import {
   Zap, 
   Target, 
   TrendingUp, 
-  MessageSquare, 
-  BookOpen, 
-  UserCircle,
   Bot,
   Sparkles,
   ArrowRight,
-  ShieldCheck,
-  ChevronLeft,
   ChevronRight,
-  ExternalLink,
-  Search,
   Menu,
   X,
-  PlayCircle,
   Monitor,
   BarChart3,
   CheckCircle,
@@ -113,7 +105,10 @@ onMounted(() => {
     if (visibleEntries.length > 0) {
       // 如果有多个模块同时在视口，取最顶部的那个（通常是 entries 中的最后一个，或者可以根据 entry.target.offsetTop 排序）
       // 这里简单处理：记录最后触发 entering 的模块
-      activeSection.value = visibleEntries[visibleEntries.length - 1].target.id
+      const lastEntry = visibleEntries[visibleEntries.length - 1]
+      if (lastEntry && lastEntry.target.id) {
+        activeSection.value = lastEntry.target.id
+      }
     }
   }, observerOptions)
 
@@ -174,33 +169,7 @@ const studentFeatures = [
   }
 ]
 
-// 企业端核心功能模块
-const enterpriseFeatures = [
-  {
-    title: '智能招聘面试',
-    subtitle: 'AI Recruitment',
-    desc: '自定义多角色 AI 初面，定制题库笔试，全维度评估报告',
-    tag: '高效率'
-  },
-  {
-    title: '人才库管理',
-    subtitle: 'Talent Pool',
-    desc: '求职者知识图谱，人岗智能匹配，长期能力追踪',
-    tag: '智能化'
-  },
-  {
-    title: '招聘效果优化',
-    subtitle: 'Analytics',
-    desc: '核验认证报告，分析招聘效果，持续优化题库策略',
-    tag: '数据驱动'
-  },
-  {
-    title: '业务挑战赛',
-    subtitle: 'Challenge',
-    desc: '发布匿名业务任务，学生提交方案，生成可溯源凭证',
-    tag: '真实场景'
-  }
-]
+
 
 const services = ['技术面试', '小组面试', '无领导小组', '压力测试', '情景分析', '外语面试']
 const activeService = ref('技术面试')
@@ -261,8 +230,10 @@ const faqItems = ref([
   }
 ])
 
-const toggleFaq = (index) => {
-  faqItems.value[index].isOpen = !faqItems.value[index].isOpen
+const toggleFaq = (index: number) => {
+  if (faqItems.value[index]) {
+    faqItems.value[index].isOpen = !faqItems.value[index].isOpen
+  }
 }
 </script>
 
