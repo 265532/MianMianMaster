@@ -390,7 +390,7 @@ const closeCertificationDetail = () => {
     <!-- Game Stats -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       <div v-for="stat in gameStats" :key="stat.label" class="bg-white p-8 rounded-[24px] shadow-sm border border-neutral-border flex flex-col items-center justify-center gap-4 group hover:shadow-md transition-all">
-        <stat.icon :size="32" :class="stat.color" class="group-hover:scale-110 transition-transform" />
+        <component :is="stat.icon" :size="32" :class="stat.color" class="group-hover:scale-110 transition-transform" />
         <div class="text-center">
           <p class="text-3xl font-black text-neutral-title">{{ stat.value }}</p>
           <p class="text-xs text-neutral-helper uppercase font-bold mt-1">{{ stat.label }}</p>

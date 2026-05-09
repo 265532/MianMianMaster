@@ -19,7 +19,7 @@ import {
   Plus
 } from 'lucide-vue-next'
 
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
 import * as echarts from 'echarts'
 
 // 模态框状态
@@ -789,8 +789,10 @@ const handleResize = () => {
 onMounted(() => {
   // 初始化数据
   console.log('Growth component mounted')
-  // 初始化图表
-  initCharts()
+  // 使用 nextTick 确保 DOM 渲染完成后再初始化图表
+  nextTick(() => {
+    initCharts()
+  })
   // 添加窗口大小变化监听
   window.addEventListener('resize', handleResize)
 })
@@ -1406,7 +1408,7 @@ onMounted(() => {
         <p class="text-white/80 mb-8 text-lg leading-relaxed">强化学习引擎，覆盖错题本与上料存档，让每一次技能进阶都清晰可见。</p>
         <div class="flex flex-wrap gap-4">
           <div v-for="stat in stats" :key="stat.label" class="bg-white/10 backdrop-blur-md px-6 py-4 rounded-3xl border border-white/10 flex items-center gap-4">
-            <stat.icon :size="24" :class="stat.color" />
+            <component :is="stat.icon" :size="24" :class="stat.color" />
             <div>
               <p class="text-[10px] text-white/60 uppercase font-bold">{{ stat.label }}</p>
               <p class="text-xl font-black">{{ stat.value }}</p>

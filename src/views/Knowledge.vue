@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import { 
-  BookOpen, 
-  Search, 
-  ChevronRight, 
-  Zap, 
-  Code2, 
-  FileText, 
-  Database, 
-  Cpu, 
-  Layout, 
+import {
+  BookOpen,
+  Search,
+  ChevronRight,
+  Zap,
+  Code2,
+  FileText,
+  Database,
+  Cpu,
+  Layout,
   Layers,
   Sparkles,
   PlayCircle,
@@ -22,6 +22,7 @@ import {
   Cloud,
   BarChart3,
   PenTool,
+  MessageSquare,
   X
 } from 'lucide-vue-next'
 
@@ -851,6 +852,7 @@ const startPractice = () => {
 </script>
 
 <template>
+  <div>
   <div class="flex flex-col gap-8 max-w-7xl mx-auto">
     <!-- Header: Knowledge Base -->
     <div class="gradient-primary p-10 rounded-[40px] text-white relative overflow-hidden shadow-xl">
@@ -1772,6 +1774,6 @@ const startPractice = () => {
       </div>
     </div>
   </div>
-
+</div>
 
 </template>

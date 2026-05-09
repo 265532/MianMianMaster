@@ -2,9 +2,9 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import * as echarts from 'echarts'
-import { 
-  User, 
-  FileText, 
+import {
+  User,
+  FileText,
   CheckCircle,
   TrendingUp,
   Calendar,
@@ -27,7 +27,8 @@ import {
   RefreshCw,
   Download,
   Share2,
-  Play
+  Play,
+  X
 } from 'lucide-vue-next'
 
 const router = useRouter()
@@ -1239,6 +1240,7 @@ const handleResize = () => {
 </script>
 
 <template>
+  <div>
   <div class="flex flex-col gap-8 max-w-7xl mx-auto">
     <!-- User Profile Hero -->
     <div class="bg-white rounded-[32px] p-8 shadow-sm border border-neutral-border relative overflow-hidden">
@@ -1278,7 +1280,7 @@ const handleResize = () => {
 
           <div class="flex flex-wrap justify-center lg:justify-start gap-4">
             <div v-for="stat in stats" :key="stat.label" class="bg-neutral-bg min-w-[120px] px-6 py-4 rounded-3xl flex flex-col items-center justify-center gap-2 group hover:bg-white hover:shadow-md transition-all cursor-default border border-transparent hover:border-neutral-border">
-              <stat.icon :size="20" :class="stat.color" class="opacity-80 group-hover:scale-110 transition-transform" />
+              <component :is="stat.icon" :size="20" :class="stat.color" class="opacity-80 group-hover:scale-110 transition-transform" />
               <div class="text-center">
                 <p class="text-xl font-black text-neutral-title leading-tight">{{ stat.value }}</p>
                 <p class="text-[10px] text-neutral-helper uppercase font-bold mt-1 tracking-tighter">{{ stat.label }}</p>
@@ -2986,6 +2988,7 @@ const handleResize = () => {
         </div>
       </div>
     </Transition>
+  </div>
 </template>
 
 <style scoped>

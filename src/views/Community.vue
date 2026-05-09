@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { 
-  MessageSquare, 
-  UserCircle, 
-  Bot, 
-  Award, 
-  ChevronRight, 
-  Mic, 
+import {
+  MessageSquare,
+  UserCircle,
+  Bot,
+  Award,
+  ChevronRight,
+  Mic,
   FileText,
   Sparkles,
   Zap,
@@ -16,7 +16,8 @@ import {
   Clock,
   Users,
   X,
-  GraduationCap
+  GraduationCap,
+  BookOpen
 } from 'lucide-vue-next'
 
 const communityPosts = [
