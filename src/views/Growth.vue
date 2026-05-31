@@ -19,8 +19,8 @@ import {
   Plus
 } from 'lucide-vue-next'
 
-import { ref, computed, onMounted, nextTick } from 'vue'
-import * as echarts from 'echarts'
+import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
+import echarts from '@/utils/echarts'
 
 // 模态框状态
 const showResourceDetailModal = ref(false)
@@ -702,6 +702,9 @@ const radarChart = ref<echarts.ECharts | null>(null)
 const initCharts = () => {
   // 成长轨迹图表
   if (growthChartRef.value) {
+    if (growthChart.value) {
+      growthChart.value.dispose()
+    }
     growthChart.value = echarts.init(growthChartRef.value)
     growthChart.value.setOption({
       tooltip: {
@@ -752,6 +755,9 @@ const initCharts = () => {
   
   // 能力雷达图
   if (radarChartRef.value) {
+    if (radarChart.value) {
+      radarChart.value.dispose()
+    }
     radarChart.value = echarts.init(radarChartRef.value)
     radarChart.value.setOption({
       tooltip: {},
@@ -787,18 +793,27 @@ const handleResize = () => {
 
 // 生命周期
 onMounted(() => {
-  // 初始化数据
-  console.log('Growth component mounted')
-  // 使用 nextTick 确保 DOM 渲染完成后再初始化图表
   nextTick(() => {
     initCharts()
   })
-  // 添加窗口大小变化监听
   window.addEventListener('resize', handleResize)
 })
 
+watch(activeTab, (newTab) => {
+  if (newTab === 'growth') {
+    nextTick(() => {
+      initCharts()
+    })
+  }
+})
 
-
+onUnmounted(() => {
+  window.removeEventListener('resize', handleResize)
+  growthChart.value?.dispose()
+  radarChart.value?.dispose()
+  growthChart.value = null
+  radarChart.value = null
+})
 // 岗位专属题库数据
 const jobQuestionBanks = [
   {

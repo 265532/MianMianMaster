@@ -1,5 +1,9 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { storeToRefs } from 'pinia'
+import SkeletonLoader from '@/components/SkeletonLoader.vue'
+import EmptyState from '@/components/EmptyState.vue'
+import LoadMore from '@/components/LoadMore.vue'
 import {
   MessageSquare,
   UserCircle,
@@ -19,48 +23,9 @@ import {
   GraduationCap,
   BookOpen
 } from 'lucide-vue-next'
-
-const communityPosts = [
-  { id: 1, author: '匿名同学', type: '前端面试', content: '刚刚结束了某大厂的二面，AI 点评说我的逻辑非常清晰，分享给大家我的面试经验和准备方法。首先，我在面试前做了充分的准备，包括公司背景、技术栈和常见面试题。其次，我在面试过程中保持冷静，有条理地回答问题。最后，我主动询问了公司的技术栈和团队文化。希望这些经验对大家有所帮助！', likes: 128, comments: 24, time: '2小时前', avatar: '👨‍💻' },
-  { id: 2, author: '面霸', type: '后端复盘', content: '关于 Java 线程池的深度分析报告已出具，内含 AI 针对性的优化建议。线程池是 Java 并发编程中的重要概念，合理使用线程池可以提高系统的性能和稳定性。在面试中，线程池也是高频考点，包括线程池的参数、工作原理和最佳实践等。我整理了一份详细的分析报告，希望对大家的面试有所帮助。', likes: 256, comments: 48, time: '4小时前', avatar: '💻' },
-  { id: 3, author: '求职小白', type: '产品经理', content: '第一次面试产品经理岗位，紧张到说话结巴，AI 给了我很多表达技巧的建议。AI 建议我在面试前多练习自我介绍和常见问题的回答，保持语速适中，逻辑清晰。同时，AI 还帮我分析了产品经理面试的重点，包括产品思维、沟通能力和用户体验意识等。现在我已经掌握了一些面试技巧，希望下次面试能够表现更好。', likes: 96, comments: 18, time: '6小时前', avatar: '👩‍💼' },
-  { id: 4, author: '技术大牛', type: '算法面试', content: '分享一道字节跳动的算法题，AI 提供了三种解法，从时间复杂度和空间复杂度分析。这道题是关于数组操作的，要求在 O(n) 的时间复杂度内解决。AI 提供的三种解法分别是暴力法、哈希表法和双指针法，其中双指针法是最优解。通过这道题，我对数组操作和时间复杂度分析有了更深入的理解。', likes: 320, comments: 56, time: '8小时前', avatar: '🧠' },
-  { id: 5, author: 'HR 视角', type: '面试技巧', content: '作为 HR，我来分享一下面试官最看重的几个点，希望对大家有帮助。首先，面试官看重候选人的专业能力和技术水平，这是基础。其次，面试官关注候选人的沟通能力和团队协作能力，因为这些能力在工作中非常重要。最后，面试官会考察候选人的学习能力和适应能力，因为技术在不断发展，需要持续学习。', likes: 180, comments: 32, time: '1天前', avatar: '👥' },
-  { id: 6, author: '前端专家', type: '技术分享', content: 'Vue3 和 React 的深度对比，包括响应式原理、组件化和性能优化等方面。Vue3 采用了 Proxy 实现响应式，而 React 采用了虚拟 DOM 和 setState。在组件化方面，Vue3 提供了 Composition API，而 React 提供了 Hooks。在性能优化方面，两者都有各自的优势和最佳实践。希望这份对比能够帮助大家选择适合自己的前端框架。', likes: 210, comments: 42, time: '1天前', avatar: '🎨' },
-  { id: 7, author: '后端工程师', type: '经验分享', content: '如何准备系统设计面试，包括架构设计、数据库设计和性能优化等方面。系统设计面试是大厂面试的重要环节，需要候选人具备全局视野和系统思维。我整理了一份系统设计面试的准备指南，包括常见的设计模式、分布式系统原理和最佳实践等。希望对大家的面试有所帮助。', likes: 175, comments: 38, time: '2天前', avatar: '⚙️' }
-]
-
-// 评论数据
-const comments: Record<number, { id: number; author: string; content: string; time: string }[]> = {
-  1: [
-    { id: 1, author: '面试新手', content: '谢谢分享，很有帮助！', time: '1小时前' },
-    { id: 2, author: '技术爱好者', content: '请问你是如何准备技术面试的？', time: '1.5小时前' }
-  ],
-  2: [
-    { id: 1, author: 'Java 开发者', content: '线程池的分析很详细，学习了！', time: '3小时前' },
-    { id: 2, author: '后端工程师', content: '请问线程池的核心参数如何设置？', time: '3.5小时前' }
-  ]
-}
-
-// 热门话题
-const hotTopics = [
-  { id: 1, title: '如何准备大厂面试', posts: 128, participants: 356 },
-  { id: 2, title: '前端框架对比', posts: 96, participants: 289 },
-  { id: 3, title: '系统设计面试指南', posts: 84, participants: 245 },
-  { id: 4, title: '简历优化技巧', posts: 72, participants: 210 }
-]
-
-// 类型定义
-interface Post {
-  id: number;
-  author: string;
-  type: string;
-  content: string;
-  likes: number;
-  comments: number;
-  time: string;
-  avatar: string;
-}
+import { useCommunityStore } from '@/stores/community'
+import { useLearningStore } from '@/stores/learning'
+import type { Post } from '@/api/types/community.types'
 
 interface Topic {
   id: number;
@@ -78,7 +43,11 @@ interface User {
   bio: string;
 }
 
-// 状态管理
+const communityStore = useCommunityStore()
+const learningStore = useLearningStore()
+const { posts: communityPosts, comments, hotTopics, activeUsers, loading } = storeToRefs(communityStore)
+const { courses } = storeToRefs(learningStore)
+
 const showAllPosts = ref(false)
 const isPostDetailOpen = ref(false)
 const selectedPost = ref<Post | null>(null)
@@ -97,76 +66,65 @@ const isAllTopicsOpen = ref(false)
 const isShareReportOpen = ref(false)
 const isArchiveDetailOpen = ref(false)
 const selectedArchive = ref<any>(null)
-const likedPosts = ref<Set<number>>(new Set())
 const bookmarkedPosts = ref<Set<number>>(new Set())
 const followedUsers = ref<Set<string>>(new Set())
 const selectedFile = ref<File | null>(null)
 const fileInputRef = ref<HTMLInputElement | null>(null)
 
-// 课程数据
-const courses = [
-  { id: 1, title: '逻辑思维提升', category: '逻辑思维', level: '初级', duration: '6小时', rating: 4.9, students: 1200, description: '通过系统训练提升逻辑思维能力，掌握结构化思考方法，提高面试中的问题分析和解决能力。', modules: ['逻辑基础', '结构化思考', '问题分析', '案例练习'] },
-  { id: 2, title: '表达结构优化', category: '表达结构', level: '中级', duration: '8小时', rating: 4.8, students: 980, description: '学习STAR法则等表达技巧，掌握清晰、有条理的表达方法，提高面试中的沟通效果。', modules: ['STAR法则', '表达框架', '语言组织', '实战模拟'] },
-  { id: 3, title: '专业深度强化', category: '专业深度', level: '高级', duration: '10小时', rating: 4.7, students: 750, description: '深入探讨技术领域的核心概念和前沿趋势，提升专业知识深度，应对技术面试中的 challenging questions。', modules: ['核心概念', '前沿技术', '问题解法', '深度思考'] },
-  { id: 4, title: '面试技巧全攻略', category: '面试技巧', level: '初级', duration: '5小时', rating: 4.9, students: 1500, description: '全面覆盖面试各个环节的技巧，包括简历准备、自我介绍、行为问题回答、薪资谈判等。', modules: ['简历优化', '自我介绍', '行为问题', '薪资谈判'] }
-]
-
-// 计算属性：显示的帖子
 const displayedPosts = computed(() => {
-  return showAllPosts.value ? communityPosts : communityPosts.slice(0, 3)
+  return showAllPosts.value ? communityPosts.value : communityPosts.value.slice(0, 3)
 })
 
-// 计算属性：筛选后的课程
 const filteredCourses = computed(() => {
   if (selectedCategory.value === '全部课程') {
-    return courses
+    return courses.value
   }
-  return courses.filter(course => course.category === selectedCategory.value)
+  return courses.value.filter(course => course.category === selectedCategory.value)
 })
 
-// 解锁智慧课程
+function formatTime(dateStr: string): string {
+  const date = new Date(dateStr)
+  const now = new Date()
+  const diff = now.getTime() - date.getTime()
+  const hours = Math.floor(diff / (1000 * 60 * 60))
+  if (hours < 1) return '刚刚'
+  if (hours < 24) return `${hours}小时前`
+  const days = Math.floor(hours / 24)
+  if (days < 7) return `${days}天前`
+  return date.toLocaleDateString('zh-CN')
+}
+
 const unlockWisdomCourse = () => {
   isWisdomCourseOpen.value = true
 }
 
-// 选择课程分类
 const selectCategory = (category: string) => {
   selectedCategory.value = category
 }
 
-// 查看课程详情
 const viewCourseDetail = (course: any) => {
   selectedCourse.value = course
   isCourseDetailOpen.value = true
 }
 
-// 开始学习
 const startLearning = (course: any) => {
   selectedCourse.value = course
   currentModuleIndex.value = 0
   isLearningOpen.value = true
 }
 
-// 匿名分享复盘报告
 const shareReport = () => {
   isShareReportOpen.value = true
 }
 
-// 查看历史存档
 const viewHistoryArchive = () => {
   isHistoryArchiveOpen.value = true
 }
 
-// 点赞帖子
-const likePost = (postId: number) => {
-  if (likedPosts.value.has(postId)) {
-    likedPosts.value.delete(postId)
-  } else {
-    likedPosts.value.add(postId)
-  }
+const handleToggleLike = async (postId: number) => {
+  await communityStore.toggleLike(postId)
 }
 
-// 收藏帖子
 const bookmarkPost = (postId: number) => {
   if (bookmarkedPosts.value.has(postId)) {
     bookmarkedPosts.value.delete(postId)
@@ -175,19 +133,15 @@ const bookmarkPost = (postId: number) => {
   }
 }
 
-// 分享帖子
 const sharePost = (_postId: number) => {
-  // 模拟分享功能
   alert('帖子已分享到剪贴板')
 }
 
-// 查看全部话题
 const viewAllTopics = () => {
   isAllTopicsOpen.value = true
 }
 
-// 关注/取消关注用户
-const toggleFollow = (userName: string) => {
+const handleToggleFollow = async (userName: string) => {
   if (followedUsers.value.has(userName)) {
     followedUsers.value.delete(userName)
   } else {
@@ -195,30 +149,25 @@ const toggleFollow = (userName: string) => {
   }
 }
 
-// 查看存档详情
 const viewArchiveDetail = (archive: any) => {
   selectedArchive.value = archive
   isArchiveDetailOpen.value = true
 }
 
-// 删除存档
 const deleteArchive = (_archiveId: number) => {
   if (confirm('确定要删除这个存档吗？')) {
     alert('删除成功！')
   }
 }
 
-// 加载更多存档
 const loadMoreArchives = () => {
   alert('已加载全部存档！')
 }
 
-// 触发文件选择
 const triggerFileInput = () => {
   fileInputRef.value?.click()
 }
 
-// 处理文件上传
 const handleFileUpload = (event: Event) => {
   const target = event.target as HTMLInputElement
   if (target.files && target.files.length > 0) {
@@ -228,6 +177,15 @@ const handleFileUpload = (event: Event) => {
     }
   }
 }
+
+onMounted(async () => {
+  await Promise.all([
+    communityStore.fetchPosts(),
+    communityStore.fetchHotTopics(),
+    communityStore.fetchActiveUsers(),
+    learningStore.fetchCourses()
+  ])
+})
 </script>
 
 <template>
@@ -267,14 +225,26 @@ const handleFileUpload = (event: Event) => {
           </div>
           
           <div class="space-y-8">
+            <template v-if="loading">
+              <SkeletonLoader v-for="i in 3" :key="'sk-'+i" type="post" />
+            </template>
+            <EmptyState
+              v-else-if="communityPosts.length === 0"
+              icon="📝"
+              title="暂无帖子"
+              description="社区里还没有帖子，来发布第一篇吧！"
+              action-text="发布帖子"
+              @action="isPostDetailOpen = true"
+            />
+            <template v-else>
             <div v-for="post in displayedPosts" :key="post.id" class="p-8 bg-neutral-bg rounded-[32px] hover:bg-white hover:shadow-lg transition-all border border-transparent hover:border-neutral-border group cursor-pointer relative overflow-hidden" @click="selectedPost = post; isPostDetailOpen = true">
               <div class="flex items-center gap-4 mb-4 relative z-10">
-                <div class="text-2xl">{{ post.avatar }}</div>
+                <div class="text-2xl">{{ post.author_avatar }}</div>
                 <div>
-                  <h4 class="text-sm font-bold text-neutral-title">{{ post.author }}</h4>
+                  <h4 class="text-sm font-bold text-neutral-title">{{ post.author_name }}</h4>
                   <div class="flex items-center gap-4">
-                    <span class="text-[10px] text-neutral-helper uppercase font-bold">{{ post.type }}</span>
-                    <span class="text-[10px] text-neutral-helper flex items-center gap-1"><Clock :size="12" /> {{ post.time }}</span>
+                    <span class="text-[10px] text-neutral-helper uppercase font-bold">{{ post.title }}</span>
+                    <span class="text-[10px] text-neutral-helper flex items-center gap-1"><Clock :size="12" /> {{ formatTime(post.created_at) }}</span>
                   </div>
                 </div>
               </div>
@@ -287,23 +257,23 @@ const handleFileUpload = (event: Event) => {
                 <div class="space-y-3">
                   <div v-for="comment in comments[post.id]" :key="comment.id" class="p-3 bg-white rounded-xl border border-neutral-border">
                     <div class="flex items-center justify-between mb-1">
-                      <h5 class="text-xs font-bold text-neutral-title">{{ comment.author }}</h5>
-                      <span class="text-[10px] text-neutral-helper">{{ comment.time }}</span>
+                      <h5 class="text-xs font-bold text-neutral-title">{{ comment.author_name }}</h5>
+                      <span class="text-[10px] text-neutral-helper">{{ formatTime(comment.created_at) }}</span>
                     </div>
                     <p class="text-xs text-neutral-body">{{ comment.content }}</p>
                   </div>
                 </div>
-                <button class="text-xs text-primary font-bold hover:underline mt-2">查看全部 {{ post.comments }} 条评论</button>
+                <button class="text-xs text-primary font-bold hover:underline mt-2">查看全部 {{ post.comments_count }} 条评论</button>
               </div>
               
               <div class="flex items-center gap-4 relative z-10 pt-4 border-t border-neutral-border">
-                <button @click.stop="likePost(post.id)" class="flex items-center gap-2 text-xs transition-colors" :class="likedPosts.has(post.id) ? 'text-auxiliary-orange' : 'text-neutral-helper hover:text-primary'">
-                  <Heart :size="16" :class="likedPosts.has(post.id) ? 'fill-auxiliary-orange' : ''" />
-                  <span class="font-bold">{{ likedPosts.has(post.id) ? post.likes + 1 : post.likes }}</span>
+                <button @click.stop="handleToggleLike(post.id)" class="flex items-center gap-2 text-xs transition-colors" :class="post.is_liked ? 'text-auxiliary-orange' : 'text-neutral-helper hover:text-primary'">
+                  <Heart :size="16" :class="post.is_liked ? 'fill-auxiliary-orange' : ''" />
+                  <span class="font-bold">{{ post.likes_count }}</span>
                 </button>
                 <button class="flex items-center gap-2 text-xs text-neutral-helper hover:text-primary transition-colors">
                   <MessageSquare :size="16" />
-                  <span class="font-bold">{{ post.comments }}</span>
+                  <span class="font-bold">{{ post.comments_count }}</span>
                 </button>
                 <button @click.stop="sharePost(post.id)" class="flex items-center gap-2 text-xs text-neutral-helper hover:text-primary transition-colors">
                   <Share2 :size="16" />
@@ -321,11 +291,18 @@ const handleFileUpload = (event: Event) => {
             
             <!-- 查看更多按钮 -->
             <div class="flex justify-center mt-4">
-              <button @click="showAllPosts = !showAllPosts" class="px-8 py-3 bg-neutral-bg text-neutral-title font-bold rounded-xl hover:bg-primary hover:text-white transition-all flex items-center gap-2">
+              <LoadMore
+                v-if="showAllPosts"
+                :loading="loading"
+                :has-more="hasMore"
+                @load-more="communityStore.loadMore()"
+              />
+              <button v-else @click="showAllPosts = !showAllPosts" class="px-8 py-3 bg-neutral-bg text-neutral-title font-bold rounded-xl hover:bg-primary hover:text-white transition-all flex items-center gap-2">
                 {{ showAllPosts ? '收起' : '查看更多' }}
                 <ChevronRight :size="16" :class="{ 'rotate-180': showAllPosts }" />
               </button>
             </div>
+            </template>
           </div>
         </div>
 
@@ -384,12 +361,12 @@ const handleFileUpload = (event: Event) => {
           </div>
           <div class="p-8">
             <div class="flex items-center gap-4 mb-6">
-              <div class="text-3xl">{{ selectedPost.avatar }}</div>
+              <div class="text-3xl">{{ selectedPost.author_avatar }}</div>
               <div>
-                <h4 class="text-lg font-bold text-neutral-title">{{ selectedPost.author }}</h4>
+                <h4 class="text-lg font-bold text-neutral-title">{{ selectedPost.author_name }}</h4>
                 <div class="flex items-center gap-4">
-                  <span class="text-xs text-primary font-bold">{{ selectedPost.type }}</span>
-                  <span class="text-xs text-neutral-helper flex items-center gap-1"><Clock :size="12" /> {{ selectedPost.time }}</span>
+                  <span class="text-xs text-primary font-bold">{{ selectedPost.title }}</span>
+                  <span class="text-xs text-neutral-helper flex items-center gap-1"><Clock :size="12" /> {{ formatTime(selectedPost.created_at) }}</span>
                 </div>
               </div>
             </div>
@@ -399,12 +376,12 @@ const handleFileUpload = (event: Event) => {
             
             <!-- 评论展示 -->
             <div v-if="comments[selectedPost.id]" class="mb-8">
-              <h5 class="font-bold text-neutral-title mb-4">评论 ({{ selectedPost.comments }})</h5>
+              <h5 class="font-bold text-neutral-title mb-4">评论 ({{ selectedPost.comments_count }})</h5>
               <div class="space-y-4">
                 <div v-for="comment in comments[selectedPost.id]" :key="comment.id" class="p-4 bg-neutral-bg rounded-xl border border-neutral-border">
                   <div class="flex items-center justify-between mb-2">
-                    <h6 class="text-sm font-bold text-neutral-title">{{ comment.author }}</h6>
-                    <span class="text-xs text-neutral-helper">{{ comment.time }}</span>
+                    <h6 class="text-sm font-bold text-neutral-title">{{ comment.author_name }}</h6>
+                    <span class="text-xs text-neutral-helper">{{ formatTime(comment.created_at) }}</span>
                   </div>
                   <p class="text-sm text-neutral-body">{{ comment.content }}</p>
                 </div>
@@ -414,13 +391,13 @@ const handleFileUpload = (event: Event) => {
             
             <!-- 互动按钮 -->
             <div class="flex items-center gap-6 pt-4 border-t border-neutral-border">
-              <button @click="likePost(selectedPost.id)" class="flex items-center gap-2 text-sm transition-colors" :class="likedPosts.has(selectedPost.id) ? 'text-auxiliary-orange' : 'text-neutral-helper hover:text-primary'">
-                <Heart :size="18" :class="likedPosts.has(selectedPost.id) ? 'fill-auxiliary-orange' : ''" />
-                <span class="font-bold">{{ likedPosts.has(selectedPost.id) ? selectedPost.likes + 1 : selectedPost.likes }}</span>
+              <button @click="handleToggleLike(selectedPost.id)" class="flex items-center gap-2 text-sm transition-colors" :class="selectedPost.is_liked ? 'text-auxiliary-orange' : 'text-neutral-helper hover:text-primary'">
+                <Heart :size="18" :class="selectedPost.is_liked ? 'fill-auxiliary-orange' : ''" />
+                <span class="font-bold">{{ selectedPost.likes_count }}</span>
               </button>
               <button class="flex items-center gap-2 text-sm text-neutral-helper hover:text-primary transition-colors">
                 <MessageSquare :size="18" />
-                <span class="font-bold">{{ selectedPost.comments }}</span>
+                <span class="font-bold">{{ selectedPost.comments_count }}</span>
               </button>
               <button @click="sharePost(selectedPost.id)" class="flex items-center gap-2 text-sm text-neutral-helper hover:text-primary transition-colors">
                 <Share2 :size="18" />
@@ -465,16 +442,16 @@ const handleFileUpload = (event: Event) => {
             <div class="space-y-4">
               <div v-for="(post, index) in communityPosts.filter(p => selectedTopic && selectedTopic.title && p.content.includes((selectedTopic.title.split(' ')[1] || '')))" :key="index" class="p-4 bg-neutral-bg rounded-xl border border-neutral-border">
                 <div class="flex items-center gap-3 mb-2">
-                  <div class="text-2xl">{{ post.avatar }}</div>
+                  <div class="text-2xl">{{ post.author_avatar }}</div>
                   <div>
-                    <h6 class="text-sm font-bold text-neutral-title">{{ post.author }}</h6>
-                    <span class="text-xs text-neutral-helper">{{ post.time }}</span>
+                    <h6 class="text-sm font-bold text-neutral-title">{{ post.author_name }}</h6>
+                    <span class="text-xs text-neutral-helper">{{ formatTime(post.created_at) }}</span>
                   </div>
                 </div>
                 <p class="text-sm text-neutral-body">{{ post.content.substring(0, 100) }}...</p>
                 <div class="flex items-center gap-4 mt-3">
-                  <span class="text-xs text-neutral-helper flex items-center gap-1"><Heart :size="12" /> {{ post.likes }}</span>
-                  <span class="text-xs text-neutral-helper flex items-center gap-1"><MessageSquare :size="12" /> {{ post.comments }}</span>
+                  <span class="text-xs text-neutral-helper flex items-center gap-1"><Heart :size="12" /> {{ post.likes_count }}</span>
+                  <span class="text-xs text-neutral-helper flex items-center gap-1"><MessageSquare :size="12" /> {{ post.comments_count }}</span>
                 </div>
               </div>
             </div>
@@ -520,7 +497,7 @@ const handleFileUpload = (event: Event) => {
                   <div class="text-xs text-neutral-helper">关注</div>
                 </span>
               </div>
-              <button @click="toggleFollow(selectedUser.name)" class="px-8 py-2 font-bold rounded-xl transition-all" :class="followedUsers.has(selectedUser.name) ? 'bg-neutral-bg text-neutral-title hover:bg-neutral-border/50' : 'bg-primary text-white hover:bg-primary/90'">
+              <button @click="handleToggleFollow(selectedUser.name)" class="px-8 py-2 font-bold rounded-xl transition-all" :class="followedUsers.has(selectedUser.name) ? 'bg-neutral-bg text-neutral-title hover:bg-neutral-border/50' : 'bg-primary text-white hover:bg-primary/90'">
                 {{ followedUsers.has(selectedUser.name) ? '已关注' : '关注' }}
               </button>
             </div>
@@ -1075,13 +1052,13 @@ const handleFileUpload = (event: Event) => {
             活跃用户
           </h2>
           <div class="space-y-4">
-            <div v-for="(user, index) in [{name: '面霸', posts: 128, avatar: '💻', followers: 520, joined: '2024-01-15', bio: '专注于技术面试辅导，已帮助 100+ 人成功拿到大厂 offer'}, {name: '技术大牛', posts: 96, avatar: '🧠', followers: 480, joined: '2024-02-10', bio: '资深后端工程师，擅长 Java、Spring 生态和系统设计'}, {name: '前端专家', posts: 84, avatar: '🎨', followers: 420, joined: '2024-03-05', bio: '前端架构师，专注于 React、Vue 和性能优化'}, {name: 'HR 视角', posts: 72, avatar: '👥', followers: 380, joined: '2024-04-20', bio: '资深 HR，10 年招聘经验，专注于技术人才招聘'}]" :key="index" class="flex items-center gap-4 p-3 bg-neutral-bg rounded-[20px] hover:bg-white hover:shadow-md transition-all border border-transparent hover:border-neutral-border cursor-pointer" @click="selectedUser = user; isUserDetailOpen = true">
+            <div v-for="(user, index) in activeUsers" :key="index" class="flex items-center gap-4 p-3 bg-neutral-bg rounded-[20px] hover:bg-white hover:shadow-md transition-all border border-transparent hover:border-neutral-border cursor-pointer" @click="selectedUser = user; isUserDetailOpen = true">
               <div class="text-2xl">{{ user.avatar }}</div>
               <div class="flex-1">
                 <h3 class="text-sm font-bold text-neutral-title">{{ user.name }}</h3>
                 <p class="text-xs text-neutral-helper">{{ user.posts }} 篇帖子</p>
               </div>
-              <button @click.stop="toggleFollow(user.name)" class="px-3 py-1 font-bold rounded-full text-xs transition-all" :class="followedUsers.has(user.name) ? 'bg-neutral-bg text-neutral-title hover:bg-neutral-border/50' : 'bg-primary/10 text-primary hover:bg-primary hover:text-white'">
+              <button @click.stop="handleToggleFollow(user.name)" class="px-3 py-1 font-bold rounded-full text-xs transition-all" :class="followedUsers.has(user.name) ? 'bg-neutral-bg text-neutral-title hover:bg-neutral-border/50' : 'bg-primary/10 text-primary hover:bg-primary hover:text-white'">
                 {{ followedUsers.has(user.name) ? '已关注' : '关注' }}
               </button>
             </div>

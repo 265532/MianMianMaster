@@ -4,13 +4,14 @@
     
     <form @submit.prevent="handleSubmit" class="space-y-6">
       <div>
-        <label for="email" class="block text-sm font-medium text-neutral-title mb-2">邮箱</label>
+        <label for="username" class="block text-sm font-medium text-neutral-title mb-2">用户名</label>
         <input
-          type="email"
-          id="email"
-          v-model="form.email"
+          type="text"
+          id="username"
+          v-model="form.username"
+          autocomplete="username"
           class="w-full px-4 py-3 border border-neutral-border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all"
-          placeholder="请输入邮箱"
+          placeholder="请输入用户名"
           required
         />
       </div>
@@ -21,6 +22,7 @@
           type="password"
           id="password"
           v-model="form.password"
+          autocomplete="current-password"
           class="w-full px-4 py-3 border border-neutral-border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all"
           placeholder="请输入密码"
           required
@@ -45,13 +47,14 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useUserStore } from '../stores/user'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 
 const userStore = useUserStore()
 const router = useRouter()
+const route = useRoute()
 
 const form = ref({
-  email: '',
+  username: '',
   password: ''
 })
 
@@ -63,10 +66,11 @@ async function handleSubmit() {
   error.value = null
   
   try {
-    await userStore.login(form.value.email, form.value.password)
-    router.push('/')
-  } catch (err) {
-    error.value = '登录失败，请检查邮箱和密码'
+    await userStore.login(form.value.username, form.value.password)
+    const redirect = (route.query.redirect as string) || '/'
+    router.push(redirect)
+  } catch (err: any) {
+    error.value = userStore.error || '登录失败，请检查用户名和密码'
   } finally {
     loading.value = false
   }

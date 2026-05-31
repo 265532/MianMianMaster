@@ -1,0 +1,5 @@
+export { registerAuthHandlers } from './auth.handler'
+export { registerUserHandlers } from './user.handler'
+export { registerCommunityHandlers } from './community.handler'
+export { registerLearningHandlers } from './learning.handler'
+export { registerAssessmentHandlers } from './assessment.handler'

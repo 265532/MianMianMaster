@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { 
   LogOut, 
@@ -16,11 +16,26 @@ import {
   Target,
   Zap,
   BookOpen,
-  Gamepad2
+  Gamepad2,
+  LogIn
 } from 'lucide-vue-next'
+import { useUserStore } from './stores/user'
+import { useAuth } from './composables/useAuth'
+import { useErrorBoundary } from './composables/useErrorBoundary'
+import { useCrossTabSync } from './composables/useCrossTabSync'
+
+useErrorBoundary({
+  handler: (err, _instance, info) => {
+    console.error('[App ErrorBoundary]', err, info)
+  }
+})
+
+useCrossTabSync()
 
 const router = useRouter()
 const route = useRoute()
+const userStore = useUserStore()
+const { isAuthenticated, logout } = useAuth()
 const isSidebarOpen = ref(true)
 const isMobileMenuOpen = ref(false)
 
@@ -46,6 +61,10 @@ const navigateTo = (path: string) => {
   router.push(path)
   isMobileMenuOpen.value = false
 }
+
+onMounted(async () => {
+  await userStore.initialize()
+})
 </script>
 
 <template>
@@ -127,18 +146,26 @@ const navigateTo = (path: string) => {
         <div class="flex items-center gap-2 md:gap-4">
           <button class="p-2 text-neutral-helper hover:bg-neutral-bg rounded-full relative">
             <Bell :size="20" />
-            <span class="absolute top-1 right-1 w-2 h-2 bg-auxiliary-orange rounded-full border-2 border-white"></span>
+            <span v-if="isAuthenticated" class="absolute top-1 right-1 w-2 h-2 bg-auxiliary-orange rounded-full border-2 border-white"></span>
           </button>
           <div class="h-8 w-[1px] bg-neutral-border mx-2"></div>
-          <div class="flex items-center gap-3 pl-2 cursor-pointer group" @click="navigateTo('/profile')">
-            <div class="text-right hidden sm:block">
-              <p class="text-sm font-bold text-neutral-title group-hover:text-primary transition-colors">王同学</p>
-              <p class="text-[10px] text-neutral-helper">已获 AI 能力认证</p>
+          <template v-if="isAuthenticated">
+            <div class="flex items-center gap-3 pl-2 cursor-pointer group" @click="navigateTo('/profile')">
+              <div class="text-right hidden sm:block">
+                <p class="text-sm font-bold text-neutral-title group-hover:text-primary transition-colors">{{ userStore.user.name }}</p>
+                <p class="text-[10px] text-neutral-helper">{{ userStore.user.role === 'admin' ? '管理员' : '已获 AI 能力认证' }}</p>
+              </div>
+              <div class="w-10 h-10 rounded-full border-2 border-primary/20 p-0.5 group-hover:border-primary transition-all overflow-hidden bg-neutral-bg flex items-center justify-center">
+                <UserIcon :size="20" class="text-neutral-helper" />
+              </div>
             </div>
-            <div class="w-10 h-10 rounded-full border-2 border-primary/20 p-0.5 group-hover:border-primary transition-all overflow-hidden bg-neutral-bg flex items-center justify-center">
-              <UserIcon :size="20" class="text-neutral-helper" />
-            </div>
-          </div>
+          </template>
+          <template v-else>
+            <button @click="navigateTo('/login')" class="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-light transition-colors text-sm font-medium">
+              <LogIn :size="16" />
+              <span class="hidden sm:inline">登录</span>
+            </button>
+          </template>
         </div>
       </header>
 
@@ -146,7 +173,7 @@ const navigateTo = (path: string) => {
       <main class="flex-1 overflow-auto" :class="!route.meta.hideSidebar ? 'p-4 md:p-8' : ''">
         <router-view v-slot="{ Component }">
           <transition name="page" mode="out-in">
-            <component :is="Component" />
+            <component :is="Component" v-if="Component" />
           </transition>
         </router-view>
       </main>
@@ -184,10 +211,18 @@ const navigateTo = (path: string) => {
           </div>
         </div>
         <div class="p-6 border-t border-neutral-border">
-          <button class="w-full py-4 bg-primary text-white rounded-2xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-primary/20 active:scale-95 transition-all">
-            <LogOut :size="20" />
-            退出登录
-          </button>
+          <template v-if="isAuthenticated">
+            <button @click="logout" class="w-full py-4 bg-primary text-white rounded-2xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-primary/20 active:scale-95 transition-all">
+              <LogOut :size="20" />
+              退出登录
+            </button>
+          </template>
+          <template v-else>
+            <button @click="navigateTo('/login')" class="w-full py-4 bg-primary text-white rounded-2xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-primary/20 active:scale-95 transition-all">
+              <LogIn :size="20" />
+              登录
+            </button>
+          </template>
         </div>
       </div>
     </Transition>

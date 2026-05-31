@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { storeToRefs } from 'pinia'
 import { 
   Gamepad2, 
   Trophy, 
@@ -22,273 +23,44 @@ import {
   Building,
   User
 } from 'lucide-vue-next'
+import { useInterviewStore } from '@/stores/interview'
 
 const router = useRouter()
+const interviewStore = useInterviewStore()
+const { gameLevels, gameStats, gameAchievements, leaderboard, loading } = storeToRefs(interviewStore)
 
-// 游戏关卡数据 - 模拟真实面试场景
-const gameLevels = [
-  {
-    id: 1, 
-    name: '关卡 01', 
-    title: '初级：校招面试', 
-    status: '已解锁', 
-    progress: 100, 
-    description: '模拟校招面试场景，面试官会问一些基础的技术问题和行为问题，适合刚毕业的学生或实习生', 
-    interviews: 5, 
-    completed: 5, 
-    timeSpent: '45分钟', 
-    successRate: '80%', 
-    面试官: '初级面试官',
-    公司: '互联网公司',
-    面试类型: '校招',
-    问题数量: 8,
-    时间限制: 30,
-    难度: '简单',
-    奖励: '校招面试认证',
-    skills: ['基础知识', '自我介绍', '项目经验', '行为问题'],
-    unlockRequirements: null,
-    icon: '🎓',
-    background: 'bg-blue-50'
-  },
-  {
-    id: 2, 
-    name: '关卡 02', 
-    title: '中级：社招面试', 
-    status: '已解锁', 
-    progress: 30, 
-    description: '模拟社招面试场景，面试官会问一些项目经验和技术深度的问题，适合有1-3年工作经验的开发者', 
-    interviews: 8, 
-    completed: 2, 
-    timeSpent: '30分钟', 
-    successRate: '65%', 
-    面试官: '中级面试官',
-    公司: '科技公司',
-    面试类型: '社招',
-    问题数量: 10,
-    时间限制: 45,
-    难度: '中等',
-    奖励: '社招面试认证',
-    skills: ['项目经验', '技术深度', '问题解决', '团队协作'],
-    unlockRequirements: { level: 1, progress: 100 },
-    icon: '💼',
-    background: 'bg-green-50'
-  },
-  {
-    id: 3, 
-    name: '关卡 03', 
-    title: '高级：资深工程师面试', 
-    status: '待解锁', 
-    progress: 0, 
-    description: '模拟资深工程师面试场景，面试官会问一些复杂的技术问题和系统设计问题，适合有3-5年工作经验的开发者', 
-    interviews: 10, 
-    completed: 0, 
-    timeSpent: '0分钟', 
-    successRate: '0%', 
-    面试官: '高级面试官',
-    公司: '大型科技公司',
-    面试类型: '社招',
-    问题数量: 12,
-    时间限制: 60,
-    难度: '困难',
-    奖励: '资深工程师面试认证',
-    skills: ['系统设计', '技术架构', '性能优化', '技术选型'],
-    unlockRequirements: { level: 2, progress: 100 },
-    icon: '🏆',
-    background: 'bg-purple-50'
-  },
-  {
-    id: 4, 
-    name: '关卡 04', 
-    title: '专家：技术总监面试', 
-    status: '待解锁', 
-    progress: 0, 
-    description: '模拟技术总监面试场景，面试官会问一些战略和管理相关的问题，适合有5-8年工作经验的技术领导者', 
-    interviews: 6, 
-    completed: 0, 
-    timeSpent: '0分钟', 
-    successRate: '0%', 
-    面试官: '技术总监',
-    公司: '知名企业',
-    面试类型: '高管',
-    问题数量: 8,
-    时间限制: 90,
-    难度: '专家',
-    奖励: '技术总监面试认证',
-    skills: ['团队管理', '技术战略', '项目规划', '沟通协调'],
-    unlockRequirements: { level: 3, progress: 100 },
-    icon: '📈',
-    background: 'bg-orange-50'
-  },
-  {
-    id: 5, 
-    name: '关卡 05', 
-    title: '大师：CTO 面试', 
-    status: '待解锁', 
-    progress: 0, 
-    description: '模拟 CTO 面试场景，面试官会问一些公司战略和技术愿景的问题，适合有8年以上工作经验的高级技术领导者', 
-    interviews: 4, 
-    completed: 0, 
-    timeSpent: '0分钟', 
-    successRate: '0%', 
-    面试官: 'CTO',
-    公司: '行业巨头',
-    面试类型: '高管',
-    问题数量: 6,
-    时间限制: 120,
-    难度: '大师',
-    奖励: 'CTO 面试认证',
-    skills: ['公司战略', '技术愿景', '人才培养', '业务理解'],
-    unlockRequirements: { level: 4, progress: 100 },
-    icon: '👑',
-    background: 'bg-red-50'
-  },
-  {
-    id: 6, 
-    name: '关卡 06', 
-    title: '挑战：跨领域面试', 
-    status: '待解锁', 
-    progress: 0, 
-    description: '模拟跨领域面试场景，面试官会问一些跨领域的技术问题，适合希望转型或扩展技能的开发者', 
-    interviews: 12, 
-    completed: 0, 
-    timeSpent: '0分钟', 
-    successRate: '0%', 
-    面试官: '多领域专家',
-    公司: '创新企业',
-    面试类型: '跨领域',
-    问题数量: 15,
-    时间限制: 75,
-    难度: '困难',
-    奖励: '跨领域专家认证',
-    skills: ['跨领域知识', '快速学习', '适应性', '创新思维'],
-    unlockRequirements: { level: 3, progress: 100 },
-    icon: '🔄',
-    background: 'bg-teal-50'
-  },
-  {
-    id: 7, 
-    name: '关卡 07', 
-    title: '终极：FAANG 面试', 
-    status: '待解锁', 
-    progress: 0, 
-    description: '模拟 FAANG 公司的面试场景，面试官会问一些极具挑战性的技术问题和系统设计问题，适合追求顶尖科技公司的开发者', 
-    interviews: 8, 
-    completed: 0, 
-    timeSpent: '0分钟', 
-    successRate: '0%', 
-    面试官: 'FAANG 面试官',
-    公司: 'FAANG 公司',
-    面试类型: '高级',
-    问题数量: 12,
-    时间限制: 90,
-    难度: '专家',
-    奖励: 'FAANG 面试认证',
-    skills: ['算法优化', '系统设计', '编码能力', '问题分析'],
-    unlockRequirements: { level: 5, progress: 100 },
-    icon: '🚀',
-    background: 'bg-indigo-50'
-  }
-]
+interface Certification {
+  id: number
+  name: string
+  status: string
+  level: number
+  description: string
+  icon: any
+  skills: string[]
+  date: string | null
+  progress: number
+  condition: string
+}
 
-// 游戏统计数据
-const gameStats = [
-  { label: '已完成关卡', value: '1', icon: Trophy, color: 'text-auxiliary-orange' },
-  { label: '总面试次数', value: '7', icon: Users, color: 'text-primary' },
-  { label: '成功率', value: '75%', icon: CheckCircle, color: 'text-auxiliary-green' },
-  { label: '总游戏时间', value: '75分钟', icon: Clock, color: 'text-auxiliary-blue' }
-]
+const certifications = ref<Certification[]>([])
 
-// 排行榜数据
-const leaderboard = [
-  { rank: 1, name: '面霸', score: 980, level: 5, avatar: '👑', completedLevels: 5, totalInterviews: 20, successRate: '95%' },
-  { rank: 2, name: '技术大牛', score: 950, level: 5, avatar: '💻', completedLevels: 5, totalInterviews: 18, successRate: '92%' },
-  { rank: 3, name: '算法王者', score: 920, level: 4, avatar: '🧠', completedLevels: 4, totalInterviews: 15, successRate: '88%' },
-  { rank: 4, name: '前端专家', score: 880, level: 4, avatar: '🎨', completedLevels: 4, totalInterviews: 14, successRate: '85%' },
-  { rank: 5, name: '后端达人', score: 850, level: 4, avatar: '⚙️', completedLevels: 4, totalInterviews: 12, successRate: '82%' },
-  { rank: 6, name: '全栈工程师', score: 820, level: 4, avatar: '🛠️', completedLevels: 4, totalInterviews: 10, successRate: '80%' },
-  { rank: 7, name: '产品经理', score: 780, level: 3, avatar: '📱', completedLevels: 3, totalInterviews: 8, successRate: '78%' },
-  { rank: 8, name: '数据分析师', score: 750, level: 3, avatar: '📊', completedLevels: 3, totalInterviews: 7, successRate: '75%' },
-  { rank: 9, name: 'UI设计师', score: 720, level: 3, avatar: '🎯', completedLevels: 3, totalInterviews: 6, successRate: '72%' },
-  { rank: 10, name: '测试工程师', score: 690, level: 3, avatar: '🧪', completedLevels: 3, totalInterviews: 5, successRate: '70%' },
-  { rank: 42, name: '王同学', score: 480, level: 2, avatar: '👨‍💻', completedLevels: 2, totalInterviews: 7, successRate: '75%' }
-]
-
-// 技能认证数据
-const certifications = [
-  { id: 1, name: '基础知识认证', status: '已认证', level: 1, description: '掌握了编程基础知识和基本面试技巧', icon: Brain, skills: ['编程基础知识', 'HTML/CSS', 'JavaScript基础'], date: '2024-12-10', progress: 100, color: 'bg-blue-100', badge: '⭐', condition: '完成关卡01的所有面试' },
-  { id: 2, name: '项目经验认证', status: '进行中', level: 2, description: '具备项目管理和团队协作能力', icon: Target, skills: ['项目管理', '团队协作', '技术文档编写'], date: '2024-12-12', progress: 60, color: 'bg-green-100', badge: '📈', condition: '完成关卡02的所有面试' },
-  { id: 3, name: '高级技能认证', status: '未解锁', level: 3, description: '掌握系统设计和性能优化能力', icon: Zap, skills: ['系统设计', '性能优化', '架构设计'], date: null, progress: 0, color: 'bg-purple-100', badge: '⚡', condition: '完成关卡03的所有面试' },
-  { id: 4, name: '系统设计认证', status: '未解锁', level: 4, description: '具备分布式系统和微服务架构设计能力', icon: BarChart3, skills: ['分布式系统', '微服务架构', '数据库设计'], date: null, progress: 0, color: 'bg-orange-100', badge: '🏗️', condition: '完成关卡04的所有面试' },
-  { id: 5, name: '综合能力认证', status: '未解锁', level: 5, description: '具备综合能力和战略思维', icon: Users, skills: ['综合能力', '领导力', '战略思维'], date: null, progress: 0, color: 'bg-red-100', badge: '🌟', condition: '完成关卡05的所有面试' },
-  { id: 6, name: '前端开发认证', status: '未解锁', level: 3, description: '掌握前端开发核心技能', icon: Brain, skills: ['React', 'Vue', 'CSS3', '响应式设计'], date: null, progress: 0, color: 'bg-teal-100', badge: '🎨', condition: '完成前端开发相关面试，答对80%以上前端问题' },
-  { id: 7, name: '后端开发认证', status: '未解锁', level: 3, description: '掌握后端开发核心技能', icon: Zap, skills: ['Node.js', 'Python', '数据库', 'API设计'], date: null, progress: 0, color: 'bg-indigo-100', badge: '⚙️', condition: '完成后端开发相关面试，答对80%以上后端问题' },
-  { id: 8, name: '面试技巧认证', status: '已认证', level: 1, description: '掌握了基本的面试技巧和方法', icon: Target, skills: ['简历准备', '自我介绍', '行为问题回答', '技术问题回答'], date: '2024-12-10', progress: 100, color: 'bg-yellow-100', badge: '💡', condition: '完成5次面试，成功率达到60%' },
-  { id: 9, name: 'FAANG 面试认证', status: '未解锁', level: 5, description: '具备FAANG公司面试所需的核心能力', icon: Trophy, skills: ['算法优化', '系统设计', '编码能力', '问题分析'], date: null, progress: 0, color: 'bg-pink-100', badge: '🚀', condition: '完成关卡07的所有面试' },
-  { id: 10, name: '跨领域专家认证', status: '未解锁', level: 4, description: '具备跨领域知识和快速学习能力', icon: Brain, skills: ['跨领域知识', '快速学习', '适应性', '创新思维'], date: null, progress: 0, color: 'bg-lime-100', badge: '🔄', condition: '完成关卡06的所有面试' },
-  { id: 11, name: '技术领导力认证', status: '未解锁', level: 4, description: '具备团队管理和技术战略能力', icon: Users, skills: ['团队管理', '技术战略', '项目规划', '沟通协调'], date: null, progress: 0, color: 'bg-amber-100', badge: '👑', condition: '完成关卡04的所有面试' },
-  { id: 12, name: 'CTO 思维认证', status: '未解锁', level: 5, description: '具备公司战略和技术愿景规划能力', icon: Trophy, skills: ['公司战略', '技术愿景', '人才培养', '业务理解'], date: null, progress: 0, color: 'bg-rose-100', badge: '🎯', condition: '完成关卡05的所有面试' },
-  { id: 13, name: '全栈开发认证', status: '未解锁', level: 3, description: '掌握前端和后端开发全栈技能', icon: Zap, skills: ['前端开发', '后端开发', '数据库', 'DevOps'], date: null, progress: 0, color: 'bg-violet-100', badge: '🛠️', condition: '完成前端和后端开发相关面试，答对75%以上问题' },
-  { id: 14, name: '数据结构与算法认证', status: '未解锁', level: 3, description: '掌握数据结构和算法核心知识', icon: Brain, skills: ['数据结构', '算法设计', '复杂度分析', '问题解决'], date: null, progress: 0, color: 'bg-sky-100', badge: '🧠', condition: '在算法相关面试中答对90%以上问题' },
-  { id: 15, name: 'DevOps 认证', status: '未解锁', level: 3, description: '掌握DevOps核心技能', icon: Zap, skills: ['CI/CD', '容器化', '自动化测试', '监控'], date: null, progress: 0, color: 'bg-emerald-100', badge: '🔧', condition: '完成DevOps相关面试，答对80%以上问题' },
-  { id: 16, name: '产品思维认证', status: '未解锁', level: 3, description: '具备产品规划和用户体验设计能力', icon: Target, skills: ['产品规划', '用户体验', '市场分析', '需求管理'], date: null, progress: 0, color: 'bg-blue-100', badge: '📱', condition: '完成产品相关面试，答对80%以上问题' }
-]
-
-// 成就数据
-const achievements = [
-  { id: 1, name: '面试新手', description: '完成第一次模拟面试', unlocked: true, icon: Star, points: 50, date: '2024-12-10', rarity: 'common', color: 'bg-gray-100', animation: 'pulse', condition: '完成任意一个面试关卡' },
-  { id: 2, name: '面试达人', description: '连续通过 3 次面试', unlocked: true, icon: Zap, points: 100, date: '2024-12-12', rarity: 'uncommon', color: 'bg-blue-100', animation: 'bounce', condition: '在同一关卡中连续通过3次面试' },
-  { id: 3, name: '面霸', description: '通过所有初级面试', unlocked: true, icon: Trophy, points: 150, date: '2024-12-15', rarity: 'rare', color: 'bg-purple-100', animation: 'wiggle', condition: '完成关卡01的所有面试' },
-  { id: 4, name: '技术专家', description: '通过高级工程师面试', unlocked: false, icon: Brain, points: 200, date: null, rarity: 'epic', color: 'bg-green-100', animation: 'spin', condition: '完成关卡03的所有面试' },
-  { id: 5, name: '职场精英', description: '通过 CTO 面试', unlocked: false, icon: Users, points: 300, date: null, rarity: 'legendary', color: 'bg-red-100', animation: 'pulse', condition: '完成关卡05的所有面试' },
-  { id: 6, name: '答题高手', description: '连续答对 10 题', unlocked: true, icon: CheckCircle, points: 80, date: '2024-12-14', rarity: 'uncommon', color: 'bg-yellow-100', animation: 'bounce', condition: '在一次面试中连续答对10个问题' },
-  { id: 7, name: '速度之王', description: '5 分钟内完成 10 题', unlocked: false, icon: Clock, points: 120, date: null, rarity: 'rare', color: 'bg-orange-100', animation: 'wiggle', condition: '在5分钟内完成10个问题的回答' },
-  { id: 8, name: '全才', description: '通过所有类型的面试', unlocked: false, icon: AwardIcon, points: 250, date: null, rarity: 'epic', color: 'bg-teal-100', animation: 'spin', condition: '完成校招、社招、高级、高管、跨领域等所有类型的面试' },
-  { id: 9, name: '坚持不懈', description: '连续 7 天登录游戏', unlocked: true, icon: Star, points: 60, date: '2024-12-16', rarity: 'common', color: 'bg-gray-100', animation: 'pulse', condition: '连续7天登录游戏' },
-  { id: 10, name: '社交达人', description: '邀请 3 位好友加入游戏', unlocked: false, icon: Users, points: 100, date: null, rarity: 'uncommon', color: 'bg-blue-100', animation: 'bounce', condition: '成功邀请3位好友注册并登录游戏' },
-  { id: 11, name: 'FAANG 追梦人', description: '通过 FAANG 面试', unlocked: false, icon: Trophy, points: 400, date: null, rarity: 'legendary', color: 'bg-indigo-100', animation: 'pulse', condition: '完成关卡07的所有面试' },
-  { id: 12, name: '跨领域专家', description: '通过跨领域面试', unlocked: false, icon: Brain, points: 250, date: null, rarity: 'epic', color: 'bg-purple-100', animation: 'spin', condition: '完成关卡06的所有面试' },
-  { id: 13, name: '答题机器', description: '连续答对 20 题', unlocked: false, icon: CheckCircle, points: 150, date: null, rarity: 'rare', color: 'bg-green-100', animation: 'wiggle', condition: '在一次面试中连续答对20个问题' },
-  { id: 14, name: '时间管理大师', description: '3 分钟内完成 10 题', unlocked: false, icon: Clock, points: 180, date: null, rarity: 'epic', color: 'bg-red-100', animation: 'spin', condition: '在3分钟内完成10个问题的回答' },
-  { id: 15, name: '常胜将军', description: '连续通过 10 次面试', unlocked: false, icon: Trophy, points: 300, date: null, rarity: 'legendary', color: 'bg-orange-100', animation: 'pulse', condition: '在任意关卡中连续通过10次面试' },
-  { id: 16, name: '学习标兵', description: '完成所有技能认证', unlocked: false, icon: AwardIcon, points: 450, date: null, rarity: 'legendary', color: 'bg-teal-100', animation: 'pulse', condition: '获得所有16个技能认证' },
-  { id: 17, name: '社区贡献者', description: '分享 10 篇面试复盘', unlocked: false, icon: Users, points: 120, date: null, rarity: 'uncommon', color: 'bg-blue-100', animation: 'bounce', condition: '分享10篇面试复盘到社区' },
-  { id: 18, name: '关卡大师', description: '完成所有游戏关卡', unlocked: false, icon: Trophy, points: 500, date: null, rarity: 'legendary', color: 'bg-indigo-100', animation: 'pulse', condition: '完成所有7个游戏关卡' },
-  { id: 19, name: '知识渊博', description: '回答 100 个不同的问题', unlocked: false, icon: Brain, points: 200, date: null, rarity: 'epic', color: 'bg-purple-100', animation: 'spin', condition: '回答100个不同的面试问题' },
-  { id: 20, name: '面试王者', description: '通过 50 次面试', unlocked: false, icon: Trophy, points: 350, date: null, rarity: 'legendary', color: 'bg-red-100', animation: 'pulse', condition: '累计通过50次面试' },
-  { id: 21, name: '快速学习者', description: '在 1 周内完成 3 个关卡', unlocked: false, icon: Zap, points: 150, date: null, rarity: 'rare', color: 'bg-yellow-100', animation: 'wiggle', condition: '在7天内完成3个游戏关卡' },
-  { id: 22, name: '精益求精', description: '单个关卡成功率达到 100%', unlocked: false, icon: Target, points: 180, date: null, rarity: 'epic', color: 'bg-green-100', animation: 'spin', condition: '在单个关卡中所有面试都通过' }
-]
-
-// 状态管理
 const activeTab = ref('levels')
 const isLeaderboardOpen = ref(false)
 const isSettingsOpen = ref(false)
 const isHelpOpen = ref(false)
 const isAchievementDetailOpen = ref(false)
 const isCertificationDetailOpen = ref(false)
-interface Achievement {
-  id: number;
-  name: string;
-  description: string;
-  unlocked: boolean;
-  icon: any;
-  points: number;
-  date: string | null;
-  rarity: string;
-  condition: string;
-}
 
-interface Certification {
-  id: number;
-  name: string;
-  status: string;
-  level: number;
-  description: string;
-  icon: any;
-  skills: string[];
-  date: string | null;
-  progress: number;
-  condition: string;
+interface Achievement {
+  id: number
+  name: string
+  description: string
+  unlocked: boolean
+  icon: any
+  points: number
+  date: string | null
+  rarity: string
+  condition: string
 }
 
 const selectedAchievement = ref<Achievement | null>(null)
@@ -296,16 +68,12 @@ const selectedCertification = ref<Certification | null>(null)
 const currentVolume = ref(70)
 const soundEnabled = ref(true)
 
-// 方法
 const startLevel = (levelId: number) => {
-  console.log(`查看关卡 ${levelId} 详情`)
-  // 跳转到关卡详情页面
   router.push(`/game-interview/level/${levelId}/detail`)
 }
 
 const startGame = () => {
-  // 找到第一个已解锁的关卡
-  const firstUnlockedLevel = gameLevels.find(level => level.status === '已解锁')
+  const firstUnlockedLevel = gameLevels.value.find(level => level.status === '已解锁' || level.status === 'unlocked')
   if (firstUnlockedLevel) {
     router.push(`/game-interview/level/${firstUnlockedLevel.id}/detail`)
   }
@@ -323,8 +91,6 @@ const toggleHelp = () => {
   isHelpOpen.value = !isHelpOpen.value
 }
 
-
-
 const toggleSound = () => {
   soundEnabled.value = !soundEnabled.value
 }
@@ -332,8 +98,6 @@ const toggleSound = () => {
 const adjustVolume = (value: number) => {
   currentVolume.value = value
 }
-
-
 
 const viewAchievementDetail = (achievement: Achievement) => {
   selectedAchievement.value = achievement
@@ -354,6 +118,10 @@ const closeCertificationDetail = () => {
   isCertificationDetailOpen.value = false
   selectedCertification.value = null
 }
+
+onMounted(async () => {
+  await interviewStore.fetchAllGameData()
+})
 </script>
 
 <template>
@@ -389,7 +157,12 @@ const closeCertificationDetail = () => {
 
     <!-- Game Stats -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      <div v-for="stat in gameStats" :key="stat.label" class="bg-white p-8 rounded-[24px] shadow-sm border border-neutral-border flex flex-col items-center justify-center gap-4 group hover:shadow-md transition-all">
+      <div v-for="stat in (gameStats ? [
+        { label: '已完成关卡', value: gameStats.completedLevels, icon: Trophy, color: 'text-auxiliary-orange' },
+        { label: '总面试次数', value: gameStats.totalQuestions, icon: Users, color: 'text-primary' },
+        { label: '成功率', value: gameStats.correctRate, icon: CheckCircle, color: 'text-auxiliary-green' },
+        { label: '总游戏时间', value: gameStats.streak, icon: Clock, color: 'text-auxiliary-blue' }
+      ] : [])" :key="stat.label" class="bg-white p-8 rounded-[24px] shadow-sm border border-neutral-border flex flex-col items-center justify-center gap-4 group hover:shadow-md transition-all">
         <component :is="stat.icon" :size="32" :class="stat.color" class="group-hover:scale-110 transition-transform" />
         <div class="text-center">
           <p class="text-3xl font-black text-neutral-title">{{ stat.value }}</p>
@@ -543,7 +316,7 @@ const closeCertificationDetail = () => {
         <!-- Achievements Tab -->
         <div v-if="activeTab === 'achievements'" class="space-y-6">
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div v-for="achievement in achievements" :key="achievement.id" @click="viewAchievementDetail(achievement)" class="p-6 rounded-[24px] relative overflow-hidden group hover:shadow-md transition-all border border-transparent hover:border-neutral-border cursor-pointer" :class="achievement.unlocked ? achievement.color : 'bg-neutral-bg'">
+            <div v-for="achievement in gameAchievements" :key="achievement.id" @click="viewAchievementDetail(achievement)" class="p-6 rounded-[24px] relative overflow-hidden group hover:shadow-md transition-all border border-transparent hover:border-neutral-border cursor-pointer" :class="achievement.unlocked ? achievement.color : 'bg-neutral-bg'">
               <div class="w-12 h-12 rounded-2xl flex items-center justify-center mb-4 shadow-sm group-hover:scale-110 transition-transform" :class="achievement.unlocked ? 'bg-white text-primary group-hover:gradient-primary group-hover:text-white animate-' + achievement.animation : 'bg-neutral-border text-neutral-helper'">
                 <component :is="achievement.icon" :size="24" />
               </div>

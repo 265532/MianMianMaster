@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
-import * as echarts from 'echarts'
+import { storeToRefs } from 'pinia'
+import echarts from '@/utils/echarts'
 import {
   User,
   FileText,
@@ -30,14 +31,19 @@ import {
   Play,
   X
 } from 'lucide-vue-next'
+import { useUserStore } from '@/stores/user'
+import { useLearningStore } from '@/stores/learning'
 
 const router = useRouter()
+const userStore = useUserStore()
+const learningStore = useLearningStore()
+const { interviewHistory, abilityData, gameInterviewData, resumeData, resumeDiagnosisResult } = storeToRefs(userStore)
+const { collections, wrongQuestions } = storeToRefs(learningStore)
 
 const chartRef = ref<HTMLElement | null>(null)
 let myChart: echarts.ECharts | null = null
 const isChartLoading = ref(true)
 
-// 能力数据
 const targetPosition = ref('前端开发工程师')
 const positions = [
   '前端开发工程师',
@@ -46,11 +52,10 @@ const positions = [
   'UI 设计师'
 ]
 
-// 能力雷达图数据
-const abilityData = {
-  '前端开发工程师': {
-    current: [85, 78, 92, 70, 88, 75, 82],
-    required: [90, 85, 80, 90, 85, 95, 90],
+const currentAbilityData = computed(() => {
+  return abilityData.value[targetPosition.value] || {
+    current: [0, 0, 0, 0, 0, 0, 0],
+    required: [0, 0, 0, 0, 0, 0, 0],
     indicators: [
       { name: '技术深度', max: 100 },
       { name: '逻辑思维', max: 100 },
@@ -60,128 +65,39 @@ const abilityData = {
       { name: '工程化能力', max: 100 },
       { name: '团队协作', max: 100 }
     ],
-    gapSkills: [
-      { name: 'Vue3 源码深度', gap: 15, level: 'high' },
-      { name: '工程化架构能力', gap: 20, level: 'high' },
-      { name: '项目经验', gap: 20, level: 'high' },
-      { name: '团队协作', gap: 8, level: 'medium' }
-    ],
-    strengths: [
-      { name: '表达能力', score: 92 },
-      { name: '学习潜力', score: 88 },
-      { name: '技术深度', score: 85 }
-    ]
-  },
-  'Java 开发工程师': {
-    current: [70, 85, 75, 65, 80, 60, 75],
-    required: [90, 85, 80, 90, 85, 85, 85],
-    indicators: [
-      { name: '技术深度', max: 100 },
-      { name: '逻辑思维', max: 100 },
-      { name: '表达能力', max: 100 },
-      { name: '项目经验', max: 100 },
-      { name: '学习潜力', max: 100 },
-      { name: '系统设计', max: 100 },
-      { name: '团队协作', max: 100 }
-    ],
-    gapSkills: [
-      { name: '系统设计', gap: 25, level: 'high' },
-      { name: '技术深度', gap: 20, level: 'high' },
-      { name: '项目经验', gap: 25, level: 'high' },
-      { name: '工程化能力', gap: 15, level: 'medium' }
-    ],
-    strengths: [
-      { name: '逻辑思维', score: 85 },
-      { name: '学习潜力', score: 80 },
-      { name: '团队协作', score: 75 }
-    ]
-  },
-  '产品经理': {
-    current: [65, 80, 90, 75, 85, 82, 95],
-    required: [70, 85, 90, 85, 85, 90, 90],
-    indicators: [
-      { name: '业务理解', max: 100 },
-      { name: '逻辑思维', max: 100 },
-      { name: '表达能力', max: 100 },
-      { name: '项目经验', max: 100 },
-      { name: '学习潜力', max: 100 },
-      { name: '用户研究', max: 100 },
-      { name: '团队协作', max: 100 }
-    ],
-    gapSkills: [
-      { name: '用户研究', gap: 8, level: 'medium' },
-      { name: '项目经验', gap: 10, level: 'medium' },
-      { name: '业务理解', gap: 5, level: 'low' }
-    ],
-    strengths: [
-      { name: '团队协作', score: 95 },
-      { name: '表达能力', score: 90 },
-      { name: '学习潜力', score: 85 }
-    ]
-  },
-  'UI 设计师': {
-    current: [80, 75, 85, 70, 90, 88, 82],
-    required: [90, 85, 85, 85, 85, 95, 85],
-    indicators: [
-      { name: '设计能力', max: 100 },
-      { name: '创意思维', max: 100 },
-      { name: '表达能力', max: 100 },
-      { name: '项目经验', max: 100 },
-      { name: '学习潜力', max: 100 },
-      { name: '工具熟练度', max: 100 },
-      { name: '团队协作', max: 100 }
-    ],
-    gapSkills: [
-      { name: '工具熟练度', gap: 7, level: 'medium' },
-      { name: '项目经验', gap: 15, level: 'high' },
-      { name: '创意思维', gap: 10, level: 'medium' }
-    ],
-    strengths: [
-      { name: '学习潜力', score: 90 },
-      { name: '工具熟练度', score: 88 },
-      { name: '表达能力', score: 85 }
-    ]
+    gapSkills: [],
+    strengths: []
   }
-}
-
-// 当前选中的能力数据
-const currentAbilityData = computed(() => {
-  return abilityData[targetPosition.value as keyof typeof abilityData]
 })
 
-// 计算能力差距
 const abilityGap = computed(() => {
   const data = currentAbilityData.value
-  const currentSum = data.current.reduce((sum, val) => sum + val, 0)
-  const requiredSum = data.required.reduce((sum, val) => sum + val, 0)
+  const currentSum = data.current.reduce((sum: number, val: number) => sum + val, 0)
+  const requiredSum = data.required.reduce((sum: number, val: number) => sum + val, 0)
   return Math.round(((requiredSum - currentSum) / (data.indicators.length * 100)) * 100)
 })
 
-// 计算匹配度
 const matchRate = computed(() => {
   return 100 - abilityGap.value
 })
 
-// 重新分析状态
 const isReanalyzing = ref(false)
 
-// 切换目标岗位
 const changePosition = (position: string) => {
   targetPosition.value = position
   initChart()
 }
 
-// 重新分析
-const reanalyze = () => {
+const reanalyze = async () => {
   isReanalyzing.value = true
-  // 模拟分析过程
-  setTimeout(() => {
-    isReanalyzing.value = false
+  try {
+    await userStore.fetchAbilityData()
     initChart()
-  }, 1500)
+  } finally {
+    isReanalyzing.value = false
+  }
 }
 
-// 计算技能项的颜色
 const getSkillColor = (level: string) => {
   switch (level) {
     case 'high':
@@ -195,227 +111,6 @@ const getSkillColor = (level: string) => {
   }
 }
 
-// 面试实战记录数据
-const interviewHistory = [
-  { 
-    id: 1, 
-    date: '2026-03-15', 
-    company: '字节跳动', 
-    position: '前端开发工程师', 
-    round: '二面', 
-    type: '技术面', 
-    score: 88, 
-    status: '已通过',
-    tags: ['Vue3', 'TypeScript', '算法'],
-    feedback: '技术基础扎实，算法能力突出，表达清晰',
-    details: {
-      technical: 90,
-      communication: 85,
-      logic: 92,
-      problemSolving: 88
-    }
-  },
-  { 
-    id: 2, 
-    date: '2026-02-28', 
-    company: '阿里巴巴', 
-    position: 'Java 开发工程师', 
-    round: '一面', 
-    type: '技术面', 
-    score: 82, 
-    status: '已通过',
-    tags: ['Java', 'Spring Boot', '数据库'],
-    feedback: '后端知识体系完整，项目经验丰富',
-    details: {
-      technical: 85,
-      communication: 78,
-      logic: 88,
-      problemSolving: 82
-    }
-  },
-  { 
-    id: 3, 
-    date: '2025-11-15', 
-    company: '腾讯', 
-    position: 'UI 设计师', 
-    round: '三面', 
-    type: '设计面', 
-    score: 91, 
-    status: '已通过',
-    tags: ['UI/UX', 'Figma', '交互设计'],
-    feedback: '设计理念新颖，作品集质量高',
-    details: {
-      technical: 92,
-      communication: 90,
-      logic: 85,
-      problemSolving: 88
-    }
-  },
-  { 
-    id: 4, 
-    date: '2025-10-20', 
-    company: '美团', 
-    position: '产品经理', 
-    round: '一面', 
-    type: '产品面', 
-    score: 78, 
-    status: '未通过',
-    tags: ['产品设计', '用户研究', '数据分析'],
-    feedback: '产品思维清晰，但行业理解深度不足',
-    details: {
-      technical: 75,
-      communication: 82,
-      logic: 78,
-      problemSolving: 75
-    }
-  },
-  { 
-    id: 5, 
-    date: '2025-09-10', 
-    company: '百度', 
-    position: '数据分析师', 
-    round: '二面', 
-    type: '技术面', 
-    score: 85, 
-    status: '已通过',
-    tags: ['数据分析', 'SQL', 'Python'],
-    feedback: '数据处理能力强，分析思路清晰',
-    details: {
-      technical: 88,
-      communication: 82,
-      logic: 90,
-      problemSolving: 85
-    }
-  },
-  { 
-    id: 6, 
-    date: '2025-08-05', 
-    company: '京东', 
-    position: '后端开发工程师', 
-    round: '一面', 
-    type: '技术面', 
-    score: 80, 
-    status: '已通过',
-    tags: ['Java', '微服务', '分布式'],
-    feedback: '后端技术掌握全面，编码能力强',
-    details: {
-      technical: 82,
-      communication: 78,
-      logic: 85,
-      problemSolving: 80
-    }
-  },
-  { 
-    id: 7, 
-    date: '2025-06-20', 
-    company: '拼多多', 
-    position: '前端开发工程师', 
-    round: '三面', 
-    type: '技术面', 
-    score: 92, 
-    status: '已通过',
-    tags: ['React', 'Node.js', '性能优化'],
-    feedback: '前端技术栈全面，性能优化经验丰富',
-    details: {
-      technical: 95,
-      communication: 90,
-      logic: 92,
-      problemSolving: 90
-    }
-  },
-  { 
-    id: 8, 
-    date: '2025-05-15', 
-    company: '小米', 
-    position: '测试工程师', 
-    round: '一面', 
-    type: '技术面', 
-    score: 76, 
-    status: '未通过',
-    tags: ['测试', '自动化', '质量保证'],
-    feedback: '测试基础扎实，但自动化测试经验不足',
-    details: {
-      technical: 78,
-      communication: 75,
-      logic: 72,
-      problemSolving: 76
-    }
-  },
-  { 
-    id: 9, 
-    date: '2025-04-10', 
-    company: '网易', 
-    position: '前端开发工程师', 
-    round: '二面', 
-    type: '技术面', 
-    score: 86, 
-    status: '已通过',
-    tags: ['Vue3', 'Webpack', '响应式设计'],
-    feedback: '前端技术能力强，项目经验丰富',
-    details: {
-      technical: 88,
-      communication: 85,
-      logic: 86,
-      problemSolving: 84
-    }
-  },
-  { 
-    id: 10, 
-    date: '2025-03-05', 
-    company: '新浪', 
-    position: '后端开发工程师', 
-    round: '一面', 
-    type: '技术面', 
-    score: 79, 
-    status: '已通过',
-    tags: ['Java', 'Spring Cloud', '缓存'],
-    feedback: '后端技术掌握良好，有一定项目经验',
-    details: {
-      technical: 82,
-      communication: 75,
-      logic: 80,
-      problemSolving: 78
-    }
-  },
-  { 
-    id: 11, 
-    date: '2024-12-20', 
-    company: '搜狐', 
-    position: '前端开发工程师', 
-    round: '一面', 
-    type: '技术面', 
-    score: 83, 
-    status: '已通过',
-    tags: ['JavaScript', 'HTML/CSS', '浏览器原理'],
-    feedback: '前端基础扎实，学习能力强',
-    details: {
-      technical: 85,
-      communication: 80,
-      logic: 82,
-      problemSolving: 83
-    }
-  },
-  { 
-    id: 12, 
-    date: '2024-11-10', 
-    company: '优酷', 
-    position: '产品经理', 
-    round: '二面', 
-    type: '产品面', 
-    score: 81, 
-    status: '未通过',
-    tags: ['产品规划', '用户体验', '市场分析'],
-    feedback: '产品思路清晰，但缺乏创新点',
-    details: {
-      technical: 78,
-      communication: 85,
-      logic: 80,
-      problemSolving: 79
-    }
-  }
-]
-
-// 筛选和排序状态
 const filterStatus = ref('all')
 const sortBy = ref('date')
 const isExpanded = ref<number | null>(null)
@@ -428,16 +123,13 @@ const currentBank = ref<any>(null)
 const currentMistake = ref<any>(null)
 const currentLevel = ref<any>(null)
 
-// 筛选后的面试记录
 const filteredInterviews = computed(() => {
-  let result = [...interviewHistory]
+  let result = [...interviewHistory.value]
   
-  // 按状态筛选
   if (filterStatus.value !== 'all') {
     result = result.filter(item => item.status === filterStatus.value)
   }
   
-  // 排序
   result.sort((a, b) => {
     if (sortBy.value === 'date') {
       return new Date(b.date).getTime() - new Date(a.date).getTime()
@@ -450,32 +142,26 @@ const filteredInterviews = computed(() => {
   return result
 })
 
-// 切换展开/收起状态
 const toggleExpand = (id: number) => {
   isExpanded.value = isExpanded.value === id ? null : id
 }
 
-// 重新练习相似面试
 const practiceAgain = (interview: any) => {
   isLoading.value = true
-  // 模拟加载
   setTimeout(() => {
     isLoading.value = false
     alert(`正在为您生成 ${interview.position} 的相似面试练习...`)
   }, 1000)
 }
 
-// 导出面试记录
 const exportRecord = (_id: number) => {
   isLoading.value = true
-  // 模拟导出
   setTimeout(() => {
     isLoading.value = false
     alert('面试记录已导出到本地')
   }, 1000)
 }
 
-// 查看全部面试记录
 const openAllInterviewsPage = () => {
   isAllInterviewsPageOpen.value = true
 }
@@ -484,142 +170,24 @@ const closeAllInterviewsPage = () => {
   isAllInterviewsPageOpen.value = false
 }
 
-// 分享面试经验
 const shareExperience = (_id: number) => {
   isLoading.value = true
-  // 模拟分享
   setTimeout(() => {
     isLoading.value = false
     alert('面试经验分享链接已复制到剪贴板')
   }, 1000)
 }
 
-const stats = [
-  { label: '累计面试', value: '15', icon: History, color: 'text-primary' },
-  { label: '平均匹配度', value: '86.5%', icon: Target, color: 'text-auxiliary-orange' },
-  { label: 'AI 能力认证', value: '8', icon: ShieldCheck, color: 'text-auxiliary-green' },
-]
+const stats = computed(() => [
+  { label: '累计面试', value: String(interviewHistory.value.length), icon: History, color: 'text-primary' },
+  { label: '平均匹配度', value: `${matchRate.value}%`, icon: Target, color: 'text-auxiliary-orange' },
+  { label: 'AI 能力认证', value: String(gameInterviewData.value?.stats?.find((s: any) => s.label === '技能认证')?.value || '0'), icon: ShieldCheck, color: 'text-auxiliary-green' },
+])
 
-// 收藏题库数据
-const savedQuestionBanks = [
-  {
-    id: 1,
-    title: '高频算法 50 题',
-    description: '涵盖面试中常见的算法题，包括排序、查找、动态规划等',
-    questionCount: 24,
-    category: '算法',
-    difficulty: 'medium',
-    savedAt: '2026-03-20',
-    lastPracticed: '2026-03-25',
-    questions: [
-      { id: 101, title: '两数之和', difficulty: 'easy', status: 'completed' },
-      { id: 102, title: '三数之和', difficulty: 'medium', status: 'completed' },
-      { id: 103, title: '最长回文子串', difficulty: 'medium', status: 'in_progress' },
-      { id: 104, title: '二叉树的最大深度', difficulty: 'easy', status: 'completed' },
-      { id: 105, title: '有效的括号', difficulty: 'easy', status: 'completed' }
-    ]
-  },
-  {
-    id: 2,
-    title: '前端框架高频题',
-    description: 'Vue、React、Angular 等前端框架的常见面试题',
-    questionCount: 32,
-    category: '前端',
-    difficulty: 'medium',
-    savedAt: '2026-03-15',
-    lastPracticed: '2026-03-22',
-    questions: [
-      { id: 201, title: 'Vue3 的响应式原理', difficulty: 'medium', status: 'completed' },
-      { id: 202, title: 'React 的生命周期', difficulty: 'easy', status: 'completed' },
-      { id: 203, title: '虚拟 DOM 的工作原理', difficulty: 'hard', status: 'in_progress' }
-    ]
-  },
-  {
-    id: 3,
-    title: '系统设计基础',
-    description: '分布式系统、微服务、缓存等系统设计相关问题',
-    questionCount: 18,
-    category: '后端',
-    difficulty: 'hard',
-    savedAt: '2026-03-10',
-    lastPracticed: '2026-03-18',
-    questions: [
-      { id: 301, title: '如何设计一个高可用的系统', difficulty: 'hard', status: 'in_progress' },
-      { id: 302, title: '缓存的设计与使用', difficulty: 'medium', status: 'completed' }
-    ]
-  }
-]
-
-// 错题本数据
-const mistakeBook = [
-  {
-    id: 1,
-    question: '在 Vue3 中，如何实现组件间的通信？',
-    userAnswer: '使用 props 和 events',
-    correctAnswer: '使用 props、events、provide/inject、pinia 等多种方式',
-    explanation: 'Vue3 提供了多种组件间通信方式，包括传统的 props 和 events，以及 provide/inject API，还有状态管理库如 pinia',
-    category: '前端',
-    difficulty: 'medium',
-    mistakeCount: 2,
-    lastMistakeAt: '2026-03-24',
-    status: 'unreviewed'
-  },
-  {
-    id: 2,
-    question: '什么是闭包？',
-    userAnswer: '闭包是一个函数',
-    correctAnswer: '闭包是指有权访问另一个函数作用域中变量的函数',
-    explanation: '闭包的核心特点是能够访问其词法作用域之外的变量，即使创建它的函数已经执行完毕',
-    category: 'JavaScript',
-    difficulty: 'medium',
-    mistakeCount: 1,
-    lastMistakeAt: '2026-03-20',
-    status: 'reviewed'
-  },
-  {
-    id: 3,
-    question: '如何优化 React 应用的性能？',
-    userAnswer: '使用 memo 和 useCallback',
-    correctAnswer: '使用 memo、useCallback、useMemo、虚拟列表、代码分割等多种方式',
-    explanation: 'React 性能优化是一个综合工程，需要从多个方面入手，包括组件渲染优化、状态管理优化、资源加载优化等',
-    category: '前端',
-    difficulty: 'hard',
-    mistakeCount: 3,
-    lastMistakeAt: '2026-03-18',
-    status: 'unreviewed'
-  },
-  {
-    id: 4,
-    question: '什么是事件冒泡和事件捕获？',
-    userAnswer: '事件冒泡是从子元素向父元素传播，事件捕获是从父元素向子元素传播',
-    correctAnswer: '事件冒泡是从触发事件的元素开始，向上传播到根元素；事件捕获是从根元素开始，向下传播到触发事件的元素',
-    explanation: 'DOM 事件流包括三个阶段：事件捕获阶段、目标阶段和事件冒泡阶段',
-    category: 'JavaScript',
-    difficulty: 'easy',
-    mistakeCount: 1,
-    lastMistakeAt: '2026-03-15',
-    status: 'reviewed'
-  },
-  {
-    id: 5,
-    question: '如何实现一个深度克隆函数？',
-    userAnswer: '使用 JSON.parse(JSON.stringify(obj))',
-    correctAnswer: 'JSON 方法有局限性，对于函数、Symbol、循环引用等无法正确处理，需要使用递归实现',
-    explanation: 'JSON 序列化方法无法处理函数、Symbol、undefined、循环引用等情况，需要使用递归并处理这些特殊情况',
-    category: 'JavaScript',
-    difficulty: 'medium',
-    mistakeCount: 2,
-    lastMistakeAt: '2026-03-12',
-    status: 'unreviewed'
-  }
-]
-
-// 收藏题库和错题本的状态管理
-const activeTab = ref('saved') // 'saved' 或 'mistakes'
+const activeTab = ref('saved')
 const expandedBankId = ref<number | null>(null)
 const expandedMistakeId = ref<number | null>(null)
 
-// 切换展开/收起状态
 const toggleBankExpand = (id: number) => {
   expandedBankId.value = expandedBankId.value === id ? null : id
 }
@@ -628,85 +196,71 @@ const toggleMistakeExpand = (id: number) => {
   expandedMistakeId.value = expandedMistakeId.value === id ? null : id
 }
 
-// 练习题库
 const practiceBank = (bank: any) => {
   currentBank.value = bank
   isPracticeModalOpen.value = true
 }
 
-// 复习错题
 const reviewMistake = (mistake: any) => {
   currentMistake.value = mistake
   isReviewModalOpen.value = true
 }
 
-// 关闭练习模态框
 const closePracticeModal = () => {
   isPracticeModalOpen.value = false
   currentBank.value = null
 }
 
-// 关闭复习模态框
 const closeReviewModal = () => {
   isReviewModalOpen.value = false
   currentMistake.value = null
 }
 
-// 开始练习
 const startPractice = () => {
   if (!currentBank.value) return
   
   const bankId = currentBank.value.id
   isLoading.value = true
-  // 模拟加载
   setTimeout(() => {
     isLoading.value = false
     closePracticeModal()
-    // 跳转到练习页面
     router.push(`/practice/${bankId}`)
   }, 1000)
 }
 
-// 标记错题为已复习
-const markAsReviewed = (id: number) => {
-  const mistake = mistakeBook.find(m => m.id === id)
-  if (mistake) {
-    mistake.status = 'reviewed'
-    // 显示成功提示
+const markAsReviewed = async (id: number) => {
+  try {
+    await learningStore.markWrongQuestionMastered(id)
     alert('已标记为已复习')
+  } catch {
+    alert('标记失败')
   }
 }
 
-// 移除收藏
 const removeSavedBank = (id: number) => {
   if (confirm('确定要移除这个收藏的题库吗？')) {
-    const index = savedQuestionBanks.findIndex(bank => bank.id === id)
+    const index = collections.value.findIndex(bank => bank.id === id)
     if (index !== -1) {
-      savedQuestionBanks.splice(index, 1)
-      // 显示成功提示
+      collections.value.splice(index, 1)
       alert('已移除收藏的题库')
     }
   }
 }
 
-// 移除错题
 const removeMistake = (id: number) => {
   if (confirm('确定要从错题本中移除这道题吗？')) {
-    const index = mistakeBook.findIndex(mistake => mistake.id === id)
+    const index = wrongQuestions.value.findIndex(mistake => mistake.id === id)
     if (index !== -1) {
-      mistakeBook.splice(index, 1)
-      // 显示成功提示
+      wrongQuestions.value.splice(index, 1)
       alert('已从错题本中移除')
     }
   }
 }
 
-// 计算未复习的错题数量
 const unreviewedMistakesCount = computed(() => {
-  return mistakeBook.filter(mistake => mistake.status === 'unreviewed').length
+  return wrongQuestions.value.filter(mistake => mistake.status === 'unreviewed').length
 })
 
-// 获取难度对应的颜色
 const getDifficultyColor = (difficulty: string) => {
   switch (difficulty) {
     case 'easy':
@@ -722,7 +276,6 @@ const getDifficultyColor = (difficulty: string) => {
   }
 }
 
-// 获取状态对应的颜色
 const getStatusColor = (status: string) => {
   switch (status) {
     case 'completed':
@@ -738,151 +291,12 @@ const getStatusColor = (status: string) => {
   }
 }
 
-// 游戏式面试数据
-const gameInterviewData = {
-  stats: [
-    { label: '已完成关卡', value: '5', icon: Gamepad2, color: 'text-primary' },
-    { label: '总答题数', value: '128', icon: Zap, color: 'text-auxiliary-orange' },
-    { label: '正确率', value: '85%', icon: CheckCircle, color: 'text-auxiliary-green' },
-    { label: '技能认证', value: '8', icon: Trophy, color: 'text-auxiliary-purple' },
-    { label: '连续打卡', value: '12天', icon: Calendar, color: 'text-auxiliary-blue' },
-    { label: '总得分', value: '2,850', icon: PieChart, color: 'text-auxiliary-red' }
-  ],
-  levels: [
-    {
-      id: 1,
-      name: '基础入门',
-      difficulty: 'easy',
-      progress: 100,
-      completed: true,
-      questions: 20,
-      correct: 18,
-      timeSpent: '2h 30m',
-      badge: 'bronze',
-      skills: ['HTML/CSS', 'JavaScript基础', '网络基础']
-    },
-    {
-      id: 2,
-      name: '前端进阶',
-      difficulty: 'medium',
-      progress: 100,
-      completed: true,
-      questions: 30,
-      correct: 25,
-      timeSpent: '4h 15m',
-      badge: 'silver',
-      skills: ['Vue3', 'React', 'TypeScript']
-    },
-    {
-      id: 3,
-      name: '后端基础',
-      difficulty: 'medium',
-      progress: 100,
-      completed: true,
-      questions: 25,
-      correct: 22,
-      timeSpent: '3h 45m',
-      badge: 'silver',
-      skills: ['Java基础', 'Spring Boot', 'SQL']
-    },
-    {
-      id: 4,
-      name: '系统设计',
-      difficulty: 'hard',
-      progress: 100,
-      completed: true,
-      questions: 20,
-      correct: 16,
-      timeSpent: '5h 20m',
-      badge: 'gold',
-      skills: ['分布式系统', '微服务', '缓存设计']
-    },
-    {
-      id: 5,
-      name: '高级算法',
-      difficulty: 'hard',
-      progress: 60,
-      completed: false,
-      questions: 33,
-      correct: 20,
-      timeSpent: '3h 10m',
-      badge: null,
-      skills: ['动态规划', '图算法', '贪心算法']
-    },
-    {
-      id: 6,
-      name: '架构实战',
-      difficulty: 'expert',
-      progress: 0,
-      completed: false,
-      questions: 0,
-      correct: 0,
-      timeSpent: '0h 0m',
-      badge: null,
-      skills: ['高可用架构', '性能优化', 'DevOps']
-    }
-  ],
-  achievements: [
-    {
-      id: 1,
-      name: '初次尝试',
-      description: '完成第一次游戏式面试',
-      icon: Sparkles,
-      unlocked: true,
-      unlockedAt: '2026-03-01'
-    },
-    {
-      id: 2,
-      name: '连续打卡',
-      description: '连续10天进行面试练习',
-      icon: Calendar,
-      unlocked: true,
-      unlockedAt: '2026-03-12'
-    },
-    {
-      id: 3,
-      name: '正确率达人',
-      description: '单次关卡正确率达到90%以上',
-      icon: CheckCircle,
-      unlocked: true,
-      unlockedAt: '2026-03-18'
-    },
-    {
-      id: 4,
-      name: '挑战大师',
-      description: '完成所有困难级别关卡',
-      icon: Trophy,
-      unlocked: false,
-      progress: 75
-    },
-    {
-      id: 5,
-      name: '知识渊博',
-      description: '完成所有技能类别的题目',
-      icon: BookOpen,
-      unlocked: false,
-      progress: 60
-    }
-  ],
-  leaderboard: [
-    { rank: 1, name: '张三', score: 3250, avatar: '👨‍💻' },
-    { rank: 2, name: '李四', score: 3120, avatar: '👩‍💻' },
-    { rank: 3, name: '王五', score: 2980, avatar: '👨‍💻' },
-    { rank: 4, name: '赵六', score: 2950, avatar: '👩‍💻' },
-    { rank: 5, name: '王同学', score: 2850, avatar: '🧑‍💻', isCurrentUser: true }
-  ]
-}
-
-// 游戏式面试模块状态
-const activeGameTab = ref('overview') // 'overview', 'levels', 'achievements', 'leaderboard'
+const activeGameTab = ref('overview')
 const expandedLevelId = ref<number | null>(null)
 
-// AI简历诊断相关状态
 const isResumeDiagnosisModalOpen = ref(false)
 const isDiagnosing = ref(false)
-const resumeDiagnosisResult = ref<any>(null)
 
-// 个人档案相关状态
 const isProfileUpdateModalOpen = ref(false)
 const isSavingProfile = ref(false)
 const profileForm = ref({
@@ -898,112 +312,44 @@ const profileForm = ref({
   certifications: '英语四级，计算机二级，AI能力认证'
 })
 
-// 简历诊断数据
-const resumeData = {
-  basicInfo: {
-    name: '王同学',
-    major: '计算机专业',
-    grade: '大三',
-    school: '北京大学'
-  },
-  education: [
-    {
-      school: '北京大学',
-      major: '计算机科学与技术',
-      startDate: '2022-09',
-      endDate: '2026-06',
-      degree: '本科'
-    }
-  ],
-  experience: [
-    {
-      company: '字节跳动',
-      position: '前端开发实习生',
-      startDate: '2025-07',
-      endDate: '2025-09',
-      description: '参与公司内部管理系统的前端开发，使用Vue3 + TypeScript技术栈，负责页面组件的开发和优化。'
-    },
-    {
-      company: '阿里巴巴',
-      position: '前端开发实习生',
-      startDate: '2024-07',
-      endDate: '2024-09',
-      description: '参与电商平台的前端开发，使用React + TypeScript技术栈，负责商品详情页的开发和性能优化。'
-    }
-  ],
-  skills: [
-    { name: 'Vue3', level: 'expert' },
-    { name: 'React', level: 'advanced' },
-    { name: 'TypeScript', level: 'advanced' },
-    { name: 'Java', level: 'intermediate' },
-    { name: 'Python', level: 'intermediate' },
-    { name: 'SQL', level: 'intermediate' }
-  ],
-  projects: [
-    {
-      name: 'AI面试模拟平台',
-      role: '前端开发',
-      description: '使用Vue3 + TypeScript + Tailwind CSS开发的AI面试模拟平台，包含面试练习、能力评估、简历诊断等功能。',
-      technologies: 'Vue3, TypeScript, Tailwind CSS, ECharts'
-    },
-    {
-      name: '在线学习平台',
-      role: '全栈开发',
-      description: '使用React + Node.js + MongoDB开发的在线学习平台，包含课程管理、用户管理、学习进度跟踪等功能。',
-      technologies: 'React, Node.js, MongoDB, Express'
-    }
-  ]
-}
-
-
-// 切换游戏式面试标签页
 const switchGameTab = (tab: string) => {
   activeGameTab.value = tab
 }
 
-// 切换关卡展开/收起状态
 const toggleLevelExpand = (id: number) => {
   expandedLevelId.value = expandedLevelId.value === id ? null : id
 }
 
-// 显示关卡详情
 const showLevelDetail = (id: number) => {
-  const level = gameInterviewData.levels.find((level: any) => level.id === id)
+  const levels = gameInterviewData.value?.levels || []
+  const level = levels.find((level: any) => level.id === id)
   if (level) {
     currentLevel.value = level
     isLevelDetailModalOpen.value = true
   }
 }
 
-// 开始关卡
 const startLevel = (id: number) => {
   isLoading.value = true
-  // 模拟加载
   setTimeout(() => {
     isLoading.value = false
-    // 跳转到关卡挑战页面
     router.push(`/game-interview/level/${id}`)
   }, 1000)
 }
 
-// 继续关卡
 const continueLevel = (id: number) => {
   isLoading.value = true
-  // 模拟加载
   setTimeout(() => {
     isLoading.value = false
-    // 跳转到关卡挑战页面，带上continue参数
     router.push(`/game-interview/level/${id}?continue=true`)
   }, 1000)
 }
 
-// 关闭关卡详情模态框
 const closeLevelDetailModal = () => {
   isLevelDetailModalOpen.value = false
   currentLevel.value = null
 }
 
-// AI简历诊断相关方法
 const openResumeDiagnosisModal = () => {
   isResumeDiagnosisModalOpen.value = true
 }
@@ -1013,41 +359,17 @@ const closeResumeDiagnosisModal = () => {
   resumeDiagnosisResult.value = null
 }
 
-const startResumeDiagnosis = () => {
+const startResumeDiagnosis = async () => {
   isDiagnosing.value = true
-  // 模拟诊断过程
-  setTimeout(() => {
+  try {
+    await userStore.diagnoseResume()
+  } catch {
+    alert('诊断失败，请稍后重试')
+  } finally {
     isDiagnosing.value = false
-    resumeDiagnosisResult.value = {
-      overallScore: 85,
-      strengths: [
-        { name: '技术栈全面', score: 90 },
-        { name: '项目经验丰富', score: 85 },
-        { name: '实习经历优质', score: 95 }
-      ],
-      weaknesses: [
-        { name: '技能描述不够具体', score: 65 },
-        { name: '项目成果量化不足', score: 70 },
-        { name: '教育背景描述简单', score: 75 }
-      ],
-      suggestions: [
-        '将技能水平具体化，例如：Vue3 (精通)、React (熟练)',
-        '量化项目成果，例如：优化页面加载速度提升30%',
-        '添加教育背景中的相关课程和成绩',
-        '突出个人优势和独特性，避免模板化',
-        '根据目标岗位调整简历内容，突出相关技能和经验'
-      ],
-      matchRate: {
-        '前端开发工程师': 90,
-        'Java开发工程师': 75,
-        '全栈开发工程师': 85,
-        '产品经理': 60
-      }
-    }
-  }, 2000)
+  }
 }
 
-// 个人档案相关方法
 const openProfileUpdateModal = () => {
   isProfileUpdateModalOpen.value = true
 }
@@ -1056,17 +378,21 @@ const closeProfileUpdateModal = () => {
   isProfileUpdateModalOpen.value = false
 }
 
-const saveProfile = () => {
+const saveProfile = async () => {
   isSavingProfile.value = true
-  // 模拟保存过程
-  setTimeout(() => {
-    isSavingProfile.value = false
+  try {
+    await userStore.updateProfile({
+      name: profileForm.value.name
+    } as any)
     closeProfileUpdateModal()
     alert('个人档案更新成功！')
-  }, 1500)
+  } catch {
+    alert('保存失败，请稍后重试')
+  } finally {
+    isSavingProfile.value = false
+  }
 }
 
-// 获取技能水平对应的文本
 const getSkillLevelText = (level: string) => {
   switch (level) {
     case 'beginner':
@@ -1082,7 +408,6 @@ const getSkillLevelText = (level: string) => {
   }
 }
 
-// 获取技能水平对应的颜色
 const getSkillLevelColor = (level: string) => {
   switch (level) {
     case 'beginner':
@@ -1098,7 +423,6 @@ const getSkillLevelColor = (level: string) => {
   }
 }
 
-// 获取徽章图标
 const getBadgeIcon = (badge: string | null) => {
   switch (badge) {
     case 'bronze':
@@ -1112,7 +436,6 @@ const getBadgeIcon = (badge: string | null) => {
   }
 }
 
-// 获取难度文本
 const getDifficultyText = (difficulty: string) => {
   switch (difficulty) {
     case 'easy':
@@ -1131,6 +454,9 @@ const getDifficultyText = (difficulty: string) => {
 const initChart = () => {
   if (chartRef.value) {
     isChartLoading.value = false
+    if (myChart) {
+      myChart.dispose()
+    }
     myChart = echarts.init(chartRef.value)
     const data = currentAbilityData.value
     const option = {
@@ -1224,7 +550,12 @@ const initChart = () => {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
+  await Promise.all([
+    userStore.fetchAllUserData(),
+    learningStore.fetchCollections(),
+    learningStore.fetchWrongQuestions()
+  ])
   initChart()
   window.addEventListener('resize', handleResize)
 })
@@ -1723,7 +1054,7 @@ const handleResize = () => {
           
           <!-- 收藏题库内容 -->
           <div v-if="activeTab === 'saved'" class="space-y-4">
-            <div v-for="bank in savedQuestionBanks" :key="bank.id" class="group">
+            <div v-for="bank in collections" :key="bank.id" class="group">
               <!-- 题库卡片 -->
               <div 
                 class="p-4 bg-neutral-bg rounded-2xl flex items-center justify-between group cursor-pointer hover:bg-white hover:shadow-md transition-all border border-transparent hover:border-neutral-border"
@@ -1797,7 +1128,7 @@ const handleResize = () => {
             </div>
             
             <!-- 空状态 -->
-            <div v-if="savedQuestionBanks.length === 0" class="flex flex-col items-center justify-center py-12 text-center">
+            <div v-if="collections.length === 0" class="flex flex-col items-center justify-center py-12 text-center">
               <div class="w-20 h-20 rounded-full bg-neutral-bg flex items-center justify-center text-neutral-helper mb-4">
                 <BookOpen :size="40" />
               </div>
@@ -1812,7 +1143,7 @@ const handleResize = () => {
           
           <!-- 错题本内容 -->
           <div v-if="activeTab === 'mistakes'" class="space-y-4">
-            <div v-for="mistake in mistakeBook" :key="mistake.id" class="group">
+            <div v-for="mistake in wrongQuestions" :key="mistake.id" class="group">
               <!-- 错题卡片 -->
               <div 
                 class="p-4 bg-neutral-bg rounded-2xl flex items-start justify-between group cursor-pointer hover:bg-white hover:shadow-md transition-all border border-transparent hover:border-neutral-border"
@@ -1897,7 +1228,7 @@ const handleResize = () => {
             </div>
             
             <!-- 空状态 -->
-            <div v-if="mistakeBook.length === 0" class="flex flex-col items-center justify-center py-12 text-center">
+            <div v-if="wrongQuestions.length === 0" class="flex flex-col items-center justify-center py-12 text-center">
               <div class="w-20 h-20 rounded-full bg-neutral-bg flex items-center justify-center text-neutral-helper mb-4">
                 <FileWarning :size="40" />
               </div>
@@ -1969,7 +1300,7 @@ const handleResize = () => {
           <!-- 概览标签页 -->
           <div v-if="activeGameTab === 'overview'">
             <div class="grid grid-cols-2 gap-4">
-              <div v-for="stat in gameInterviewData.stats" :key="stat.label" class="p-4 bg-neutral-bg rounded-2xl flex flex-col items-center justify-center gap-2 group hover:bg-white hover:shadow-md transition-all border border-transparent hover:border-neutral-border">
+              <div v-for="stat in (gameInterviewData?.stats || [])" :key="stat.label" class="p-4 bg-neutral-bg rounded-2xl flex flex-col items-center justify-center gap-2 group hover:bg-white hover:shadow-md transition-all border border-transparent hover:border-neutral-border">
                 <div class="w-10 h-10 rounded-2xl bg-white flex items-center justify-center text-primary shadow-sm group-hover:gradient-primary group-hover:text-white transition-all">
                   <component :is="stat.icon" :size="20" :class="stat.color" />
                 </div>
@@ -2018,7 +1349,7 @@ const handleResize = () => {
           
           <!-- 关卡标签页 -->
           <div v-if="activeGameTab === 'levels'" class="space-y-4">
-            <div v-for="level in gameInterviewData.levels" :key="level.id" class="group">
+            <div v-for="level in (gameInterviewData?.levels || [])" :key="level.id" class="group">
               <!-- 关卡卡片 -->
               <div 
                 class="p-4 bg-neutral-bg rounded-2xl flex items-center justify-between group cursor-pointer hover:bg-white hover:shadow-md transition-all border border-transparent hover:border-neutral-border"
@@ -2120,7 +1451,7 @@ const handleResize = () => {
           
           <!-- 成就标签页 -->
           <div v-if="activeGameTab === 'achievements'" class="space-y-4">
-            <div v-for="achievement in gameInterviewData.achievements" :key="achievement.id" class="p-4 bg-neutral-bg rounded-2xl flex items-center gap-4 group hover:bg-white hover:shadow-md transition-all border border-transparent hover:border-neutral-border">
+            <div v-for="achievement in (gameInterviewData?.achievements || [])" :key="achievement.id" class="p-4 bg-neutral-bg rounded-2xl flex items-center gap-4 group hover:bg-white hover:shadow-md transition-all border border-transparent hover:border-neutral-border">
               <div class="w-12 h-12 rounded-2xl flex items-center justify-center shadow-md" :class="achievement.unlocked ? 'gradient-primary text-white' : 'bg-neutral-border text-neutral-helper'">
                 <component :is="achievement.icon" :size="24" />
               </div>
@@ -2160,7 +1491,7 @@ const handleResize = () => {
             </div>
             <div class="space-y-3">
               <div 
-                v-for="item in gameInterviewData.leaderboard" 
+                v-for="item in (gameInterviewData?.leaderboard || [])" 
                 :key="item.rank"
                 class="p-4 rounded-2xl flex items-center gap-4 transition-all" 
                 :class="item.isCurrentUser ? 'bg-primary/10 border border-primary/30' : 'bg-neutral-bg border border-transparent hover:border-neutral-border hover:bg-white hover:shadow-sm'"
@@ -2632,19 +1963,19 @@ const handleResize = () => {
                   <div class="grid grid-cols-2 gap-4">
                     <div>
                       <p class="text-xs text-neutral-helper mb-1">姓名</p>
-                      <p class="text-sm font-medium text-neutral-body">{{ resumeData.basicInfo.name }}</p>
+                      <p class="text-sm font-medium text-neutral-body">{{ resumeData?.basicInfo?.name }}</p>
                     </div>
                     <div>
                       <p class="text-xs text-neutral-helper mb-1">专业</p>
-                      <p class="text-sm font-medium text-neutral-body">{{ resumeData.basicInfo.major }}</p>
+                      <p class="text-sm font-medium text-neutral-body">{{ resumeData?.basicInfo?.major }}</p>
                     </div>
                     <div>
                       <p class="text-xs text-neutral-helper mb-1">年级</p>
-                      <p class="text-sm font-medium text-neutral-body">{{ resumeData.basicInfo.grade }}</p>
+                      <p class="text-sm font-medium text-neutral-body">{{ resumeData?.basicInfo?.grade }}</p>
                     </div>
                     <div>
                       <p class="text-xs text-neutral-helper mb-1">学校</p>
-                      <p class="text-sm font-medium text-neutral-body">{{ resumeData.basicInfo.school }}</p>
+                      <p class="text-sm font-medium text-neutral-body">{{ resumeData?.basicInfo?.school }}</p>
                     </div>
                   </div>
                 </div>
@@ -2653,7 +1984,7 @@ const handleResize = () => {
                 <div>
                   <h5 class="text-sm font-bold text-neutral-title mb-3">教育经历</h5>
                   <div class="space-y-3">
-                    <div v-for="(edu, index) in resumeData.education" :key="index" class="bg-white rounded-xl p-4 border border-neutral-border">
+                    <div v-for="(edu, index) in resumeData?.education || []" :key="index" class="bg-white rounded-xl p-4 border border-neutral-border">
                       <div class="flex items-center justify-between mb-2">
                         <h6 class="text-sm font-bold text-neutral-title">{{ edu.school }}</h6>
                         <span class="text-xs text-neutral-helper">{{ edu.startDate }} - {{ edu.endDate }}</span>
@@ -2667,7 +1998,7 @@ const handleResize = () => {
                 <div>
                   <h5 class="text-sm font-bold text-neutral-title mb-3">实习经历</h5>
                   <div class="space-y-3">
-                    <div v-for="(exp, index) in resumeData.experience" :key="index" class="bg-white rounded-xl p-4 border border-neutral-border">
+                    <div v-for="(exp, index) in resumeData?.experience || []" :key="index" class="bg-white rounded-xl p-4 border border-neutral-border">
                       <div class="flex items-center justify-between mb-2">
                         <h6 class="text-sm font-bold text-neutral-title">{{ exp.company }}</h6>
                         <span class="text-xs text-neutral-helper">{{ exp.startDate }} - {{ exp.endDate }}</span>
@@ -2683,7 +2014,7 @@ const handleResize = () => {
                   <h5 class="text-sm font-bold text-neutral-title mb-3">技能</h5>
                   <div class="flex flex-wrap gap-2">
                     <span 
-                      v-for="(skill, index) in resumeData.skills" 
+                      v-for="(skill, index) in resumeData?.skills || []" 
                       :key="index"
                       :class="['px-3 py-1.5 text-xs font-bold rounded-xl', getSkillLevelColor(skill.level)]"
                     >
@@ -2696,7 +2027,7 @@ const handleResize = () => {
                 <div>
                   <h5 class="text-sm font-bold text-neutral-title mb-3">项目经历</h5>
                   <div class="space-y-3">
-                    <div v-for="(proj, index) in resumeData.projects" :key="index" class="bg-white rounded-xl p-4 border border-neutral-border">
+                    <div v-for="(proj, index) in resumeData?.projects || []" :key="index" class="bg-white rounded-xl p-4 border border-neutral-border">
                       <div class="flex items-center justify-between mb-2">
                         <h6 class="text-sm font-bold text-neutral-title">{{ proj.name }}</h6>
                         <span class="text-xs text-primary">{{ proj.role }}</span>
@@ -2803,7 +2134,7 @@ const handleResize = () => {
                     class="flex items-start gap-3 p-3 bg-white rounded-xl border border-neutral-border"
                   >
                     <div class="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-primary flex-shrink-0 mt-0.5">
-                      {{ index + 1 }}
+                      {{ Number(index) + 1 }}
                     </div>
                     <p class="text-xs text-neutral-body leading-relaxed">{{ suggestion }}</p>
                   </div>

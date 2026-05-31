@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Sparkles, Clock, PlayCircle, X, ChevronLeft } from 'lucide-vue-next'
+import { Clock, PlayCircle, ChevronLeft } from 'lucide-vue-next'
 
 const route = useRoute()
 const router = useRouter()

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { onMounted } from 'vue'
+import { storeToRefs } from 'pinia'
 import {
   BookOpen,
   Search,
@@ -25,6 +27,10 @@ import {
   MessageSquare,
   X
 } from 'lucide-vue-next'
+import { useKnowledgeStore } from '@/stores/knowledge'
+
+const knowledgeStore = useKnowledgeStore()
+const { courses, jobPositions, loading } = storeToRefs(knowledgeStore)
 
 const categories = [
   { id: 1, name: '前端开发', icon: Layout, count: 450, color: 'text-primary', description: 'HTML、CSS、JavaScript、框架技术等前端相关知识' },
@@ -240,6 +246,8 @@ const router = useRouter()
 // 专项通关路径相关状态
 const practiceProgress = ref(0)
 const isPracticeStarted = ref(false)
+void practiceProgress
+void isPracticeStarted
 
 // 交互方法
 const toggleCategory = (categoryId: number) => {
@@ -846,9 +854,12 @@ const openPathPractice = (path: string) => {
 
 // 专项通关路径开启首次练习
 const startPractice = () => {
-  // 跳转到默认的专项通关路径练习页面
   router.push('/path-practice?path=简历押题专项')
 }
+
+onMounted(async () => {
+  await knowledgeStore.fetchAllData()
+})
 </script>
 
 <template>

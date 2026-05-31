@@ -1,11 +1,12 @@
 # MianMianMaster 前端API联调实施计划
 
-**版本**: v1.0  
-**创建日期**: 2026-05-09  
-**状态**: 待实施  
-**预计工期**: 10-12个工作日  
+**版本**: v1.1\
+**创建日期**: 2026-05-09\
+**最后更新**: 2026-05-10\
+**状态**: Phase 1-4 已完成，Phase 5 待实施\
+**预计工期**: 10-12个工作日（已完成 Day 1-8）
 
----
+***
 
 ## 📋 目录
 
@@ -22,7 +23,7 @@
 11. [测试策略](#11-测试策略)
 12. [风险与缓解措施](#12-风险与缓解措施)
 
----
+***
 
 ## 1. 项目背景与目标
 
@@ -32,28 +33,30 @@ MianMianMaster 是一个AI模拟面试与能力提升平台，前端基于 Vue 3
 
 ### 1.2 核心问题
 
-| 问题类别 | 具体问题 | 影响范围 | 优先级 |
-|---------|---------|----------|--------|
-| **HTTP基础设施缺失** | 无axios封装、无API服务层、无拦截器 | 全局 | 🔴 Critical |
-| **认证系统未对接** | 前端使用布尔标志，后端使用JWT Token | 所有需登录接口 | 🔴 Critical |
-| **数据硬编码** | Store和Views中使用Mock硬编码数据 | Profile, Community等 | 🔴 Critical |
+| 问题类别           | 具体问题                    | 影响范围                | 优先级         |
+| -------------- | ----------------------- | ------------------- | ----------- |
+| **HTTP基础设施缺失** | 无axios封装、无API服务层、无拦截器   | 全局                  | 🔴 Critical |
+| **认证系统未对接**    | 前端使用布尔标志，后端使用JWT Token  | 所有需登录接口             | 🔴 Critical |
+| **数据硬编码**      | Store和Views中使用Mock硬编码数据 | Profile, Community等 | 🔴 Critical |
 
 ### 1.3 实施目标
 
 #### 主要目标
+
 1. ✅ 建立完整的HTTP请求基础设施（axios封装 + 拦截器 + 统一错误处理）
 2. ✅ 对接JWT Token认证系统（登录/注册/Token管理）
 3. ✅ 实现Mock数据软编码架构（支持Mock/真实API无缝切换）
 4. ✅ 重构现有Store层（从硬编码迁移到API调用）
 
 #### 设计原则
+
 - **业内最佳实践**: 参考Ant Design Pro、Vue Element Admin等成熟方案
 - **渐进式迁移**: 不破坏现有功能，平滑过渡
 - **类型安全**: 全面的TypeScript类型定义
 - **可维护性**: 清晰的代码结构和注释
 - **可扩展性**: 易于添加新模块和新API
 
----
+***
 
 ## 2. 现状分析
 
@@ -103,6 +106,7 @@ src/
 #### 问题1: stores/user.ts - Mock登录实现
 
 **当前代码**:
+
 ```typescript
 function login(email: string, _password: string) {
   loading.value = true
@@ -127,6 +131,7 @@ function login(email: string, _password: string) {
 ```
 
 **问题点**:
+
 - 无HTTP请求
 - 数据硬编码
 - 无法获取JWT Token
@@ -135,6 +140,7 @@ function login(email: string, _password: string) {
 #### 问题2: views/Profile.vue - 硬编码业务数据
 
 **当前数据量统计**:
+
 - 面试记录: 12条（第199-416行）
 - 收藏题库: 3个（第504-551行）
 - 错题本: 5道（第554-615行）
@@ -143,6 +149,7 @@ function login(email: string, _password: string) {
 - 排行榜: 5人（第867-873行）
 
 **示例代码**:
+
 ```typescript
 // ❌ 第199行开始 - 硬编码面试记录
 const interviewHistory = [
@@ -158,6 +165,7 @@ const interviewHistory = [
 ```
 
 **问题点**:
+
 - 无法从后端动态加载
 - 无法分页
 - 无法筛选/排序（实际是前端过滤）
@@ -166,6 +174,7 @@ const interviewHistory = [
 #### 问题3: views/Community.vue - 硬编码社区数据
 
 **当前数据量统计**:
+
 - 社区帖子: 7篇（第23-31行）
 - 评论数据: 2组（第34-43行）
 - 热门话题: 4个（第47-51行）
@@ -173,6 +182,7 @@ const interviewHistory = [
 - 活跃用户: 4人（Community.vue中引用）
 
 **问题点**:
+
 - 无真实帖子流
 - 无互动功能（点赞/评论仅本地状态）
 - 无法发布新帖子
@@ -180,6 +190,7 @@ const interviewHistory = [
 ### 2.4 后端API就绪情况
 
 根据审查报告，后端已提供：
+
 - ✅ 50+个RESTful API端点
 - ✅ Swagger文档 (`http://localhost:8081/docs`)
 - ✅ JWT认证机制
@@ -187,7 +198,7 @@ const interviewHistory = [
 - ✅ CORS全开放配置
 - ✅ 限流机制（SlowAPI + Redis）
 
----
+***
 
 ## 3. 架构设计方案
 
@@ -246,22 +257,25 @@ const interviewHistory = [
 ### 3.2 核心设计理念
 
 #### 理念1: 分层解耦
+
 - **View层**: 只负责UI展示和用户交互
 - **Store层**: 管理业务状态和数据流
 - **API层**: 封装所有HTTP请求
 - **HTTP层**: 底层通信基础设施
 
 #### 理念2: 依赖倒置
+
 - Store依赖抽象的API接口（不直接依赖axios）
 - 通过适配器模式切换真实/Mock数据源
 - 符合SOLID原则
 
 #### 理念3: 配置驱动
+
 - 通过环境变量控制使用真实API还是Mock
 - 开发环境默认使用Mock，生产环境使用真实API
 - 一键切换，无需改动业务代码
 
----
+***
 
 ## 4. 目录结构规划
 
@@ -349,40 +363,40 @@ src/
 
 ### 4.2 新增文件清单
 
-| 文件路径 | 类型 | 说明 | 优先级 |
-|---------|------|------|--------|
-| `utils/http.ts` | 核心 | Axios实例配置 | P0 |
-| `utils/auth.ts` | 核心 | Token管理 | P0 |
-| `utils/request.ts` | 核心 | 请求方法封装 | P0 |
-| `utils/error.ts` | 核心 | 错误处理 | P0 |
-| `utils/storage.ts` | 工具 | 本地存储 | P0 |
-| `mock/adapter.ts` | 核心 | Mock适配器 | P0 |
-| `mock/data/*.mock.ts` | 数据 | Mock数据 | P0 |
-| `mock/handlers/*.handler.ts` | 逻辑 | Mock处理 | P0 |
-| `api/modules/*.api.ts` | 服务 | API服务层 | P0 |
-| `api/types/*.types.ts` | 类型 | API类型定义 | P0 |
-| `composables/useAuth.ts` | 逻辑 | 认证组合函数 | P1 |
-| `composables/useRequest.ts` | 逻辑 | 请求状态管理 | P1 |
-| `stores/community.ts` | 状态 | 社区Store | P1 |
-| `stores/learning.ts` | 状态 | 学习Store | P1 |
-| `config/index.ts` | 配置 | 应用配置 | P1 |
+| 文件路径                         | 类型 | 说明        | 优先级 |
+| ---------------------------- | -- | --------- | --- |
+| `utils/http.ts`              | 核心 | Axios实例配置 | P0  |
+| `utils/auth.ts`              | 核心 | Token管理   | P0  |
+| `utils/request.ts`           | 核心 | 请求方法封装    | P0  |
+| `utils/error.ts`             | 核心 | 错误处理      | P0  |
+| `utils/storage.ts`           | 工具 | 本地存储      | P0  |
+| `mock/adapter.ts`            | 核心 | Mock适配器   | P0  |
+| `mock/data/*.mock.ts`        | 数据 | Mock数据    | P0  |
+| `mock/handlers/*.handler.ts` | 逻辑 | Mock处理    | P0  |
+| `api/modules/*.api.ts`       | 服务 | API服务层    | P0  |
+| `api/types/*.types.ts`       | 类型 | API类型定义   | P0  |
+| `composables/useAuth.ts`     | 逻辑 | 认证组合函数    | P1  |
+| `composables/useRequest.ts`  | 逻辑 | 请求状态管理    | P1  |
+| `stores/community.ts`        | 状态 | 社区Store   | P1  |
+| `stores/learning.ts`         | 状态 | 学习Store   | P1  |
+| `config/index.ts`            | 配置 | 应用配置      | P1  |
 
----
+***
 
 ## 5. HTTP请求基础设施实现
 
 ### 5.1 技术选型：为什么选择Axios？
 
-| 特性 | Axios | Fetch API |
-|------|-------|-----------|
-| 拦截器 | ✅ 原生支持 | ❌ 需手动封装 |
-| 请求/响应转换 | ✅ 内置 | ❌ 需手动处理 |
-| 取消请求 | ✅ CancelToken | ✅ AbortController |
-| 超时控制 | ✅ 配置项 | ❌ 需AbortController |
-| JSON自动解析 | ✅ 默认 | ❌ 需.json() |
-| 上传进度 | ✅ onUploadProgress | ❌ 复杂 |
-| 浏览器兼容性 | ✅ 更好 | ES6+ |
-| 社区生态 | ✅ 丰富 | 较少 |
+| 特性       | Axios              | Fetch API          |
+| -------- | ------------------ | ------------------ |
+| 拦截器      | ✅ 原生支持             | ❌ 需手动封装            |
+| 请求/响应转换  | ✅ 内置               | ❌ 需手动处理            |
+| 取消请求     | ✅ CancelToken      | ✅ AbortController  |
+| 超时控制     | ✅ 配置项              | ❌ 需AbortController |
+| JSON自动解析 | ✅ 默认               | ❌ 需.json()         |
+| 上传进度     | ✅ onUploadProgress | ❌ 复杂               |
+| 浏览器兼容性   | ✅ 更好               | ES6+               |
+| 社区生态     | ✅ 丰富               | 较少                 |
 
 **结论**: Axios更适合企业级应用，功能完善，社区活跃。
 
@@ -849,7 +863,7 @@ export const localCache = new StorageHelper('local')
 export const sessionCache = new StorageHelper('session')
 ```
 
----
+***
 
 ## 6. 认证系统对接方案
 
@@ -1323,7 +1337,7 @@ export function setupAuthGuard(router: Router): void {
 }
 ```
 
----
+***
 
 ## 7. Mock数据软编码架构
 
@@ -1697,7 +1711,7 @@ VITE_API_BASE_URL=https://staging-api.mianmianmaster.com/api/v1
 VITE_USE_MOCK=false
 ```
 
----
+***
 
 ## 8. 分阶段实施计划
 
@@ -1708,46 +1722,43 @@ VITE_USE_MOCK=false
 #### 任务清单
 
 ##### Day 1: 上午
+
 - [ ] **1.1** 安装axios依赖
   ```bash
   pnpm add axios axios-mock-adapter
   pnpm add -D @types/axios
   ```
-
 - [ ] **1.2** 创建环境变量配置文件
   - `.env.development`
   - `.env.production`
   - `.env.staging`
-
 - [ ] **1.3** 实现 `utils/http.ts`
   - Axios实例配置
   - 请求拦截器（Token注入）
   - 响应拦截器（错误处理）
 
 ##### Day 1: 下午
+
 - [ ] **1.4** 实现 `utils/request.ts`
   - GET/POST/PUT/DELETE封装
   - 文件上传方法
-
 - [ ] **1.5** 实现 `utils/auth.ts`
   - Token存储/读取/删除
   - 用户信息缓存
-
 - [ ] **1.6** 实现 `utils/error.ts`
   - 错误码映射
   - 错误消息格式化
-
 - [ ] **1.7** 实现 `utils/storage.ts`
   - localStorage/sessionStorage封装
   - 过期时间支持
 
 ##### Day 2: 上午
+
 - [ ] **1.8** 创建API类型定义
   - `api/types/response.types.ts` - 通用响应类型
   - `api/types/auth.types.ts` - 认证类型
   - `api/types/user.types.ts` - 用户类型
   - `api/types/community.types.ts` - 社区类型
-
 - [ ] **1.9** 创建API服务层骨架
   - `api/modules/auth.api.ts`
   - `api/modules/user.api.ts`
@@ -1755,25 +1766,25 @@ VITE_USE_MOCK=false
   - `api/index.ts` - 统一导出
 
 ##### Day 2: 下午
+
 - [ ] **1.10** 配置Vite代理（如需要）
   - 更新 `vite.config.ts`
-
 - [ ] **1.11** 编写单元测试
   - HTTP客户端测试
   - Token管理测试
   - 错误处理测试
-
 - [ ] **1.12** 代码审查和文档编写
   - README.md更新
   - JSDoc注释
 
 **交付物**:
+
 - ✅ 完整的HTTP基础设施
 - ✅ 类型定义文件
 - ✅ 单元测试
 - ✅ 技术文档
 
----
+***
 
 ### 8.2 Phase 2: 认证系统对接（Day 3-4）
 
@@ -1782,11 +1793,11 @@ VITE_USE_MOCK=false
 #### 任务清单
 
 ##### Day 3: 上午
+
 - [ ] **2.1** 完善 `api/modules/auth.api.ts`
   - login/register/getUserInfo
   - smsLogin/sendSmsCode
   - passwordReset
-
 - [ ] **2.2** 重构 `stores/user.ts`
   - 对接真实登录API
   - Token管理
@@ -1794,50 +1805,50 @@ VITE_USE_MOCK=false
   - initialize() 方法
 
 ##### Day 3: 下午
+
 - [ ] **2.3** 增强 `router/index.ts`
   - 导入并使用新的认证守卫
   - 白名单配置
   - 登录回调处理
-
 - [ ] **2.4** 更新 `LoginForm.vue` 组件
   - 调用store.login()
   - 错误提示
   - Loading状态
   - 表单验证增强
-
 - [ ] **2.5** 实现登录后的跳转逻辑
   - 从query参数获取redirect
   - 跳转到原目标页面
 
 ##### Day 4: 上午
+
 - [ ] **2.6** 实现 `composables/useAuth.ts`
   - 登录状态判断
   - 权限检查
   - 登录/登出快捷方法
-
 - [ ] **2.7** 更新 `App.vue` 或布局组件
   - 根据登录状态显示/隐藏元素
   - 用户头像和信息展示
 
 ##### Day 4: 下午
+
 - [ ] **2.8** 编写认证流程测试
   - 登录成功场景
   - 登录失败场景
   - Token过期场景
   - 路由守卫测试
-
 - [ ] **2.9** 边界情况处理
   - 网络断开时登录
   - 并发登录
   - 多标签页同步
 
 **交付物**:
+
 - ✅ 完整的认证流程
 - ✅ 重构后的User Store
 - ✅ 增强的路由守卫
 - ✅ 测试用例
 
----
+***
 
 ### 8.3 Phase 3: Mock数据迁移（Day 5-6）
 
@@ -1846,16 +1857,15 @@ VITE_USE_MOCK=false
 #### 任务清单
 
 ##### Day 5: 上午
+
 - [ ] **3.1** 安装Mock依赖
   ```bash
   pnpm add axios-mock-adapter
   ```
-
 - [ ] **3.2** 实现 `mock/adapter.ts`
   - Mock适配器初始化
   - 环境检测
   - 延迟配置
-
 - [ ] **3.3** 迁移Profile.vue的数据
   - 创建 `mock/data/user.mock.ts`
   - 提取interviewHistory数据
@@ -1864,13 +1874,13 @@ VITE_USE_MOCK=false
   - 提取gameInterviewData数据
 
 ##### Day 5: 下午
+
 - [ ] **3.4** 迁移Community.vue的数据
   - 创建 `mock/data/community.mock.ts`
   - 提取posts数据
   - 提取comments数据
   - 提取hotTopics数据
   - 提取courses数据
-
 - [ ] **3.5** 实现Mock处理器
   - `mock/handlers/user.handler.ts`
   - `mock/handlers/community.handler.ts`
@@ -1878,39 +1888,38 @@ VITE_USE_MOCK=false
   - `mock/handlers/assessment.handler.ts`
 
 ##### Day 6: 上午
+
 - [ ] **3.6** 注册Mock处理器
   - 更新 `mock/adapter.ts`
   - 测试各处理器
-
 - [ ] **3.7** 创建 `mock/data/learning.mock.ts`
   - 课程数据
   - 学习进度数据
   - 徽章数据
-
 - [ ] **3.8** 创建 `mock/data/assessment.mock.ts`
   - 测评题目
   - 测评结果
 
 ##### Day 6: 下午
+
 - [ ] **3.9** 更新main.ts
   - 导入Mock适配器初始化
   - 条件性启用
-
 - [ ] **3.10** 验证Mock模式
   - 启动开发服务器
   - 验证各页面数据正常
   - 检查Console日志
-
 - [ ] **3.11** 编写Mock数据验证脚本
   - 自动化检查Mock覆盖率
 
 **交付物**:
+
 - ✅ 完整的Mock数据层
 - ✅ Mock处理器
 - ✅ 迁移后的Views（数据来源改为API）
 - ✅ 验证报告
 
----
+***
 
 ### 8.4 Phase 4: Store层重构（Day 7-8）
 
@@ -1919,27 +1928,26 @@ VITE_USE_MOCK=false
 #### 任务清单
 
 ##### Day 7: 上午
+
 - [ ] **4.1** 创建 `stores/community.ts`
   - posts状态管理
   - 调用communityApi
   - 点赞/评论/关注操作
-
 - [ ] **4.2** 创建 `stores/learning.ts`
   - 课程状态管理
   - 学习进度跟踪
   - 题库/错题/收藏管理
-
 - [ ] **4.3** 创建 `stores/assessment.ts`
   - 测评状态管理
   - 结果计算（可复用assessment.ts工具）
 
 ##### Day 7: 下午
+
 - [ ] **4.4** 重构 `views/Profile.vue`
   - 移除硬编码数据
   - 使用userStore/learningStore
   - 实现数据加载状态
   - 实现下拉刷新/上拉加载
-
 - [ ] **4.5** 重构 `views/Community.vue`
   - 移除硬编码数据
   - 使用communityStore
@@ -1947,34 +1955,35 @@ VITE_USE_MOCK=false
   - 实现发布帖子功能
 
 ##### Day 8: 上午
+
 - [ ] **4.6** 重构其他Views（按优先级）
   - `views/Growth.vue`
   - `views/Matching.vue`
   - `views/Knowledge.vue`
-
 - [ ] **4.7** 实现全局Loading状态
   - `composables/useRequest.ts`
   - 请求中显示加载动画
   - 错误提示组件
 
 ##### Day 8: 下午
+
 - [ ] **4.8** 性能优化
   - 请求去重
   - 数据缓存
   - 防抖/节流
-
 - [ ] **4.9** 编写集成测试
   - Store单元测试
   - View组件测试
   - E2E测试场景
 
 **交付物**:
+
 - ✅ 重构后的所有Stores
 - ✅ 重构后的主要Views
 - ✅ 全局Loading/错误处理
 - ✅ 测试套件
 
----
+***
 
 ### 8.5 Phase 5: 优化与收尾（Day 9-10）
 
@@ -1983,58 +1992,59 @@ VITE_USE_MOCK=false
 #### 任务清单
 
 ##### Day 9: 上午
+
 - [ ] **5.1** 用户体验优化
   - 骨架屏（Skeleton）
   - 空状态占位符
   - 下拉刷新
   - 加载更多
-
 - [ ] **5.2** 错误边界处理
   - 全局错误捕获
   - 友好的错误提示
   - 重试机制
 
 ##### Day 9: 下午
+
 - [ ] **5.3** 性能监控
   - 接口耗时统计
   - 错误率监控
   - 性能指标收集
-
 - [ ] **5.4** 安全加固
   - XSS防护
   - CSRF Token（如果需要）
   - 敏感数据脱敏日志
 
 ##### Day 10: 上午
+
 - [ ] **5.5** 文档完善
   - API使用文档
   - Mock数据文档
   - 开发者指南
   - 故障排查手册
-
 - [ ] **5.6** 代码质量
   - ESLint/Prettier检查
   - TypeScript严格模式
   - 代码复杂度分析
 
 ##### Day 10: 下午
+
 - [ ] **5.7** 最终测试
   - 回归测试
   - 兼容性测试
   - 性能测试
-
 - [ ] **5.8** 部署准备
   - 构建优化
   - 环境变量检查
   - 部署脚本
 
 **交付物**:
+
 - ✅ 生产就绪的代码
 - ✅ 完整的技术文档
 - ✅ 测试报告
 - ✅ 部署指南
 
----
+***
 
 ## 9. 代码示例与最佳实践
 
@@ -2236,11 +2246,10 @@ function formatTime(timeStr: string): string {
    ```typescript
    // 好：明确类型
    async function fetchUser(id: number): Promise<UserInfo> { ... }
-   
+
    // 差：使用any
    async function fetchUser(id: any): Promise<any> { ... }
    ```
-
 2. **错误处理要完整**
    ```typescript
    try {
@@ -2259,16 +2268,14 @@ function formatTime(timeStr: string): string {
      loading.value = false
    }
    ```
-
 3. **Loading状态管理**
    ```typescript
    // 在请求前设置
    loading.value = true
-   
+
    // 在finally中重置
    finally { loading.value = false }
    ```
-
 4. **使用composables复用逻辑**
    ```typescript
    // composable: useRequest.ts
@@ -2300,18 +2307,17 @@ function formatTime(timeStr: string): string {
    <!-- 差 -->
    <script setup>
    import axios from 'axios'
-   
+
    onMounted(() => {
      axios.get('/api/posts')  // ❌ 不要这样做
    })
    </script>
    ```
-
 2. **不要忽略错误**
    ```typescript
    // 差
    const data = await api.call()  // 可能抛异常
-   
+
    // 好
    try {
      const data = await api.call()
@@ -2319,17 +2325,15 @@ function formatTime(timeStr: string): string {
      handleError(e)
    }
    ```
-
 3. **不要硬编码API路径**
    ```typescript
    // 差
    axios.get('/api/v1/community/posts')  // ❌ 硬编码
-   
+
    // 好
    import { communityApi } from '@/api/modules/community.api'
    communityApi.getPosts()  // ✅ 封装好的方法
    ```
-
 4. **不要在Store中进行大量数据处理**
    ```typescript
    // 差：Store中有复杂的业务逻辑
@@ -2340,13 +2344,13 @@ function formatTime(timeStr: string): string {
        // ... 100行计算逻辑
      }
    }
-   
+
    // 好：复杂逻辑抽取到utils或services
    import { calculateAssessmentScore } from '@/utils/assessment'
    const score = calculateAssessmentScore(data)
    ```
 
----
+***
 
 ## 10. 迁移指南
 
@@ -2355,6 +2359,7 @@ function formatTime(timeStr: string): string {
 #### Step 1: 识别硬编码数据
 
 在Views中搜索以下模式：
+
 ```typescript
 // 硬编码数组
 const xxxList = [ { ... }, { ... } ]
@@ -2385,6 +2390,7 @@ setTimeout(() => { ... }, 1000)
 ### 10.2 迁移示例：Profile.vue
 
 **Before（硬编码）**:
+
 ```typescript
 // 第199行
 const interviewHistory = [
@@ -2394,6 +2400,7 @@ const interviewHistory = [
 ```
 
 **After（API调用）**:
+
 ```typescript
 import { useUserStore } from '@/stores/user'
 import { useLearningStore } from '@/stores/learning'
@@ -2426,13 +2433,14 @@ onMounted(async () => {
 - [ ] Mock模式下数据正常
 - [ ] 关闭Mock后连接真实API正常
 
----
+***
 
 ## 11. 测试策略
 
 ### 11.1 单元测试
 
 #### 测试HTTP基础设施
+
 ```typescript
 // tests/unit/http.test.ts
 import { describe, it, expect } from 'vitest'
@@ -2454,6 +2462,7 @@ describe('HTTP Client', () => {
 ```
 
 #### 测试Token管理
+
 ```typescript
 // tests/unit/auth.test.ts
 import { describe, it, expect, beforeEach } from 'vitest'
@@ -2486,6 +2495,7 @@ describe('Token Management', () => {
 ### 11.2 集成测试
 
 #### 测试Mock适配器
+
 ```typescript
 // tests/integration/mock.test.ts
 import { describe, it, expect } from 'vitest'
@@ -2544,51 +2554,57 @@ test.describe('Authentication Flow', () => {
 })
 ```
 
----
+***
 
 ## 12. 风险与缓解措施
 
 ### 12.1 技术风险
 
-| 风险 | 概率 | 影响 | 缓解措施 |
-|------|------|------|----------|
-| Axios版本兼容性问题 | 低 | 中 | 锁定版本号，充分测试 |
-| Mock数据与真实API不一致 | 高 | 高 | 严格的类型约束，自动化对比测试 |
-| Token过期处理不当 | 中 | 高 | 完善的错误处理和刷新机制 |
-| 并发请求竞态条件 | 低 | 中 | 请求锁、防抖节流 |
-| 大文件上传内存溢出 | 低 | 高 | 分片上传、进度监控 |
+| 风险              | 概率 | 影响 | 缓解措施            |
+| --------------- | -- | -- | --------------- |
+| Axios版本兼容性问题    | 低  | 中  | 锁定版本号，充分测试      |
+| Mock数据与真实API不一致 | 高  | 高  | 严格的类型约束，自动化对比测试 |
+| Token过期处理不当     | 中  | 高  | 完善的错误处理和刷新机制    |
+| 并发请求竞态条件        | 低  | 中  | 请求锁、防抖节流        |
+| 大文件上传内存溢出       | 低  | 高  | 分片上传、进度监控       |
 
 ### 12.2 进度风险
 
-| 风险 | 概率 | 影响 | 缓解措施 |
-|------|------|------|----------|
-| 估算不准确 | 中 | 中 | 预留20%缓冲时间 |
-| 需求变更 | 中 | 高 | 模块化设计，降低耦合 |
-| 技术难点卡住 | 低 | 高 | 提前调研，准备备选方案 |
-| 团队成员变动 | 低 | 中 | 完善的文档和代码注释 |
+| 风险     | 概率 | 影响 | 缓解措施        |
+| ------ | -- | -- | ----------- |
+| 估算不准确  | 中  | 中  | 预留20%缓冲时间   |
+| 需求变更   | 中  | 高  | 模块化设计，降低耦合  |
+| 技术难点卡住 | 低  | 高  | 提前调研，准备备选方案 |
+| 团队成员变动 | 低  | 中  | 完善的文档和代码注释  |
 
 ### 12.3 应急预案
 
 #### 场景1: Mock数据无法覆盖所有场景
+
 **预案**:
+
 - 临时混合使用：部分接口用Mock，部分用真实API
 - 使用Mock.js动态生成随机数据
 - 手动补充边界case
 
 #### 场景2: 后端API不稳定
+
 **预案**:
+
 - 增加重试机制
 - 降级到Mock模式
 - 增加本地缓存层
 
 #### 场景3: 性能不达标
+
 **预案**:
+
 - 虚拟滚动（长列表）
 - 数据分页
 - 图片懒加载
 - CDN加速
 
----
+***
 
 ## 附录A: 快速参考卡片
 
@@ -2614,22 +2630,22 @@ pnpm typecheck
 
 ### A.2 文件速查表
 
-| 需求 | 文件位置 |
-|------|----------|
-| Axios配置 | `src/utils/http.ts` |
-| 请求方法 | `src/utils/request.ts` |
-| Token管理 | `src/utils/auth.ts` |
-| 错误处理 | `src/utils/error.ts` |
-| 认证API | `src/api/modules/auth.api.ts` |
-| 用户API | `src/api/modules/user.api.ts` |
-| 社区API | `src/api/modules/community.api.ts` |
-| 类型定义 | `src/api/types/*.types.ts` |
-| Mock适配器 | `src/mock/adapter.ts` |
-| Mock数据 | `src/mock/data/*.mock.ts` |
-| Mock处理器 | `src/mock/handlers/*.handler.ts` |
-| 用户Store | `src/stores/user.ts` |
-| 社区Store | `src/stores/community.ts` |
-| 环境变量 | `.env.development/.production/.staging` |
+| 需求      | 文件位置                                    |
+| ------- | --------------------------------------- |
+| Axios配置 | `src/utils/http.ts`                     |
+| 请求方法    | `src/utils/request.ts`                  |
+| Token管理 | `src/utils/auth.ts`                     |
+| 错误处理    | `src/utils/error.ts`                    |
+| 认证API   | `src/api/modules/auth.api.ts`           |
+| 用户API   | `src/api/modules/user.api.ts`           |
+| 社区API   | `src/api/modules/community.api.ts`      |
+| 类型定义    | `src/api/types/*.types.ts`              |
+| Mock适配器 | `src/mock/adapter.ts`                   |
+| Mock数据  | `src/mock/data/*.mock.ts`               |
+| Mock处理器 | `src/mock/handlers/*.handler.ts`        |
+| 用户Store | `src/stores/user.ts`                    |
+| 社区Store | `src/stores/community.ts`               |
+| 环境变量    | `.env.development/.production/.staging` |
 
 ### A.3 环境变量一览
 
@@ -2650,16 +2666,18 @@ VITE_MOCK_DELAY=300  # Mock延迟(ms)
 VITE_ENABLE_DEVTOOLS=true  # 开发工具
 ```
 
----
+***
 
 ## 附录B: 相关资源
 
 ### B.1 参考项目
+
 - [Vue Element Admin](https://github.com/PanJiaChen/vue-element-admin)
 - [Ant Design Pro Vue](https://github.com/vueComponent/ant-design-vue-pro)
 - [Vben Admin](https://github.com/vbenjs/vue-vben-admin)
 
 ### B.2 官方文档
+
 - [Axios文档](https://axios-http.com/)
 - [Pinia文档](https://pinia.vuejs.org/)
 - [Vue Router文档](https://router.vuejs.org/)
@@ -2667,17 +2685,19 @@ VITE_ENABLE_DEVTOOLS=true  # 开发工具
 - [axios-mock-adapter](https://github.com/ctimmerm/axios-mock-adapter)
 
 ### B.3 推荐阅读
+
 - 《Vue.js设计与实现》
 - 《TypeScript编程》
 - 《前端工程化：体系设计与实践》
 
----
+***
 
 ## 结语
 
 本文档提供了完整的前端API联调实施方案，涵盖了从基础设施建设到Mock数据迁移的全过程。按照此方案执行，可以在10-12个工作日内完成核心功能的联调工作。
 
 **关键成功因素**:
+
 1. ✅ 严格按照阶段推进，每个Phase结束进行验收
 2. ✅ 保持Mock数据与真实API的一致性
 3. ✅ 及时编写测试，确保重构不引入回归Bug
@@ -2685,10 +2705,99 @@ VITE_ENABLE_DEVTOOLS=true  # 开发工具
 
 如有疑问或需要调整方案，请及时沟通！
 
----
+***
 
 **文档版本历史**
 
-| 版本 | 日期 | 作者 | 变更说明 |
-|------|------|------|----------|
-| v1.0 | 2026-05-09 | AI Assistant | 初稿 |
+| 版本   | 日期         | 作者           | 变更说明 |
+| ---- | ---------- | ------------ | ---- |
+| v1.0 | 2026-05-09 | AI Assistant | 初稿   |
+| v1.1 | 2026-05-10 | AI Assistant | 更新实施进度，补充 Phase 1-4 完成状态和剩余工作 |
+
+---
+
+## 附录C: 实施进度追踪（v1.1 新增）
+
+> 本章节追踪实际实施进度与原计划的偏差，以及剩余工作项。
+
+### Phase 1-4 完成状态
+
+| Phase | 原计划 | 实际状态 | 偏差说明 |
+|-------|--------|----------|----------|
+| Phase 1: 基础设施搭建 | Day 1-2 | ✅ 已完成 | 基本按计划执行，额外修复了 tsconfig paths 配置和类型导入路径错误 |
+| Phase 2: 认证系统对接 | Day 3-4 | ✅ 已完成 | LoginRequest 字段从 email 改为 username（与后端对齐）；额外创建了 useErrorBoundary composable |
+| Phase 3: Mock数据迁移 | Day 5-6 | ✅ 已完成 | 额外创建了 assessment.mock.ts 和 assessment.handler.ts（原计划未明确列出） |
+| Phase 4: Store层重构 | Day 7-8 | ✅ 已完成 | 仅完成了 Profile.vue 和 Community.vue 的 View 层重构，其他 12 个页面未对接 Store |
+| Phase 5: 优化与收尾 | Day 9-10 | ❌ 未开始 | — |
+
+### 原计划 vs 实际交付对比
+
+| 原计划交付项 | 实际交付 | 状态 |
+|-------------|---------|------|
+| 完整的HTTP基础设施 | `http.ts` + `request.ts` + `auth.ts` + `error.ts` + `storage.ts` | ✅ 完成 |
+| 类型定义文件 | 7个 types 文件（含 index.ts） | ✅ 完成 |
+| API服务层（8个模块） | 6个模块（auth/user/community/learning/assessment/job） | ⚠️ 缺少 notification 和 system 模块 |
+| 认证系统对接 | User Store 重构 + 路由守卫 + LoginForm + useAuth | ✅ 完成 |
+| Mock数据层 | 5个 mock data + 5个 handler + adapter | ⚠️ 缺少 job/notification/system 模块 |
+| Store层重构（所有Store） | 5个 Store（user/community/learning/assessment/interview） | ⚠️ interview Store 无 API 调用 |
+| View层重构（所有Views） | 仅 Profile.vue 和 Community.vue | ❌ 12个页面未对接 |
+| 单元测试 | 未编写 | ❌ 未完成 |
+| 集成测试 | 未编写 | ❌ 未完成 |
+
+### 剩余工作清单（按优先级排序）
+
+#### 🔴 P0: View层Store对接（核心阻塞项）
+
+12个页面仍使用硬编码数据，需要对接 Store：
+
+| 页面 | 硬编码数据量 | 需要的 Store | 优先级 | 说明 |
+|------|------------|-------------|--------|------|
+| Growth.vue | 大（stats/skills/growthData/radarData 等） | 需新建 growth Store | 🔴 高 | 数据量大，ECharts 已正确实现 |
+| Matching.vue | 大（5个岗位匹配结果） | useAssessmentStore（已有） | 🔴 高 | Store 和 API 层已就绪，仅需对接 |
+| Interview.vue | 大（题库/评分/详情） | useInterviewStore（需完善） | 🔴 高 | Store 存在但无 API 调用 |
+| GameInterview.vue | 大（5关卡/统计/排行） | useInterviewStore（需完善） | 🟡 中 | 与 Interview 共用 Store |
+| Knowledge.vue | 中（岗位分类/题库） | 需新建 knowledge Store | 🟡 中 | 静态导航数据 |
+| Practice.vue | 中（题库数据） | 需新建 practice Store | 🟡 中 | 题库数据 |
+| LevelChallenge.vue | 中（5关卡/面试问题） | useInterviewStore（需完善） | 🟡 中 | 摄像头验证已实现 |
+| LevelDetail.vue | 小（关卡详情） | useInterviewStore（需完善） | 🟢 低 | — |
+| JobSpecificQuestionBank.vue | 小（模拟题目） | 需新建或复用 Store | 🟢 低 | — |
+| PathPractice.vue | 小（路径详情） | 需新建或复用 Store | 🟢 低 | — |
+| Report.vue | 小（报告数据） | 需新建或复用 Store | 🟢 低 | — |
+| Home.vue | 中（功能/服务/新闻/评价/FAQ） | 需新建 home Store | 🟢 低 | 展示型页面 |
+
+#### 🟡 P1: 缺失模块补充
+
+| 缺失项 | 说明 | 优先级 |
+|--------|------|--------|
+| `api/modules/notification.api.ts` | 后端有 `/notifications` 端点，前端未创建 API 模块 | 🟡 中 |
+| `api/modules/system.api.ts` | 后端有 `/system` 端点，前端未创建 API 模块 | 🟢 低 |
+| `mock/data/job.mock.ts` + `mock/handlers/job.handler.ts` | API 层有 job 模块但 Mock 层缺失 | 🟡 中 |
+| `stores/interview.ts` API 调用层 | Store 仅含本地状态管理，无 API 调用 | 🔴 高 |
+| `src/config/` 目录 | 规约要求存在，当前缺失 | 🟢 低 |
+
+#### 🟢 P2: 质量保障
+
+| 待办项 | 说明 | 优先级 |
+|--------|------|--------|
+| 单元测试 | HTTP/Token/Error/Storage 工具函数测试 | 🟡 中 |
+| 集成测试 | Mock 适配器 + Store + API 集成测试 | 🟡 中 |
+| E2E 测试 | 登录/注册/核心流程端到端测试 | 🟢 低 |
+| Token 刷新机制 | 后端目前未提供 refresh 端点 | 🟢 低 |
+| 多标签页登录状态同步 | 监听 storage 事件 | 🟢 低 |
+| Vite 构建产物代码分割优化 | 当前单 chunk 超 2MB（已有 manualChunks 但需优化） | 🟡 中 |
+| axios-mock-adapter 生产打包 | 生产构建时不应打包 mock-adapter | 🟢 低 |
+
+### 建议的下一阶段实施路径
+
+#### Phase 4.5: 核心 View 对接（预计 4-5 天）
+
+1. **Day 1**: 完善 `interview.ts` Store（添加 API 调用），对接 Interview.vue
+2. **Day 2**: 对接 Matching.vue（使用已有 assessmentStore），对接 Growth.vue（新建 growth Store）
+3. **Day 3**: 对接 GameInterview.vue + LevelChallenge.vue（使用 interviewStore）
+4. **Day 4**: 对接 Knowledge.vue + Practice.vue（新建 knowledge/practice Store）
+5. **Day 5**: 对接剩余页面（Home/Report/PathPractice 等）
+
+#### Phase 5: 优化与收尾（预计 2-3 天）
+
+按原计划 Phase 5 执行，补充测试和文档。
+
