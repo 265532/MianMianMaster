@@ -21,9 +21,7 @@
   --background-gradient-primary: linear-gradient(135deg, #18C5C7 0%, #95E0E1 100%);
   --background-gradient-cyan-yellow: linear-gradient(135deg, #95E0E1 0%, #FFEAC2 100%);
   --background-gradient-yellow-orange: linear-gradient(135deg, #FFEAC2 0%, #FFC585 100%);
-  /* 圆心位置：中心，渐变半径：默认 */
-  --background-gradient-yellow-orange: radial-gradient(circle at center, #FFEAC2 0%, #FFC585 100%);
-  /* 圆心位置：中心，渐变半径：默认 */
+--background-gradient-yellow-orange-radial: radial-gradient(circle at center, #FFEAC2 0%, #FFC585 100%);
 }
 
 :root {
