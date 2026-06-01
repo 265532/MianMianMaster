@@ -1,12 +1,16 @@
 import { defineConfig, loadEnv } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { resolve } from 'path'
+import { mockSsePlugin } from './src/mock/plugins/mock-sse-plugin'
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
 
   return {
-    plugins: [vue()],
+    plugins: [
+      vue(),
+      ...(env.VITE_USE_MOCK === 'true' ? [mockSsePlugin()] : []),
+    ],
     server: {
       port: 9000,
       proxy: env.VITE_PROXY_TARGET
@@ -14,6 +18,7 @@ export default defineConfig(({ mode }) => {
             '/api': {
               target: env.VITE_PROXY_TARGET,
               changeOrigin: true,
+              timeout: 60000,
             },
           }
         : undefined,

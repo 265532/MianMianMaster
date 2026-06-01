@@ -534,3 +534,21 @@
 | PathPractice.vue | 🟡 通过 learningStore | 小（路径详情） | 🟢 低 |
 | Report.vue | 🟡 通过 assessmentStore | 中（报告数据暂保留） | 🟢 低 |
 | Home.vue | 🟡 通过 systemApi | 中（功能/服务/新闻/评价/FAQ） | 🟢 低 |
+
+### 2026-05-31 更新：API 基础设施联调审查
+
+| 文档 | 路径 | 说明 |
+|------|------|------|
+| API 联调交接 | `docs/api/handover.md` | 本轮完整工作总结 |
+| 基础设施审查报告 | `docs/api/infrastructure-review-report.md` | 联调准备度审查（含 SSE 补充审查） |
+| 修复任务清单 | `docs/api/fix-checklist.md` | 15 项 P0/P1/P2 全部完成 |
+| 后端对接接口大纲 | `docs/api/frontend-api-integration-guide.md` | 73 个后端端点清单 |
+
+**本轮核心成果**:
+- 15 项基础设施问题全部修复（P0×5、P1×5、P2×5）
+- SSE 流式对话全链路集成
+- Interview API 与后端 8 端点对齐
+- 开发规约新增 §17/§18/§19 三条红色标记规则
+- 96 个测试用例（+18 Interview 集成测试）
+
+```

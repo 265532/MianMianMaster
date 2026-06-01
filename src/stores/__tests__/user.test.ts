@@ -1,168 +1,180 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { setActivePinia, createPinia } from 'pinia'
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { setActivePinia, createPinia } from "pinia";
 
-vi.mock('@/api/modules/auth.api', () => ({
+vi.mock("@/api/modules/auth.api", () => ({
   authApi: {
     login: vi.fn(),
     register: vi.fn(),
-    getUserInfo: vi.fn()
-  }
-}))
+    getUserInfo: vi.fn(),
+  },
+}));
 
-vi.mock('@/api/modules/user.api', () => ({
+vi.mock("@/api/modules/user.api", () => ({
   userApi: {
     getProfile: vi.fn(),
     getInterviewHistory: vi.fn(),
     getAbilityData: vi.fn(),
     getGameInterviewData: vi.fn(),
     getResume: vi.fn(),
-    diagnoseResume: vi.fn()
-  }
-}))
+    diagnoseResume: vi.fn(),
+  },
+}));
 
-vi.mock('@/utils/auth', () => ({
+vi.mock("@/utils/auth", () => ({
   getToken: vi.fn(),
   setToken: vi.fn(),
   removeToken: vi.fn(),
   isLoggedIn: vi.fn(() => false),
   getCachedUserInfo: vi.fn(() => null),
-  cacheUserInfo: vi.fn()
-}))
+  cacheUserInfo: vi.fn(),
+}));
 
-describe('useUserStore integration', () => {
+describe("useUserStore integration", () => {
   beforeEach(() => {
-    setActivePinia(createPinia())
-    vi.clearAllMocks()
-    localStorage.clear()
-  })
+    setActivePinia(createPinia());
+    vi.clearAllMocks();
+    localStorage.clear();
+  });
 
-  describe('login', () => {
-    it('should login successfully and set user state', async () => {
-      const { authApi } = await import('@/api/modules/auth.api')
-      const mockedLogin = vi.mocked(authApi.login)
-      const mockedGetUserInfo = vi.mocked(authApi.getUserInfo)
+  describe("login", () => {
+    it("should login successfully and set user state", async () => {
+      const { authApi } = await import("@/api/modules/auth.api");
+      const mockedLogin = vi.mocked(authApi.login);
+      const mockedGetUserInfo = vi.mocked(authApi.getUserInfo);
 
       mockedLogin.mockResolvedValue({
         code: 200,
-        message: 'success',
+        message: "success",
         data: {
-          access_token: 'mock-jwt-token',
-          token_type: 'bearer',
-          expires_in: 3600
-        }
-      })
+          access_token: "mock-jwt-token",
+          token_type: "bearer",
+          expires_in: 3600,
+        },
+      });
 
       mockedGetUserInfo.mockResolvedValue({
         code: 200,
-        message: 'success',
+        message: "success",
         data: {
           id: 1,
-          email: 'wang@example.com',
-          username: '王同学',
-          avatar_url: '',
+          email: "wang@example.com",
+          username: "王同学",
+          avatar_url: "",
           is_active: true,
-          role: 'user',
-          created_at: '2026-01-01T00:00:00Z',
-          updated_at: '2026-05-09T00:00:00Z',
-          profile: { skills: ['Vue3', 'TypeScript'] }
-        }
-      })
+          role: "user",
+          created_at: "2026-01-01T00:00:00Z",
+          updated_at: "2026-05-09T00:00:00Z",
+          profile: { skills: ["Vue3", "TypeScript"] },
+        },
+      });
 
-      const { useUserStore } = await import('@/stores/user')
-      const store = useUserStore()
+      const { useUserStore } = await import("@/stores/user");
+      const store = useUserStore();
 
-      const result = await store.login('wang@example.com', 'password123')
+      const result = await store.login("wang@example.com", "password123");
 
-      expect(result).toBe(true)
+      expect(result).toBe(true);
       expect(mockedLogin).toHaveBeenCalledWith({
-        username: 'wang@example.com',
-        password: 'password123'
-      })
-      expect(mockedGetUserInfo).toHaveBeenCalled()
-    })
+        username: "wang@example.com",
+        password: "password123",
+      });
+      expect(mockedGetUserInfo).toHaveBeenCalled();
+    });
 
-    it('should handle login failure', async () => {
-      const { authApi } = await import('@/api/modules/auth.api')
-      const mockedLogin = vi.mocked(authApi.login)
+    it("should handle login failure", async () => {
+      const { authApi } = await import("@/api/modules/auth.api");
+      const mockedLogin = vi.mocked(authApi.login);
 
-      mockedLogin.mockRejectedValue(new Error('Invalid credentials'))
+      mockedLogin.mockRejectedValue(new Error("Invalid credentials"));
 
-      const { useUserStore } = await import('@/stores/user')
-      const store = useUserStore()
+      const { useUserStore } = await import("@/stores/user");
+      const store = useUserStore();
 
-      await expect(store.login('wrong@example.com', 'wrong')).rejects.toThrow('Invalid credentials')
-      expect(store.user.isAuthenticated).toBe(false)
-    })
-  })
+      await expect(store.login("wrong@example.com", "wrong")).rejects.toThrow(
+        "Invalid credentials",
+      );
+      expect(store.user.isAuthenticated).toBe(false);
+    });
+  });
 
-  describe('register', () => {
-    it('should register successfully', async () => {
-      const { authApi } = await import('@/api/modules/auth.api')
-      const mockedRegister = vi.mocked(authApi.register)
+  describe("register", () => {
+    it("should register successfully", async () => {
+      const { authApi } = await import("@/api/modules/auth.api");
+      const mockedRegister = vi.mocked(authApi.register);
 
       mockedRegister.mockResolvedValue({
         code: 200,
-        message: 'success',
+        message: "success",
         data: {
           id: 2,
-          email: 'new@example.com',
-          username: '新用户',
-          avatar_url: '',
+          email: "new@example.com",
+          username: "新用户",
+          avatar_url: "",
           is_active: true,
-          role: 'user',
-          created_at: '2026-05-10T00:00:00Z',
-          updated_at: '2026-05-10T00:00:00Z'
-        }
-      })
+          role: "user",
+          created_at: "2026-05-10T00:00:00Z",
+          updated_at: "2026-05-10T00:00:00Z",
+        },
+      });
 
-      const { useUserStore } = await import('@/stores/user')
-      const store = useUserStore()
+      const { useUserStore } = await import("@/stores/user");
+      const store = useUserStore();
 
-      const result = await store.register('newuser', 'new@example.com', 'password123')
+      const result = await store.register(
+        "newuser",
+        "new@example.com",
+        "password123",
+      );
 
-      expect(result).toBe(true)
-      expect(mockedRegister).toHaveBeenCalled()
-    })
-  })
+      expect(result).toBe(true);
+      expect(mockedRegister).toHaveBeenCalled();
+    });
+  });
 
-  describe('logout', () => {
-    it('should clear user state on logout', async () => {
-      const { useUserStore } = await import('@/stores/user')
-      const { removeToken } = await import('@/utils/auth')
-      const store = useUserStore()
+  describe("logout", () => {
+    it("should clear user state on logout", async () => {
+      const { useUserStore } = await import("@/stores/user");
+      const { removeToken } = await import("@/utils/auth");
+      const store = useUserStore();
 
-      store.logout()
+      store.logout();
 
-      expect(store.user.isAuthenticated).toBe(false)
-      expect(store.user.name).toBe('')
-      expect(removeToken).toHaveBeenCalled()
-    })
-  })
+      expect(store.user.isAuthenticated).toBe(false);
+      expect(store.user.name).toBe("");
+      expect(removeToken).toHaveBeenCalled();
+    });
+  });
 
-  describe('fetchInterviewHistory', () => {
-    it('should fetch and store interview history', async () => {
-      const { userApi } = await import('@/api/modules/user.api')
-      const mockedGetInterviewHistory = vi.mocked(userApi.getInterviewHistory)
+  describe("fetchInterviewHistory", () => {
+    it("should fetch and store interview history", async () => {
+      const { userApi } = await import("@/api/modules/user.api");
+      const mockedGetInterviewHistory = vi.mocked(userApi.getInterviewHistory);
 
       mockedGetInterviewHistory.mockResolvedValue({
         code: 200,
-        message: 'success',
+        message: "success",
         data: {
           items: [
-            { id: 1, company: '字节跳动', position: '前端', score: 88, status: 'passed' }
+            {
+              id: 1,
+              company: "字节跳动",
+              position: "前端",
+              score: 88,
+              status: "passed",
+            },
           ],
           total: 1,
           page: 1,
-          page_size: 10
-        }
-      })
+          page_size: 10,
+        },
+      });
 
-      const { useUserStore } = await import('@/stores/user')
-      const store = useUserStore()
+      const { useUserStore } = await import("@/stores/user");
+      const store = useUserStore();
 
-      await store.fetchInterviewHistory()
+      await store.fetchInterviewHistory();
 
-      expect(mockedGetInterviewHistory).toHaveBeenCalled()
-    })
-  })
-})
+      expect(mockedGetInterviewHistory).toHaveBeenCalled();
+    });
+  });
+});

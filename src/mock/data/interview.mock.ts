@@ -1,69 +1,242 @@
-import type { GameLevel, GameStats, GameAchievement, LeaderboardEntry } from '../../api/types/interview.types'
+import type {
+  GameLevel,
+  GameStats,
+  GameAchievement,
+  LeaderboardEntry,
+  InterviewSession,
+  InterviewReport,
+} from "../../api/types/interview.types";
+
+export const mockInterviewSessions: InterviewSession[] = [
+  {
+    id: "session-001",
+    job_title: "前端开发工程师",
+    company: "字节跳动",
+    status: "completed",
+    type: "technical",
+    max_rounds: 10,
+    current_round: 10,
+    created_at: "2026-05-28T10:00:00Z",
+    started_at: "2026-05-28T10:01:00Z",
+    ended_at: "2026-05-28T10:30:00Z",
+    total_score: 85,
+    feedback: "技术基础扎实，沟通表达清晰，建议加强系统设计能力。",
+    details: {
+      technical: 88,
+      communication: 82,
+      logic: 85,
+      problem_solving: 80,
+    },
+  },
+  {
+    id: "session-002",
+    job_title: "全栈开发工程师",
+    company: "腾讯",
+    status: "in_progress",
+    type: "technical",
+    max_rounds: 10,
+    current_round: 3,
+    created_at: "2026-05-30T14:00:00Z",
+    started_at: "2026-05-30T14:01:00Z",
+  },
+  {
+    id: "session-003",
+    job_title: "React 开发工程师",
+    company: "阿里巴巴",
+    status: "scheduled",
+    type: "technical",
+    max_rounds: 8,
+    current_round: 0,
+    created_at: "2026-05-31T09:00:00Z",
+  },
+];
+
+export const mockInterviewReport: InterviewReport = {
+  session_id: "session-001",
+  status: "completed",
+  overall_score: 85,
+  dimensions: {
+    technical: 88,
+    communication: 82,
+    logic: 85,
+    problem_solving: 80,
+  },
+  strengths: [
+    "Vue 3 Composition API 理解深入",
+    "对前端性能优化有实际经验",
+    "代码组织能力较强",
+  ],
+  weaknesses: [
+    "系统设计思维需要加强",
+    "对微前端架构了解不够深入",
+  ],
+  suggestions: [
+    "建议学习系统设计方法论，如 CAP 理论、分布式系统设计",
+    "可以尝试实践微前端架构，了解 qiankun 或 Module Federation",
+    "多参与技术分享，提升表达能力",
+  ],
+  generated_at: "2026-05-28T10:31:00Z",
+};
 
 export const mockGameLevels: GameLevel[] = [
   {
-    id: 1, name: '关卡 01', title: '初级：校招面试', status: '已解锁', progress: 100,
-    description: '模拟校招面试场景，面试官会问一些基础的技术问题和行为问题，适合刚毕业的学生或实习生',
-    interviews: 5, completed: 5, timeSpent: '45分钟', successRate: '80%',
-    skills: ['基础知识', '自我介绍', '项目经验', '行为问题'],
-    unlockRequirements: null, icon: '🎓', background: 'bg-blue-50',
-    difficulty: '简单', reward: '校招面试认证', questionCount: 8, timeLimit: 30
+    id: 1,
+    name: "关卡 01",
+    title: "初级：校招面试",
+    status: "已解锁",
+    progress: 100,
+    description:
+      "模拟校招面试场景，面试官会问一些基础的技术问题和行为问题，适合刚毕业的学生或实习生",
+    interviews: 5,
+    completed: 5,
+    timeSpent: "45分钟",
+    successRate: "80%",
+    skills: ["基础知识", "自我介绍", "项目经验", "行为问题"],
+    unlockRequirements: null,
+    icon: "🎓",
+    background: "bg-blue-50",
+    difficulty: "简单",
+    reward: "校招面试认证",
+    questionCount: 8,
+    timeLimit: 30,
   },
   {
-    id: 2, name: '关卡 02', title: '中级：社招面试', status: '已解锁', progress: 30,
-    description: '模拟社招面试场景，面试官会问一些项目经验和技术深度的问题，适合有1-3年工作经验的开发者',
-    interviews: 8, completed: 2, timeSpent: '30分钟', successRate: '75%',
-    skills: ['项目经验', '技术深度', '系统设计', '团队协作'],
-    unlockRequirements: '完成关卡 01', icon: '💼', background: 'bg-green-50',
-    difficulty: '中等', reward: '社招面试认证', questionCount: 12, timeLimit: 45
+    id: 2,
+    name: "关卡 02",
+    title: "中级：社招面试",
+    status: "已解锁",
+    progress: 30,
+    description:
+      "模拟社招面试场景，面试官会问一些项目经验和技术深度的问题，适合有1-3年工作经验的开发者",
+    interviews: 8,
+    completed: 2,
+    timeSpent: "30分钟",
+    successRate: "75%",
+    skills: ["项目经验", "技术深度", "系统设计", "团队协作"],
+    unlockRequirements: "完成关卡 01",
+    icon: "💼",
+    background: "bg-green-50",
+    difficulty: "中等",
+    reward: "社招面试认证",
+    questionCount: 12,
+    timeLimit: 45,
   },
   {
-    id: 3, name: '关卡 03', title: '高级：架构师面试', status: '未解锁', progress: 0,
-    description: '模拟架构师面试场景，面试官会问一些架构设计和技术选型的问题，适合有5年以上经验的资深开发者',
-    interviews: 10, completed: 0, timeSpent: '0分钟', successRate: '0%',
-    skills: ['架构设计', '技术选型', '性能优化', '团队管理'],
-    unlockRequirements: '完成关卡 02', icon: '🏗️', background: 'bg-purple-50',
-    difficulty: '困难', reward: '架构师认证', questionCount: 15, timeLimit: 60
+    id: 3,
+    name: "关卡 03",
+    title: "高级：架构师面试",
+    status: "未解锁",
+    progress: 0,
+    description:
+      "模拟架构师面试场景，面试官会问一些架构设计和技术选型的问题，适合有5年以上经验的资深开发者",
+    interviews: 10,
+    completed: 0,
+    timeSpent: "0分钟",
+    successRate: "0%",
+    skills: ["架构设计", "技术选型", "性能优化", "团队管理"],
+    unlockRequirements: "完成关卡 02",
+    icon: "🏗️",
+    background: "bg-purple-50",
+    difficulty: "困难",
+    reward: "架构师认证",
+    questionCount: 15,
+    timeLimit: 60,
   },
   {
-    id: 4, name: '关卡 04', title: '专家：CTO面试', status: '未解锁', progress: 0,
-    description: '模拟CTO面试场景，面试官会问一些战略规划和技术管理的问题，适合有8年以上经验的技术管理者',
-    interviews: 12, completed: 0, timeSpent: '0分钟', successRate: '0%',
-    skills: ['战略规划', '技术管理', '商业模式', '领导力'],
-    unlockRequirements: '完成关卡 03', icon: '👑', background: 'bg-yellow-50',
-    difficulty: '专家', reward: 'CTO认证', questionCount: 20, timeLimit: 90
+    id: 4,
+    name: "关卡 04",
+    title: "专家：CTO面试",
+    status: "未解锁",
+    progress: 0,
+    description:
+      "模拟CTO面试场景，面试官会问一些战略规划和技术管理的问题，适合有8年以上经验的技术管理者",
+    interviews: 12,
+    completed: 0,
+    timeSpent: "0分钟",
+    successRate: "0%",
+    skills: ["战略规划", "技术管理", "商业模式", "领导力"],
+    unlockRequirements: "完成关卡 03",
+    icon: "👑",
+    background: "bg-yellow-50",
+    difficulty: "专家",
+    reward: "CTO认证",
+    questionCount: 20,
+    timeLimit: 90,
   },
   {
-    id: 5, name: '关卡 05', title: '终极：AI面试官', status: '未解锁', progress: 0,
-    description: '与AI面试官进行1v1深度面试，AI会根据你的回答动态调整问题难度和方向',
-    interviews: 15, completed: 0, timeSpent: '0分钟', successRate: '0%',
-    skills: ['综合能力', '临场应变', '深度思考', '创新思维'],
-    unlockRequirements: '完成关卡 04', icon: '🤖', background: 'bg-red-50',
-    difficulty: '终极', reward: 'AI面试官认证', questionCount: 25, timeLimit: 120
-  }
-]
+    id: 5,
+    name: "关卡 05",
+    title: "终极：AI面试官",
+    status: "未解锁",
+    progress: 0,
+    description:
+      "与AI面试官进行1v1深度面试，AI会根据你的回答动态调整问题难度和方向",
+    interviews: 15,
+    completed: 0,
+    timeSpent: "0分钟",
+    successRate: "0%",
+    skills: ["综合能力", "临场应变", "深度思考", "创新思维"],
+    unlockRequirements: "完成关卡 04",
+    icon: "🤖",
+    background: "bg-red-50",
+    difficulty: "终极",
+    reward: "AI面试官认证",
+    questionCount: 25,
+    timeLimit: 120,
+  },
+];
 
 export const mockGameStats: GameStats = {
   completedLevels: 1,
   totalQuestions: 45,
-  correctRate: '80%',
+  correctRate: "80%",
   certifications: 1,
-  streak: '3天',
-  totalScore: '1,250'
-}
+  streak: "3天",
+  totalScore: "1,250",
+};
 
 export const mockGameAchievements: GameAchievement[] = [
-  { id: 1, name: '初次尝试', description: '完成第一次游戏式面试', unlocked: true, unlockedAt: '2026-03-01' },
-  { id: 2, name: '连续打卡', description: '连续10天进行面试练习', unlocked: true, unlockedAt: '2026-03-12' },
-  { id: 3, name: '正确率达人', description: '单次关卡正确率达到90%以上', unlocked: true, unlockedAt: '2026-03-18' },
-  { id: 4, name: '挑战大师', description: '完成所有困难级别关卡', unlocked: false, progress: 25 },
-  { id: 5, name: '知识渊博', description: '完成所有技能类别的题目', unlocked: false, progress: 40 }
-]
+  {
+    id: 1,
+    name: "初次尝试",
+    description: "完成第一次游戏式面试",
+    unlocked: true,
+    unlockedAt: "2026-03-01",
+  },
+  {
+    id: 2,
+    name: "连续打卡",
+    description: "连续10天进行面试练习",
+    unlocked: true,
+    unlockedAt: "2026-03-12",
+  },
+  {
+    id: 3,
+    name: "正确率达人",
+    description: "单次关卡正确率达到90%以上",
+    unlocked: true,
+    unlockedAt: "2026-03-18",
+  },
+  {
+    id: 4,
+    name: "挑战大师",
+    description: "完成所有困难级别关卡",
+    unlocked: false,
+    progress: 25,
+  },
+  {
+    id: 5,
+    name: "知识渊博",
+    description: "完成所有技能类别的题目",
+    unlocked: false,
+    progress: 40,
+  },
+];
 
 export const mockLeaderboard: LeaderboardEntry[] = [
-  { rank: 1, name: '张三', score: 3250, avatar: '👨‍💻' },
-  { rank: 2, name: '李四', score: 3120, avatar: '👩‍💻' },
-  { rank: 3, name: '王五', score: 2980, avatar: '👨‍💻' },
-  { rank: 4, name: '赵六', score: 2950, avatar: '👩‍💻' },
-  { rank: 5, name: '王同学', score: 2850, avatar: '🧑‍💻', isCurrentUser: true }
-]
+  { rank: 1, name: "张三", score: 3250, avatar: "👨‍💻" },
+  { rank: 2, name: "李四", score: 3120, avatar: "👩‍💻" },
+  { rank: 3, name: "王五", score: 2980, avatar: "👨‍💻" },
+  { rank: 4, name: "赵六", score: 2950, avatar: "👩‍💻" },
+  { rank: 5, name: "王同学", score: 2850, avatar: "🧑‍💻", isCurrentUser: true },
+];

@@ -1,13 +1,13 @@
-import * as echarts from 'echarts/core'
-import { LineChart, RadarChart } from 'echarts/charts'
+import * as echarts from "echarts/core";
+import { LineChart, RadarChart } from "echarts/charts";
 import {
   TitleComponent,
   TooltipComponent,
   LegendComponent,
   GridComponent,
-  RadarComponent
-} from 'echarts/components'
-import { CanvasRenderer } from 'echarts/renderers'
+  RadarComponent,
+} from "echarts/components";
+import { CanvasRenderer } from "echarts/renderers";
 
 echarts.use([
   LineChart,
@@ -17,7 +17,7 @@ echarts.use([
   LegendComponent,
   GridComponent,
   RadarComponent,
-  CanvasRenderer
-])
+  CanvasRenderer,
+]);
 
-export default echarts
+export default echarts;

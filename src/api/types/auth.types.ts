@@ -1,45 +1,46 @@
 export interface LoginRequest {
-  username: string
-  password: string
+  username: string;
+  password: string;
 }
 
 export interface RegisterRequest {
-  username: string
-  email: string
-  password: string
-  phone?: string
-  role_ids?: number[]
+  username: string;
+  email: string;
+  password: string;
+  phone?: string;
+  role_ids?: number[];
 }
 
 export interface Token {
-  access_token: string
-  token_type: string
+  access_token: string;
+  token_type: string;
+  refresh_token: string;
 }
 
 export interface SmsSendRequest {
-  phone: string
+  phone: string;
 }
 
 export interface SmsLoginRequest {
-  phone: string
-  code: string
+  phone: string;
+  code: string;
 }
 
 export interface PasswordResetTokenRequest {
-  email: string
+  email: string;
 }
 
 export interface PasswordResetRequest {
-  token: string
-  new_password: string
+  token: string;
+  new_password: string;
 }
 
 export interface ChangePasswordRequest {
-  old_password: string
-  new_password: string
+  old_password: string;
+  new_password: string;
 }
 
 export interface ChangePhoneRequest {
-  new_phone: string
-  code: string
+  new_phone: string;
+  code: string;
 }

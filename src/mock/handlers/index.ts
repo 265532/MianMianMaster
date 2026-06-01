@@ -1,5 +1,9 @@
-export { registerAuthHandlers } from './auth.handler'
-export { registerUserHandlers } from './user.handler'
-export { registerCommunityHandlers } from './community.handler'
-export { registerLearningHandlers } from './learning.handler'
-export { registerAssessmentHandlers } from './assessment.handler'
+export { registerAuthHandlers } from "./auth.handler";
+export { registerUserHandlers } from "./user.handler";
+export { registerCommunityHandlers } from "./community.handler";
+export { registerLearningHandlers } from "./learning.handler";
+export { registerAssessmentHandlers } from "./assessment.handler";
+export { registerInterviewHandlers } from "./interview.handler";
+export { registerJobHandlers } from "./job.handler";
+export { registerNotificationHandlers } from "./notification.handler";
+export { registerSystemHandlers } from "./system.handler";

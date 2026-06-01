@@ -216,6 +216,87 @@ VITE_MOCK_DELAY=300           # Mock 延迟(ms)
 - **强制 Must**: 交接文档内容必须包含：当前已实现的核心功能清单、未完成的 Todo 事项、关键技术决策说明、踩坑记录与经验教训、以及下一步开发的建议上下文。
 - **强制 Must**: 发现新的踩坑模式时，**必须**同步更新本规约文档（`frontend-development-specification.md`）中的对应红色标记条目。
 
+## 17. 🔴 SSE 流式响应（踩坑提炼）
+
+> **背景**: 后端面试模块 `/interview/sessions/{id}/chat` 使用 SSE 返回 `text/event-stream`，前端 `chatSSE()` 使用 `fetch()` 而非 axios，`axios-mock-adapter` 无法拦截。
+
+- **强制 Must**: SSE 流式响应的 Mock **必须**使用 Vite 中间件插件（`mock/plugins/`）在 HTTP 层拦截，**禁止**使用 `axios-mock-adapter` 模拟。
+- **强制 Must**: SSE 解析使用 `fetch()` + `ReadableStream.getReader()`，**禁止**使用 `EventSource`（不支持 POST + 自定义 Header）。
+- **强制 Must**: SSE 连接必须返回 `AbortController`，供调用方中断旧连接后发起新请求。
+- **强制 Must**: SSE 流解析日志必须记录：HTTP 状态/content-type → 流启动 → 每个 raw chunk → 每个 event 解析 → 流结束/异常。全部通过 `VITE_ENABLE_DEBUG_LOG` 控制。
+- **强制 Must**: 组件 `onUnmounted` 时必须 `stopChat()` 中断 SSE 连接。
+
+**SSE Mock 中间件标准模式**:
+```typescript
+// src/mock/plugins/mock-sse-plugin.ts
+import type { Plugin } from "vite";
+
+export function mockSsePlugin(): Plugin {
+  return {
+    name: "mock-sse-server",
+    configureServer(server) {
+      server.middlewares.use((req, res, next) => {
+        // 匹配 SSE endpoint
+        if (req.url?.match(/sse-pattern/) && req.method === "POST") {
+          // 读取请求体
+          // 设置 SSE headers
+          res.writeHead(200, {
+            "Content-Type": "text/event-stream",
+            "Cache-Control": "no-cache",
+            Connection: "keep-alive",
+          });
+          // 逐条发送 event: xxx\ndata: yyy\n\n
+          // 最后 res.end()
+          return;
+        }
+        next();
+      });
+    },
+  };
+}
+```
+
+**SSE API 层标准模式**:
+```typescript
+chatSSE(sessionId: string, message: string,
+  onEvent: (e: SseEvent) => void,
+  onError?: (e: Error) => void
+): AbortController {
+  const controller = new AbortController();
+  fetch(`${baseURL}/sessions/${sessionId}/chat`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ message }),
+    signal: controller.signal,
+  }).then(async (response) => {
+    const reader = response.body?.getReader();
+    // SSE 协议解析循环：event: xxx → data: yyy
+  }).catch(err => {
+    if (err.name !== "AbortError") onError?.(err);
+  });
+  return controller;
+}
+```
+
+## 18. 🔴 Mock 层级分工（踩坑提炼）
+
+> **背景**: 本轮发现 `axios-mock-adapter` 无法拦截 `fetch()` 请求，SSE 流式 Mock 需用 Vite 中间件。
+
+- **强制 Must**: Mock 体系分为两层：
+  - **axios 请求** → `axios-mock-adapter`（`mock/handlers/`）
+  - **fetch/SSE/WebSocket 请求** → Vite 中间件插件（`mock/plugins/`）
+- **强制 Must**: Vite 中间件插件必须在 `vite.config.ts` 的 `plugins` 中注册，并通过 `VITE_USE_MOCK` 条件启用。
+- **强制 Must**: 新增强制 HTTP 层的 Mock 需求时，先评估是 `axios-mock-adapter` 可拦截还是需要 Vite 中间件。
+
+## 19. 🔴 后端 API 对齐规范（踩坑提炼）
+
+> **背景**: P2-13 盲目将 Assessment BASE_URL 改为单数 `/assessment`，实际后端使用复数 `/assessments`。Interview Session 字段使用 camelCase（`jobTitle`），后端使用 snake_case（`job_title`）。
+
+- **强制 Must**: 前后端字段命名的唯一权威来源是**后端代码/Schema/接口文档**（本项目中为 `docs/api/frontend-api-integration-guide.md`）。禁止凭猜测或"风格一致"来修改。
+- **强制 Must**: API 类型定义（`src/api/types/`）字段名**必须**与后端 snake_case 严格一致。
+- **强制 Must**: 修改 `BASE_URL` 或端点路径前，**必须**与后端文档核对后端的实际路由前缀。
+- **推荐 Should**: 在 `docs/api/` 目录维护一份后端接口清单，作为联调时的字段对齐参考。
+
 ---
 
 ## 踩坑记录索引
@@ -231,3 +312,5 @@ VITE_MOCK_DELAY=300           # Mock 延迟(ms)
 | 2026-05-10 | Store 数据为 null 时模板直接访问属性报错 | §14 Store 数据空值防护 | 同上 |
 | 2026-05-10 | 类型导入路径错误（UserResponse 从 auth.types 导入） | §10 API 类型定义 | [handover.md](/docs/frontend-api/handover.md) |
 | 2026-05-10 | tsconfig 缺少 paths 配置导致 @/ 导入类型检查失败 | §13 构建验证 | [handover.md](/docs/frontend-api/handover.md) |
+| 2026-05-31 | axios-mock-adapter 无法拦截 fetch/SSE 流式请求 | §17 SSE 流式响应 + §18 Mock 层级分工 | [handover.md](/docs/api/handover.md) |
+| 2026-05-31 | 盲目修改 API 路径/字段名而不核对后端文档 | §19 后端 API 对齐规范 | [handover.md](/docs/api/handover.md) |

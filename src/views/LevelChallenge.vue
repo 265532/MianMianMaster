@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { 
-  Gamepad2, 
-  ChevronLeft, 
-  Clock, 
-  Zap, 
+import { ref, computed, onMounted } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import {
+  Gamepad2,
+  ChevronLeft,
+  Clock,
+  Zap,
   Trophy,
   Volume2,
   VolumeX,
@@ -20,771 +20,869 @@ import {
   CheckCircle2,
   AlertCircle,
   Video,
-  RefreshCw
-} from 'lucide-vue-next'
+  RefreshCw,
+} from "lucide-vue-next";
 
-const route = useRoute()
-const router = useRouter()
-const levelId = computed(() => parseInt(route.params.id as string) || 1)
+const route = useRoute();
+const router = useRouter();
+const levelId = computed(() => parseInt(route.params.id as string) || 1);
 
 // 摄像头和麦克风验证状态
-const showCameraVerification = ref(true)
-const cameraStream = ref<MediaStream | null>(null)
-const microphoneStream = ref<MediaStream | null>(null)
-const cameraEnabled = ref(false)
-const microphoneEnabled = ref(false)
-const verificationError = ref('')
+const showCameraVerification = ref(true);
+const cameraStream = ref<MediaStream | null>(null);
+const microphoneStream = ref<MediaStream | null>(null);
+const cameraEnabled = ref(false);
+const microphoneEnabled = ref(false);
+const verificationError = ref("");
 
 // 关卡数据
 const levels = [
   {
     id: 1,
-    name: '关卡 01',
-    title: '初级：校招面试',
-    description: '模拟校招面试场景，面试官会问一些基础的技术问题和行为问题',
+    name: "关卡 01",
+    title: "初级：校招面试",
+    description: "模拟校招面试场景，面试官会问一些基础的技术问题和行为问题",
     interviews: 5,
     timeLimit: 30,
-    difficulty: '简单',
-    rewards: '校招面试认证',
-    面试官: '初级面试官',
-    公司: '互联网公司',
-    面试类型: '校招',
-    问题数量: 8
+    difficulty: "简单",
+    rewards: "校招面试认证",
+    面试官: "初级面试官",
+    公司: "互联网公司",
+    面试类型: "校招",
+    问题数量: 8,
   },
   {
     id: 2,
-    name: '关卡 02',
-    title: '中级：社招面试',
-    description: '模拟社招面试场景，面试官会问一些项目经验和技术深度的问题',
+    name: "关卡 02",
+    title: "中级：社招面试",
+    description: "模拟社招面试场景，面试官会问一些项目经验和技术深度的问题",
     interviews: 8,
     timeLimit: 45,
-    difficulty: '中等',
-    rewards: '社招面试认证',
-    面试官: '中级面试官',
-    公司: '科技公司',
-    面试类型: '社招',
-    问题数量: 10
+    difficulty: "中等",
+    rewards: "社招面试认证",
+    面试官: "中级面试官",
+    公司: "科技公司",
+    面试类型: "社招",
+    问题数量: 10,
   },
   {
     id: 3,
-    name: '关卡 03',
-    title: '高级：资深工程师面试',
-    description: '模拟资深工程师面试场景，面试官会问一些复杂的技术问题和系统设计问题',
+    name: "关卡 03",
+    title: "高级：资深工程师面试",
+    description:
+      "模拟资深工程师面试场景，面试官会问一些复杂的技术问题和系统设计问题",
     interviews: 10,
     timeLimit: 60,
-    difficulty: '困难',
-    rewards: '资深工程师面试认证',
-    面试官: '高级面试官',
-    公司: '大型科技公司',
-    面试类型: '社招',
-    问题数量: 12
+    difficulty: "困难",
+    rewards: "资深工程师面试认证",
+    面试官: "高级面试官",
+    公司: "大型科技公司",
+    面试类型: "社招",
+    问题数量: 12,
   },
   {
     id: 4,
-    name: '关卡 04',
-    title: '专家：技术总监面试',
-    description: '模拟技术总监面试场景，面试官会问一些战略和管理相关的问题',
+    name: "关卡 04",
+    title: "专家：技术总监面试",
+    description: "模拟技术总监面试场景，面试官会问一些战略和管理相关的问题",
     interviews: 6,
     timeLimit: 90,
-    difficulty: '专家',
-    rewards: '技术总监面试认证',
-    面试官: '技术总监',
-    公司: '知名企业',
-    面试类型: '高管',
-    问题数量: 8
+    difficulty: "专家",
+    rewards: "技术总监面试认证",
+    面试官: "技术总监",
+    公司: "知名企业",
+    面试类型: "高管",
+    问题数量: 8,
   },
   {
     id: 5,
-    name: '关卡 05',
-    title: '大师：CTO 面试',
-    description: '模拟 CTO 面试场景，面试官会问一些公司战略和技术愿景的问题',
+    name: "关卡 05",
+    title: "大师：CTO 面试",
+    description: "模拟 CTO 面试场景，面试官会问一些公司战略和技术愿景的问题",
     interviews: 4,
     timeLimit: 120,
-    difficulty: '大师',
-    rewards: 'CTO 面试认证',
-    面试官: 'CTO',
-    公司: '行业巨头',
-    面试类型: '高管',
-    问题数量: 6
-  }
-]
+    difficulty: "大师",
+    rewards: "CTO 面试认证",
+    面试官: "CTO",
+    公司: "行业巨头",
+    面试类型: "高管",
+    问题数量: 6,
+  },
+];
 
 // 模拟面试问题数据 - 按关卡分类
 const interviewQuestions = {
   1: [
     {
       id: 1,
-      question: '请介绍一下你自己',
-      type: 'behavioral',
-      difficulty: 'easy',
-      category: '自我介绍',
-      tips: '简洁明了地介绍自己的背景、技能和优势，突出与岗位相关的经验',
-      exampleAnswer: '您好，我叫王小明，是计算机科学专业的应届毕业生。我在校期间学习了前端开发相关的课程，掌握了 HTML、CSS、JavaScript 等基础技术，并且有过一些项目经验。我对前端开发充满热情，希望能够在贵公司得到实践和成长的机会。'
+      question: "请介绍一下你自己",
+      type: "behavioral",
+      difficulty: "easy",
+      category: "自我介绍",
+      tips: "简洁明了地介绍自己的背景、技能和优势，突出与岗位相关的经验",
+      exampleAnswer:
+        "您好，我叫王小明，是计算机科学专业的应届毕业生。我在校期间学习了前端开发相关的课程，掌握了 HTML、CSS、JavaScript 等基础技术，并且有过一些项目经验。我对前端开发充满热情，希望能够在贵公司得到实践和成长的机会。",
     },
     {
       id: 2,
-      question: '你为什么选择我们公司？',
-      type: 'behavioral',
-      difficulty: 'easy',
-      category: '求职动机',
-      tips: '表达对公司的了解和认可，结合自身职业规划说明选择理由',
-      exampleAnswer: '我一直关注贵公司的产品和技术发展，贵公司在前端领域的技术创新和用户体验方面做得非常出色。我希望能够加入这样一个充满活力和创新精神的团队，同时也希望能够在贵公司的平台上发挥自己的技术能力，实现个人和公司的共同成长。'
+      question: "你为什么选择我们公司？",
+      type: "behavioral",
+      difficulty: "easy",
+      category: "求职动机",
+      tips: "表达对公司的了解和认可，结合自身职业规划说明选择理由",
+      exampleAnswer:
+        "我一直关注贵公司的产品和技术发展，贵公司在前端领域的技术创新和用户体验方面做得非常出色。我希望能够加入这样一个充满活力和创新精神的团队，同时也希望能够在贵公司的平台上发挥自己的技术能力，实现个人和公司的共同成长。",
     },
     {
       id: 3,
-      question: '你最大的优点是什么？',
-      type: 'behavioral',
-      difficulty: 'easy',
-      category: '个人优势',
-      tips: '结合具体例子，突出与岗位相关的优点',
-      exampleAnswer: '我认为我最大的优点是学习能力强，并且有较强的团队协作精神。在大学期间，我通过自学掌握了前端框架 Vue.js，并且在团队项目中能够积极与队友沟通，共同解决问题。'
+      question: "你最大的优点是什么？",
+      type: "behavioral",
+      difficulty: "easy",
+      category: "个人优势",
+      tips: "结合具体例子，突出与岗位相关的优点",
+      exampleAnswer:
+        "我认为我最大的优点是学习能力强，并且有较强的团队协作精神。在大学期间，我通过自学掌握了前端框架 Vue.js，并且在团队项目中能够积极与队友沟通，共同解决问题。",
     },
     {
       id: 4,
-      question: '你如何看待加班？',
-      type: 'behavioral',
-      difficulty: 'easy',
-      category: '工作态度',
-      tips: '表达对工作的责任心，同时强调效率的重要性',
-      exampleAnswer: '我认为在工作需要的时候，适当的加班是必要的。我会尽最大努力提高工作效率，避免不必要的加班，但如果项目需要，我会愿意投入更多的时间和精力来完成任务。'
+      question: "你如何看待加班？",
+      type: "behavioral",
+      difficulty: "easy",
+      category: "工作态度",
+      tips: "表达对工作的责任心，同时强调效率的重要性",
+      exampleAnswer:
+        "我认为在工作需要的时候，适当的加班是必要的。我会尽最大努力提高工作效率，避免不必要的加班，但如果项目需要，我会愿意投入更多的时间和精力来完成任务。",
     },
     {
       id: 5,
-      question: 'HTML5 有哪些新特性？',
-      type: 'technical',
-      difficulty: 'easy',
-      category: '前端技术',
-      tips: '列举主要的 HTML5 新特性，如语义化标签、Canvas、LocalStorage 等',
-      exampleAnswer: 'HTML5 的新特性包括：语义化标签（如 header、nav、section、footer 等）、Canvas 元素用于绘图、LocalStorage 和 SessionStorage 用于本地存储、音频和视频元素、地理定位 API、拖放 API 等。'
+      question: "HTML5 有哪些新特性？",
+      type: "technical",
+      difficulty: "easy",
+      category: "前端技术",
+      tips: "列举主要的 HTML5 新特性，如语义化标签、Canvas、LocalStorage 等",
+      exampleAnswer:
+        "HTML5 的新特性包括：语义化标签（如 header、nav、section、footer 等）、Canvas 元素用于绘图、LocalStorage 和 SessionStorage 用于本地存储、音频和视频元素、地理定位 API、拖放 API 等。",
     },
     {
       id: 6,
-      question: 'CSS 盒模型是什么？',
-      type: 'technical',
-      difficulty: 'easy',
-      category: '前端技术',
-      tips: '解释标准盒模型和 IE 盒模型的区别',
-      exampleAnswer: 'CSS 盒模型是由内容（content）、内边距（padding）、边框（border）和外边距（margin）组成的。标准盒模型中，width 和 height 只包括内容区域的尺寸，而 IE 盒模型中，width 和 height 包括内容、内边距和边框。'
+      question: "CSS 盒模型是什么？",
+      type: "technical",
+      difficulty: "easy",
+      category: "前端技术",
+      tips: "解释标准盒模型和 IE 盒模型的区别",
+      exampleAnswer:
+        "CSS 盒模型是由内容（content）、内边距（padding）、边框（border）和外边距（margin）组成的。标准盒模型中，width 和 height 只包括内容区域的尺寸，而 IE 盒模型中，width 和 height 包括内容、内边距和边框。",
     },
     {
       id: 7,
-      question: 'JavaScript 中的数据类型有哪些？',
-      type: 'technical',
-      difficulty: 'easy',
-      category: '前端技术',
-      tips: '区分基本数据类型和引用数据类型',
-      exampleAnswer: 'JavaScript 中的数据类型包括：基本数据类型（String、Number、Boolean、Null、Undefined、Symbol、BigInt）和引用数据类型（Object，包括 Array、Function、Date 等）。'
+      question: "JavaScript 中的数据类型有哪些？",
+      type: "technical",
+      difficulty: "easy",
+      category: "前端技术",
+      tips: "区分基本数据类型和引用数据类型",
+      exampleAnswer:
+        "JavaScript 中的数据类型包括：基本数据类型（String、Number、Boolean、Null、Undefined、Symbol、BigInt）和引用数据类型（Object，包括 Array、Function、Date 等）。",
     },
     {
       id: 8,
-      question: '你有什么问题要问我吗？',
-      type: 'behavioral',
-      difficulty: 'easy',
-      category: '面试结尾',
-      tips: '问一些关于公司文化、团队建设或职业发展的问题',
-      exampleAnswer: '是的，我想了解一下贵公司的团队结构和开发流程是怎样的？另外，对于新员工，贵公司有哪些培训和成长机会？'
+      question: "你有什么问题要问我吗？",
+      type: "behavioral",
+      difficulty: "easy",
+      category: "面试结尾",
+      tips: "问一些关于公司文化、团队建设或职业发展的问题",
+      exampleAnswer:
+        "是的，我想了解一下贵公司的团队结构和开发流程是怎样的？另外，对于新员工，贵公司有哪些培训和成长机会？",
     },
     {
       id: 9,
-      question: '什么是 CSS 选择器？常见的选择器有哪些？',
-      type: 'technical',
-      difficulty: 'easy',
-      category: '前端技术',
-      tips: '解释 CSS 选择器的概念，列举常见的选择器类型',
-      exampleAnswer: 'CSS 选择器是用于选择 HTML 元素并应用样式的模式。常见的选择器包括：元素选择器（如 div）、类选择器（如 .class）、ID 选择器（如 #id）、后代选择器（如 div p）、子选择器（如 div > p）、相邻兄弟选择器（如 div + p）、伪类选择器（如 :hover）等。'
+      question: "什么是 CSS 选择器？常见的选择器有哪些？",
+      type: "technical",
+      difficulty: "easy",
+      category: "前端技术",
+      tips: "解释 CSS 选择器的概念，列举常见的选择器类型",
+      exampleAnswer:
+        "CSS 选择器是用于选择 HTML 元素并应用样式的模式。常见的选择器包括：元素选择器（如 div）、类选择器（如 .class）、ID 选择器（如 #id）、后代选择器（如 div p）、子选择器（如 div > p）、相邻兄弟选择器（如 div + p）、伪类选择器（如 :hover）等。",
     },
     {
       id: 10,
-      question: '如何实现 CSS 动画？',
-      type: 'technical',
-      difficulty: 'easy',
-      category: '前端技术',
-      tips: '解释 CSS 动画的实现方法，包括 @keyframes 和 animation 属性',
-      exampleAnswer: 'CSS 动画可以通过 @keyframes 规则定义动画序列，然后使用 animation 属性应用到元素上。@keyframes 规则定义了动画的关键帧，animation 属性则指定了动画的名称、持续时间、缓动函数、延迟时间、重复次数等参数。'
-    }
+      question: "如何实现 CSS 动画？",
+      type: "technical",
+      difficulty: "easy",
+      category: "前端技术",
+      tips: "解释 CSS 动画的实现方法，包括 @keyframes 和 animation 属性",
+      exampleAnswer:
+        "CSS 动画可以通过 @keyframes 规则定义动画序列，然后使用 animation 属性应用到元素上。@keyframes 规则定义了动画的关键帧，animation 属性则指定了动画的名称、持续时间、缓动函数、延迟时间、重复次数等参数。",
+    },
   ],
   2: [
     {
       id: 1,
-      question: '请描述一个你做过的项目，你在其中扮演了什么角色？',
-      type: 'behavioral',
-      difficulty: 'medium',
-      category: '项目经验',
-      tips: 'STAR 法则：情境（Situation）、任务（Task）、行动（Action）、结果（Result）',
-      exampleAnswer: '我在大学期间参与了一个校园论坛的开发项目，担任前端开发负责人。当时的任务是构建一个响应式的论坛界面，提升用户体验。我使用了 HTML、CSS 和 JavaScript 技术，实现了论坛的基本功能，包括帖子发布、回复、用户登录等。最终，项目成功上线，受到了同学们的好评，同时我也在这个过程中积累了团队协作和项目管理的经验。'
+      question: "请描述一个你做过的项目，你在其中扮演了什么角色？",
+      type: "behavioral",
+      difficulty: "medium",
+      category: "项目经验",
+      tips: "STAR 法则：情境（Situation）、任务（Task）、行动（Action）、结果（Result）",
+      exampleAnswer:
+        "我在大学期间参与了一个校园论坛的开发项目，担任前端开发负责人。当时的任务是构建一个响应式的论坛界面，提升用户体验。我使用了 HTML、CSS 和 JavaScript 技术，实现了论坛的基本功能，包括帖子发布、回复、用户登录等。最终，项目成功上线，受到了同学们的好评，同时我也在这个过程中积累了团队协作和项目管理的经验。",
     },
     {
       id: 2,
-      question: 'JavaScript 中的闭包是什么？请举一个例子',
-      type: 'technical',
-      difficulty: 'medium',
-      category: '前端技术',
-      tips: '解释闭包的概念，说明其作用和应用场景',
-      exampleAnswer: '闭包是指有权访问另一个函数作用域中变量的函数。例如，当一个函数内部定义了另一个函数，内部函数可以访问外部函数的变量，即使外部函数已经执行完毕。闭包的应用场景包括：模块化代码、实现私有变量、柯里化等。'
+      question: "JavaScript 中的闭包是什么？请举一个例子",
+      type: "technical",
+      difficulty: "medium",
+      category: "前端技术",
+      tips: "解释闭包的概念，说明其作用和应用场景",
+      exampleAnswer:
+        "闭包是指有权访问另一个函数作用域中变量的函数。例如，当一个函数内部定义了另一个函数，内部函数可以访问外部函数的变量，即使外部函数已经执行完毕。闭包的应用场景包括：模块化代码、实现私有变量、柯里化等。",
     },
     {
       id: 3,
-      question: '你如何处理工作中的压力和挑战？',
-      type: 'behavioral',
-      difficulty: 'medium',
-      category: '抗压能力',
-      tips: '分享具体的应对策略和实际例子',
-      exampleAnswer: '当面对压力和挑战时，我会首先保持冷静，分析问题的本质和解决方案。然后制定合理的计划，分步骤解决问题。如果遇到困难，我会主动寻求同事或上级的帮助，同时不断学习和提升自己的能力。例如，在之前的项目中，我曾遇到过一个技术难题，通过查阅资料、与团队讨论，最终成功解决了问题，同时也提升了自己的技术水平。'
+      question: "你如何处理工作中的压力和挑战？",
+      type: "behavioral",
+      difficulty: "medium",
+      category: "抗压能力",
+      tips: "分享具体的应对策略和实际例子",
+      exampleAnswer:
+        "当面对压力和挑战时，我会首先保持冷静，分析问题的本质和解决方案。然后制定合理的计划，分步骤解决问题。如果遇到困难，我会主动寻求同事或上级的帮助，同时不断学习和提升自己的能力。例如，在之前的项目中，我曾遇到过一个技术难题，通过查阅资料、与团队讨论，最终成功解决了问题，同时也提升了自己的技术水平。",
     },
     {
       id: 4,
-      question: 'React 和 Vue 的区别是什么？',
-      type: 'technical',
-      difficulty: 'medium',
-      category: '前端框架',
-      tips: '从设计理念、组件化、状态管理等方面比较',
-      exampleAnswer: 'React 和 Vue 的区别主要体现在：1. 设计理念：React 更注重函数式编程和不可变数据，Vue 更注重响应式数据和模板语法；2. 组件化：两者都支持组件化开发，但实现方式略有不同；3. 状态管理：React 通常使用 Redux 或 Context API，Vue 有内置的 Vuex；4. 学习曲线：Vue 相对更容易上手，React 有一定的学习曲线。'
+      question: "React 和 Vue 的区别是什么？",
+      type: "technical",
+      difficulty: "medium",
+      category: "前端框架",
+      tips: "从设计理念、组件化、状态管理等方面比较",
+      exampleAnswer:
+        "React 和 Vue 的区别主要体现在：1. 设计理念：React 更注重函数式编程和不可变数据，Vue 更注重响应式数据和模板语法；2. 组件化：两者都支持组件化开发，但实现方式略有不同；3. 状态管理：React 通常使用 Redux 或 Context API，Vue 有内置的 Vuex；4. 学习曲线：Vue 相对更容易上手，React 有一定的学习曲线。",
     },
     {
       id: 5,
-      question: '什么是 RESTful API？',
-      type: 'technical',
-      difficulty: 'medium',
-      category: '后端技术',
-      tips: '解释 RESTful API 的设计原则和特点',
-      exampleAnswer: 'RESTful API 是一种基于 REST 架构风格的 API 设计方式，其特点包括：1. 使用 HTTP 方法（GET、POST、PUT、DELETE 等）来表示操作；2. 使用 URL 来表示资源；3. 无状态通信；4. 使用 JSON 或 XML 作为数据交换格式；5. 支持缓存。'
+      question: "什么是 RESTful API？",
+      type: "technical",
+      difficulty: "medium",
+      category: "后端技术",
+      tips: "解释 RESTful API 的设计原则和特点",
+      exampleAnswer:
+        "RESTful API 是一种基于 REST 架构风格的 API 设计方式，其特点包括：1. 使用 HTTP 方法（GET、POST、PUT、DELETE 等）来表示操作；2. 使用 URL 来表示资源；3. 无状态通信；4. 使用 JSON 或 XML 作为数据交换格式；5. 支持缓存。",
     },
     {
       id: 6,
-      question: '你如何优化前端性能？',
-      type: 'technical',
-      difficulty: 'medium',
-      category: '性能优化',
-      tips: '从资源加载、渲染、代码优化等方面说明',
-      exampleAnswer: '前端性能优化可以从以下几个方面入手：1. 资源加载优化：压缩代码、使用 CDN、浏览器缓存、懒加载等；2. 渲染优化：减少 DOM 操作、使用虚拟 DOM、避免重排重绘等；3. 代码优化：减少 HTTP 请求、使用异步加载、优化算法等；4. 网络优化：使用 HTTP/2、WebSocket 等。'
+      question: "你如何优化前端性能？",
+      type: "technical",
+      difficulty: "medium",
+      category: "性能优化",
+      tips: "从资源加载、渲染、代码优化等方面说明",
+      exampleAnswer:
+        "前端性能优化可以从以下几个方面入手：1. 资源加载优化：压缩代码、使用 CDN、浏览器缓存、懒加载等；2. 渲染优化：减少 DOM 操作、使用虚拟 DOM、避免重排重绘等；3. 代码优化：减少 HTTP 请求、使用异步加载、优化算法等；4. 网络优化：使用 HTTP/2、WebSocket 等。",
     },
     {
       id: 7,
-      question: '你为什么要离开之前的公司？',
-      type: 'behavioral',
-      difficulty: 'medium',
-      category: '离职原因',
-      tips: '保持客观，不要说前公司的坏话，强调职业发展',
-      exampleAnswer: '我离开之前的公司主要是因为我希望能够在技术上有更大的发展空间，接触更多前沿的技术和项目。我感谢之前公司给予我的机会和成长，但我认为现在是时候寻求新的挑战和发展机会了。'
+      question: "你为什么要离开之前的公司？",
+      type: "behavioral",
+      difficulty: "medium",
+      category: "离职原因",
+      tips: "保持客观，不要说前公司的坏话，强调职业发展",
+      exampleAnswer:
+        "我离开之前的公司主要是因为我希望能够在技术上有更大的发展空间，接触更多前沿的技术和项目。我感谢之前公司给予我的机会和成长，但我认为现在是时候寻求新的挑战和发展机会了。",
     },
     {
       id: 8,
-      question: '你期望的薪资是多少？',
-      type: 'behavioral',
-      difficulty: 'medium',
-      category: '薪资谈判',
-      tips: '根据市场行情和自身能力，给出合理的范围',
-      exampleAnswer: '根据我对市场行情的了解和自身的技能水平，我期望的薪资范围是 15K-20K。当然，我也愿意根据公司的具体情况进行协商。'
+      question: "你期望的薪资是多少？",
+      type: "behavioral",
+      difficulty: "medium",
+      category: "薪资谈判",
+      tips: "根据市场行情和自身能力，给出合理的范围",
+      exampleAnswer:
+        "根据我对市场行情的了解和自身的技能水平，我期望的薪资范围是 15K-20K。当然，我也愿意根据公司的具体情况进行协商。",
     },
     {
       id: 9,
-      question: '什么是跨域？如何解决？',
-      type: 'technical',
-      difficulty: 'medium',
-      category: '前端技术',
-      tips: '解释跨域的原因和常见的解决方案',
-      exampleAnswer: '跨域是指浏览器出于安全考虑，限制从一个域名的网页访问另一个域名的资源。常见的解决方案包括：1. CORS（跨域资源共享）：服务器设置 Access-Control-Allow-Origin 响应头；2. JSONP：利用 script 标签的跨域特性；3. 代理服务器：在同源服务器上设置代理；4. WebSocket：不受同源策略限制。'
+      question: "什么是跨域？如何解决？",
+      type: "technical",
+      difficulty: "medium",
+      category: "前端技术",
+      tips: "解释跨域的原因和常见的解决方案",
+      exampleAnswer:
+        "跨域是指浏览器出于安全考虑，限制从一个域名的网页访问另一个域名的资源。常见的解决方案包括：1. CORS（跨域资源共享）：服务器设置 Access-Control-Allow-Origin 响应头；2. JSONP：利用 script 标签的跨域特性；3. 代理服务器：在同源服务器上设置代理；4. WebSocket：不受同源策略限制。",
     },
     {
       id: 10,
-      question: '你有什么问题要问我吗？',
-      type: 'behavioral',
-      difficulty: 'medium',
-      category: '面试结尾',
-      tips: '问一些关于团队技术栈、项目规划或职业发展的问题',
-      exampleAnswer: '是的，我想了解一下贵公司目前使用的技术栈是什么？另外，团队近期有哪些重要的项目规划？'
+      question: "你有什么问题要问我吗？",
+      type: "behavioral",
+      difficulty: "medium",
+      category: "面试结尾",
+      tips: "问一些关于团队技术栈、项目规划或职业发展的问题",
+      exampleAnswer:
+        "是的，我想了解一下贵公司目前使用的技术栈是什么？另外，团队近期有哪些重要的项目规划？",
     },
     {
       id: 11,
-      question: '什么是 Promise？如何使用？',
-      type: 'technical',
-      difficulty: 'medium',
-      category: '前端技术',
-      tips: '解释 Promise 的概念和使用方法',
-      exampleAnswer: 'Promise 是 JavaScript 中用于处理异步操作的对象，它表示一个异步操作的最终完成或失败。Promise 有三种状态：pending（进行中）、fulfilled（已成功）和 rejected（已失败）。使用 Promise 可以避免回调地狱，使代码更加清晰。例如：new Promise((resolve, reject) => { ... }).then(result => { ... }).catch(error => { ... })'
+      question: "什么是 Promise？如何使用？",
+      type: "technical",
+      difficulty: "medium",
+      category: "前端技术",
+      tips: "解释 Promise 的概念和使用方法",
+      exampleAnswer:
+        "Promise 是 JavaScript 中用于处理异步操作的对象，它表示一个异步操作的最终完成或失败。Promise 有三种状态：pending（进行中）、fulfilled（已成功）和 rejected（已失败）。使用 Promise 可以避免回调地狱，使代码更加清晰。例如：new Promise((resolve, reject) => { ... }).then(result => { ... }).catch(error => { ... })",
     },
     {
       id: 12,
-      question: '什么是 ES6 模块？如何使用？',
-      type: 'technical',
-      difficulty: 'medium',
-      category: '前端技术',
-      tips: '解释 ES6 模块的概念和使用方法',
-      exampleAnswer: 'ES6 模块是 JavaScript 的官方模块系统，它允许我们将代码分割成独立的模块，每个模块都有自己的作用域。使用 ES6 模块可以通过 import 和 export 语句来导入和导出模块。例如：export const foo = "bar" import { foo } from "./module.js"'
-    }
+      question: "什么是 ES6 模块？如何使用？",
+      type: "technical",
+      difficulty: "medium",
+      category: "前端技术",
+      tips: "解释 ES6 模块的概念和使用方法",
+      exampleAnswer:
+        'ES6 模块是 JavaScript 的官方模块系统，它允许我们将代码分割成独立的模块，每个模块都有自己的作用域。使用 ES6 模块可以通过 import 和 export 语句来导入和导出模块。例如：export const foo = "bar" import { foo } from "./module.js"',
+    },
   ],
   3: [
     {
       id: 1,
-      question: '请设计一个高并发的电商系统',
-      type: 'technical',
-      difficulty: 'hard',
-      category: '系统设计',
-      tips: '从架构设计、数据库设计、缓存策略、负载均衡等方面说明',
-      exampleAnswer: '设计高并发电商系统需要考虑以下几个方面：1. 架构设计：采用微服务架构，将系统拆分为多个独立的服务；2. 数据库设计：使用分库分表、读写分离等策略；3. 缓存策略：使用 Redis 等缓存技术，减少数据库压力；4. 负载均衡：使用 Nginx 等负载均衡器，分散流量；5. 消息队列：使用 Kafka 等消息队列，异步处理订单、库存等操作；6. 降级和熔断：在系统负载过高时，保证核心功能的正常运行。'
+      question: "请设计一个高并发的电商系统",
+      type: "technical",
+      difficulty: "hard",
+      category: "系统设计",
+      tips: "从架构设计、数据库设计、缓存策略、负载均衡等方面说明",
+      exampleAnswer:
+        "设计高并发电商系统需要考虑以下几个方面：1. 架构设计：采用微服务架构，将系统拆分为多个独立的服务；2. 数据库设计：使用分库分表、读写分离等策略；3. 缓存策略：使用 Redis 等缓存技术，减少数据库压力；4. 负载均衡：使用 Nginx 等负载均衡器，分散流量；5. 消息队列：使用 Kafka 等消息队列，异步处理订单、库存等操作；6. 降级和熔断：在系统负载过高时，保证核心功能的正常运行。",
     },
     {
       id: 2,
-      question: '什么是微服务？微服务的优缺点是什么？',
-      type: 'technical',
-      difficulty: 'hard',
-      category: '架构设计',
-      tips: '解释微服务的概念，分析其优缺点',
-      exampleAnswer: '微服务是一种架构风格，将应用程序拆分为多个独立的服务，每个服务都有自己的业务逻辑和数据库。优点包括：1. 服务独立部署和扩展；2. 技术栈灵活；3. 故障隔离；4. 团队分工明确。缺点包括：1. 服务间通信复杂；2. 分布式事务处理困难；3. 系统运维复杂度增加；4. 开发和测试成本提高。'
+      question: "什么是微服务？微服务的优缺点是什么？",
+      type: "technical",
+      difficulty: "hard",
+      category: "架构设计",
+      tips: "解释微服务的概念，分析其优缺点",
+      exampleAnswer:
+        "微服务是一种架构风格，将应用程序拆分为多个独立的服务，每个服务都有自己的业务逻辑和数据库。优点包括：1. 服务独立部署和扩展；2. 技术栈灵活；3. 故障隔离；4. 团队分工明确。缺点包括：1. 服务间通信复杂；2. 分布式事务处理困难；3. 系统运维复杂度增加；4. 开发和测试成本提高。",
     },
     {
       id: 3,
-      question: '你如何设计一个安全的用户认证系统？',
-      type: 'technical',
-      difficulty: 'hard',
-      category: '安全',
-      tips: '从密码存储、认证方式、授权策略等方面说明',
-      exampleAnswer: '设计安全的用户认证系统需要考虑：1. 密码存储：使用 bcrypt 等算法对密码进行哈希处理，加盐存储；2. 认证方式：使用 JWT 或 Session 进行身份验证，支持多因素认证；3. 授权策略：基于角色的访问控制（RBAC），细粒度权限管理；4. 安全措施：防止 SQL 注入、XSS、CSRF 等攻击；5. 监控和审计：记录认证日志，及时发现异常行为。'
+      question: "你如何设计一个安全的用户认证系统？",
+      type: "technical",
+      difficulty: "hard",
+      category: "安全",
+      tips: "从密码存储、认证方式、授权策略等方面说明",
+      exampleAnswer:
+        "设计安全的用户认证系统需要考虑：1. 密码存储：使用 bcrypt 等算法对密码进行哈希处理，加盐存储；2. 认证方式：使用 JWT 或 Session 进行身份验证，支持多因素认证；3. 授权策略：基于角色的访问控制（RBAC），细粒度权限管理；4. 安全措施：防止 SQL 注入、XSS、CSRF 等攻击；5. 监控和审计：记录认证日志，及时发现异常行为。",
     },
     {
       id: 4,
-      question: '什么是分布式系统？分布式系统面临的挑战有哪些？',
-      type: 'technical',
-      difficulty: 'hard',
-      category: '分布式系统',
-      tips: '解释分布式系统的概念，分析其面临的挑战',
-      exampleAnswer: '分布式系统是由多个独立的计算机组成的系统，这些计算机通过网络进行通信和协作，共同完成一个任务。面临的挑战包括：1. 网络延迟和不可靠性；2. 节点故障；3. 数据一致性；4. 分布式事务；5. 负载均衡；6. 系统复杂性。'
+      question: "什么是分布式系统？分布式系统面临的挑战有哪些？",
+      type: "technical",
+      difficulty: "hard",
+      category: "分布式系统",
+      tips: "解释分布式系统的概念，分析其面临的挑战",
+      exampleAnswer:
+        "分布式系统是由多个独立的计算机组成的系统，这些计算机通过网络进行通信和协作，共同完成一个任务。面临的挑战包括：1. 网络延迟和不可靠性；2. 节点故障；3. 数据一致性；4. 分布式事务；5. 负载均衡；6. 系统复杂性。",
     },
     {
       id: 5,
-      question: '你如何处理技术债务？',
-      type: 'behavioral',
-      difficulty: 'hard',
-      category: '技术管理',
-      tips: '分享具体的处理策略和实际例子',
-      exampleAnswer: '处理技术债务需要采取以下策略：1. 定期代码审查，及时发现和修复问题；2. 制定技术债务计划，分阶段解决；3. 建立技术规范，防止新的技术债务产生；4. 在项目计划中预留时间用于技术债务的处理；5. 对团队成员进行培训，提高代码质量意识。例如，在之前的项目中，我们通过重构代码、优化数据库查询、更新依赖库等方式，成功降低了技术债务，提高了系统的可维护性。'
+      question: "你如何处理技术债务？",
+      type: "behavioral",
+      difficulty: "hard",
+      category: "技术管理",
+      tips: "分享具体的处理策略和实际例子",
+      exampleAnswer:
+        "处理技术债务需要采取以下策略：1. 定期代码审查，及时发现和修复问题；2. 制定技术债务计划，分阶段解决；3. 建立技术规范，防止新的技术债务产生；4. 在项目计划中预留时间用于技术债务的处理；5. 对团队成员进行培训，提高代码质量意识。例如，在之前的项目中，我们通过重构代码、优化数据库查询、更新依赖库等方式，成功降低了技术债务，提高了系统的可维护性。",
     },
     {
       id: 6,
-      question: '你如何带领团队进行技术选型？',
-      type: 'behavioral',
-      difficulty: 'hard',
-      category: '技术管理',
-      tips: '分享技术选型的流程和考虑因素',
-      exampleAnswer: '带领团队进行技术选型需要考虑以下因素：1. 项目需求：根据项目的功能和性能要求选择合适的技术；2. 团队技能：考虑团队成员的技术背景和熟悉程度；3. 技术生态：评估技术的社区活跃度、文档完善程度；4. 可扩展性：考虑技术的未来发展和可扩展性；5. 成本：评估技术的学习成本、维护成本等。具体流程包括：收集需求、技术调研、方案对比、团队讨论、最终决策。'
+      question: "你如何带领团队进行技术选型？",
+      type: "behavioral",
+      difficulty: "hard",
+      category: "技术管理",
+      tips: "分享技术选型的流程和考虑因素",
+      exampleAnswer:
+        "带领团队进行技术选型需要考虑以下因素：1. 项目需求：根据项目的功能和性能要求选择合适的技术；2. 团队技能：考虑团队成员的技术背景和熟悉程度；3. 技术生态：评估技术的社区活跃度、文档完善程度；4. 可扩展性：考虑技术的未来发展和可扩展性；5. 成本：评估技术的学习成本、维护成本等。具体流程包括：收集需求、技术调研、方案对比、团队讨论、最终决策。",
     },
     {
       id: 7,
-      question: '什么是容器化？Docker 和 Kubernetes 的作用是什么？',
-      type: 'technical',
-      difficulty: 'hard',
-      category: 'DevOps',
-      tips: '解释容器化的概念，说明 Docker 和 Kubernetes 的作用',
-      exampleAnswer: '容器化是一种虚拟化技术，将应用程序及其依赖项打包到一个独立的容器中，实现应用程序的隔离和标准化部署。Docker 是一个容器运行时，用于创建和管理容器。Kubernetes 是一个容器编排平台，用于自动化容器的部署、扩展和管理，提供负载均衡、服务发现、自动扩缩容等功能。'
+      question: "什么是容器化？Docker 和 Kubernetes 的作用是什么？",
+      type: "technical",
+      difficulty: "hard",
+      category: "DevOps",
+      tips: "解释容器化的概念，说明 Docker 和 Kubernetes 的作用",
+      exampleAnswer:
+        "容器化是一种虚拟化技术，将应用程序及其依赖项打包到一个独立的容器中，实现应用程序的隔离和标准化部署。Docker 是一个容器运行时，用于创建和管理容器。Kubernetes 是一个容器编排平台，用于自动化容器的部署、扩展和管理，提供负载均衡、服务发现、自动扩缩容等功能。",
     },
     {
       id: 8,
-      question: '你如何评估一个技术方案的可行性？',
-      type: 'behavioral',
-      difficulty: 'hard',
-      category: '技术评估',
-      tips: '分享技术方案评估的方法和考虑因素',
-      exampleAnswer: '评估技术方案的可行性需要考虑以下因素：1. 技术成熟度：评估技术的稳定性和可靠性；2. 团队能力：评估团队是否具备实施该技术的能力；3. 成本效益：评估技术的实施成本和预期收益；4. 风险评估：识别可能的风险和应对措施；5. 兼容性：评估与现有系统的兼容性；6. 可扩展性：评估技术的未来发展和可扩展性。具体方法包括：技术调研、原型开发、专家评审、成本效益分析等。'
+      question: "你如何评估一个技术方案的可行性？",
+      type: "behavioral",
+      difficulty: "hard",
+      category: "技术评估",
+      tips: "分享技术方案评估的方法和考虑因素",
+      exampleAnswer:
+        "评估技术方案的可行性需要考虑以下因素：1. 技术成熟度：评估技术的稳定性和可靠性；2. 团队能力：评估团队是否具备实施该技术的能力；3. 成本效益：评估技术的实施成本和预期收益；4. 风险评估：识别可能的风险和应对措施；5. 兼容性：评估与现有系统的兼容性；6. 可扩展性：评估技术的未来发展和可扩展性。具体方法包括：技术调研、原型开发、专家评审、成本效益分析等。",
     },
     {
       id: 9,
-      question: '你如何处理团队中的技术分歧？',
-      type: 'behavioral',
-      difficulty: 'hard',
-      category: '团队管理',
-      tips: '分享处理技术分歧的方法和实际例子',
-      exampleAnswer: '处理团队中的技术分歧需要采取以下方法：1. 鼓励开放沟通，让团队成员充分表达自己的观点；2. 基于数据和事实进行讨论，避免主观判断；3. 考虑不同方案的优缺点，寻求平衡点；4. 制定明确的决策流程，确保决策的透明度；5. 尊重最终决策，确保团队的一致性。例如，在之前的项目中，团队在选择前端框架时产生了分歧，我们通过技术调研、原型开发、性能测试等方式，最终选择了最适合项目需求的框架，并且团队成员都接受了这个决策。'
+      question: "你如何处理团队中的技术分歧？",
+      type: "behavioral",
+      difficulty: "hard",
+      category: "团队管理",
+      tips: "分享处理技术分歧的方法和实际例子",
+      exampleAnswer:
+        "处理团队中的技术分歧需要采取以下方法：1. 鼓励开放沟通，让团队成员充分表达自己的观点；2. 基于数据和事实进行讨论，避免主观判断；3. 考虑不同方案的优缺点，寻求平衡点；4. 制定明确的决策流程，确保决策的透明度；5. 尊重最终决策，确保团队的一致性。例如，在之前的项目中，团队在选择前端框架时产生了分歧，我们通过技术调研、原型开发、性能测试等方式，最终选择了最适合项目需求的框架，并且团队成员都接受了这个决策。",
     },
     {
       id: 10,
-      question: '你有什么问题要问我吗？',
-      type: 'behavioral',
-      difficulty: 'hard',
-      category: '面试结尾',
-      tips: '问一些关于公司技术战略、团队结构或未来发展的问题',
-      exampleAnswer: '是的，我想了解一下贵公司未来的技术发展方向是什么？另外，团队的结构和协作方式是怎样的？'
+      question: "你有什么问题要问我吗？",
+      type: "behavioral",
+      difficulty: "hard",
+      category: "面试结尾",
+      tips: "问一些关于公司技术战略、团队结构或未来发展的问题",
+      exampleAnswer:
+        "是的，我想了解一下贵公司未来的技术发展方向是什么？另外，团队的结构和协作方式是怎样的？",
     },
     {
       id: 11,
-      question: '什么是机器学习？你有相关的项目经验吗？',
-      type: 'technical',
-      difficulty: 'hard',
-      category: '人工智能',
-      tips: '解释机器学习的概念，分享相关项目经验',
-      exampleAnswer: '机器学习是人工智能的一个分支，通过算法让计算机从数据中学习，而不是通过明确的编程指令。我在之前的项目中，使用机器学习算法进行用户行为分析和推荐系统的开发，通过数据预处理、特征工程、模型训练和评估等步骤，提高了推荐系统的准确性和用户满意度。'
+      question: "什么是机器学习？你有相关的项目经验吗？",
+      type: "technical",
+      difficulty: "hard",
+      category: "人工智能",
+      tips: "解释机器学习的概念，分享相关项目经验",
+      exampleAnswer:
+        "机器学习是人工智能的一个分支，通过算法让计算机从数据中学习，而不是通过明确的编程指令。我在之前的项目中，使用机器学习算法进行用户行为分析和推荐系统的开发，通过数据预处理、特征工程、模型训练和评估等步骤，提高了推荐系统的准确性和用户满意度。",
     },
     {
       id: 12,
-      question: '你如何设计一个可扩展的 API？',
-      type: 'technical',
-      difficulty: 'hard',
-      category: 'API 设计',
-      tips: '从 API 设计原则、版本控制、文档等方面说明',
-      exampleAnswer: '设计可扩展的 API 需要考虑以下因素：1. 遵循 RESTful 设计原则；2. 使用版本控制，确保向后兼容；3. 提供详细的 API 文档；4. 实现合理的错误处理和状态码；5. 支持分页、过滤、排序等功能；6. 考虑 API 的性能和安全性；7. 设计合理的速率限制，防止滥用。'
-    }
+      question: "你如何设计一个可扩展的 API？",
+      type: "technical",
+      difficulty: "hard",
+      category: "API 设计",
+      tips: "从 API 设计原则、版本控制、文档等方面说明",
+      exampleAnswer:
+        "设计可扩展的 API 需要考虑以下因素：1. 遵循 RESTful 设计原则；2. 使用版本控制，确保向后兼容；3. 提供详细的 API 文档；4. 实现合理的错误处理和状态码；5. 支持分页、过滤、排序等功能；6. 考虑 API 的性能和安全性；7. 设计合理的速率限制，防止滥用。",
+    },
   ],
   4: [
     {
       id: 1,
-      question: '你如何制定技术战略？',
-      type: 'behavioral',
-      difficulty: 'expert',
-      category: '技术战略',
-      tips: '分享制定技术战略的方法和考虑因素',
-      exampleAnswer: '制定技术战略需要考虑以下因素：1. 业务目标：技术战略应该支持业务目标的实现；2. 市场趋势：关注技术发展的最新趋势；3. 竞争分析：了解竞争对手的技术布局；4. 内部能力：评估团队的技术能力和资源；5. 风险评估：识别技术实施的风险和应对措施。具体方法包括：进行技术调研、与业务部门沟通、制定技术路线图、定期评估和调整。'
+      question: "你如何制定技术战略？",
+      type: "behavioral",
+      difficulty: "expert",
+      category: "技术战略",
+      tips: "分享制定技术战略的方法和考虑因素",
+      exampleAnswer:
+        "制定技术战略需要考虑以下因素：1. 业务目标：技术战略应该支持业务目标的实现；2. 市场趋势：关注技术发展的最新趋势；3. 竞争分析：了解竞争对手的技术布局；4. 内部能力：评估团队的技术能力和资源；5. 风险评估：识别技术实施的风险和应对措施。具体方法包括：进行技术调研、与业务部门沟通、制定技术路线图、定期评估和调整。",
     },
     {
       id: 2,
-      question: '你如何管理技术团队？',
-      type: 'behavioral',
-      difficulty: 'expert',
-      category: '团队管理',
-      tips: '分享团队管理的方法和经验',
-      exampleAnswer: '管理技术团队需要采取以下方法：1. 明确团队目标和职责；2. 建立良好的沟通机制；3. 提供适当的培训和发展机会；4. 建立公平的绩效考核体系；5. 鼓励创新和知识分享；6. 营造积极的团队文化。例如，我会定期组织团队会议，了解团队成员的工作进展和困难，提供必要的支持和指导；同时，我会鼓励团队成员参与技术决策，提高他们的参与感和责任感。'
+      question: "你如何管理技术团队？",
+      type: "behavioral",
+      difficulty: "expert",
+      category: "团队管理",
+      tips: "分享团队管理的方法和经验",
+      exampleAnswer:
+        "管理技术团队需要采取以下方法：1. 明确团队目标和职责；2. 建立良好的沟通机制；3. 提供适当的培训和发展机会；4. 建立公平的绩效考核体系；5. 鼓励创新和知识分享；6. 营造积极的团队文化。例如，我会定期组织团队会议，了解团队成员的工作进展和困难，提供必要的支持和指导；同时，我会鼓励团队成员参与技术决策，提高他们的参与感和责任感。",
     },
     {
       id: 3,
-      question: '你如何平衡技术创新和业务需求？',
-      type: 'behavioral',
-      difficulty: 'expert',
-      category: '技术管理',
-      tips: '分享平衡技术创新和业务需求的方法和经验',
-      exampleAnswer: '平衡技术创新和业务需求需要采取以下策略：1. 了解业务需求的优先级和时间要求；2. 评估技术创新的潜在价值和风险；3. 制定合理的技术创新路线图，分阶段实施；4. 与业务部门保持密切沟通，确保技术创新能够支持业务目标；5. 建立技术债务管理机制，避免技术创新影响系统的稳定性。例如，在之前的项目中，我们在满足业务需求的同时，预留了 20% 的时间用于技术创新和技术债务的处理，既保证了业务的正常运行，又推动了技术的发展。'
+      question: "你如何平衡技术创新和业务需求？",
+      type: "behavioral",
+      difficulty: "expert",
+      category: "技术管理",
+      tips: "分享平衡技术创新和业务需求的方法和经验",
+      exampleAnswer:
+        "平衡技术创新和业务需求需要采取以下策略：1. 了解业务需求的优先级和时间要求；2. 评估技术创新的潜在价值和风险；3. 制定合理的技术创新路线图，分阶段实施；4. 与业务部门保持密切沟通，确保技术创新能够支持业务目标；5. 建立技术债务管理机制，避免技术创新影响系统的稳定性。例如，在之前的项目中，我们在满足业务需求的同时，预留了 20% 的时间用于技术创新和技术债务的处理，既保证了业务的正常运行，又推动了技术的发展。",
     },
     {
       id: 4,
-      question: '你如何评估技术团队的绩效？',
-      type: 'behavioral',
-      difficulty: 'expert',
-      category: '绩效管理',
-      tips: '分享绩效评估的方法和标准',
-      exampleAnswer: '评估技术团队的绩效需要考虑以下因素：1. 项目交付：按时按质完成项目；2. 技术质量：代码质量、系统稳定性等；3. 创新能力：技术创新和改进；4. 团队协作：与其他团队的协作情况；5. 个人发展：技能提升和知识分享。具体方法包括：设定明确的绩效目标、定期进行绩效评估、提供及时的反馈和指导、建立激励机制。'
+      question: "你如何评估技术团队的绩效？",
+      type: "behavioral",
+      difficulty: "expert",
+      category: "绩效管理",
+      tips: "分享绩效评估的方法和标准",
+      exampleAnswer:
+        "评估技术团队的绩效需要考虑以下因素：1. 项目交付：按时按质完成项目；2. 技术质量：代码质量、系统稳定性等；3. 创新能力：技术创新和改进；4. 团队协作：与其他团队的协作情况；5. 个人发展：技能提升和知识分享。具体方法包括：设定明确的绩效目标、定期进行绩效评估、提供及时的反馈和指导、建立激励机制。",
     },
     {
       id: 5,
-      question: '你如何处理技术危机？',
-      type: 'behavioral',
-      difficulty: 'expert',
-      category: '危机管理',
-      tips: '分享处理技术危机的方法和经验',
-      exampleAnswer: '处理技术危机需要采取以下步骤：1. 快速响应：及时发现和处理危机；2. 评估影响：评估危机对业务的影响程度；3. 制定方案：制定应对危机的方案；4. 执行方案：快速实施应对方案；5. 总结经验：分析危机产生的原因，采取措施防止类似问题再次发生。例如，在之前的项目中，我们遇到了系统宕机的情况，我立即组织团队进行故障排查，制定了应急方案，在最短的时间内恢复了系统运行，同时分析了问题产生的原因，对系统进行了优化，防止了类似问题的再次发生。'
+      question: "你如何处理技术危机？",
+      type: "behavioral",
+      difficulty: "expert",
+      category: "危机管理",
+      tips: "分享处理技术危机的方法和经验",
+      exampleAnswer:
+        "处理技术危机需要采取以下步骤：1. 快速响应：及时发现和处理危机；2. 评估影响：评估危机对业务的影响程度；3. 制定方案：制定应对危机的方案；4. 执行方案：快速实施应对方案；5. 总结经验：分析危机产生的原因，采取措施防止类似问题再次发生。例如，在之前的项目中，我们遇到了系统宕机的情况，我立即组织团队进行故障排查，制定了应急方案，在最短的时间内恢复了系统运行，同时分析了问题产生的原因，对系统进行了优化，防止了类似问题的再次发生。",
     },
     {
       id: 6,
-      question: '你如何制定技术预算？',
-      type: 'behavioral',
-      difficulty: 'expert',
-      category: '预算管理',
-      tips: '分享制定技术预算的方法和考虑因素',
-      exampleAnswer: '制定技术预算需要考虑以下因素：1. 项目需求：根据项目的规模和复杂度估算预算；2. 人力成本：团队成员的薪资和福利；3. 硬件和软件成本：服务器、网络设备、软件许可等；4. 培训和发展：团队成员的培训费用；5. 技术债务：技术债务的处理成本；6. 风险储备：预留一定的预算用于应对突发情况。具体方法包括：收集需求、估算成本、制定预算计划、定期监控和调整。'
+      question: "你如何制定技术预算？",
+      type: "behavioral",
+      difficulty: "expert",
+      category: "预算管理",
+      tips: "分享制定技术预算的方法和考虑因素",
+      exampleAnswer:
+        "制定技术预算需要考虑以下因素：1. 项目需求：根据项目的规模和复杂度估算预算；2. 人力成本：团队成员的薪资和福利；3. 硬件和软件成本：服务器、网络设备、软件许可等；4. 培训和发展：团队成员的培训费用；5. 技术债务：技术债务的处理成本；6. 风险储备：预留一定的预算用于应对突发情况。具体方法包括：收集需求、估算成本、制定预算计划、定期监控和调整。",
     },
     {
       id: 7,
-      question: '你如何与非技术部门沟通？',
-      type: 'behavioral',
-      difficulty: 'expert',
-      category: '沟通能力',
-      tips: '分享与非技术部门沟通的方法和经验',
-      exampleAnswer: '与非技术部门沟通需要采取以下方法：1. 使用通俗易懂的语言，避免技术术语；2. 关注业务价值，强调技术对业务的支持作用；3. 提供具体的例子和可视化的展示；4. 定期沟通，及时了解业务需求和反馈；5. 建立信任关系，增强合作意愿。例如，在之前的项目中，我会定期与业务部门举行会议，用通俗的语言解释技术方案，并且通过原型演示等方式，让业务部门更好地理解技术实现和业务价值。'
+      question: "你如何与非技术部门沟通？",
+      type: "behavioral",
+      difficulty: "expert",
+      category: "沟通能力",
+      tips: "分享与非技术部门沟通的方法和经验",
+      exampleAnswer:
+        "与非技术部门沟通需要采取以下方法：1. 使用通俗易懂的语言，避免技术术语；2. 关注业务价值，强调技术对业务的支持作用；3. 提供具体的例子和可视化的展示；4. 定期沟通，及时了解业务需求和反馈；5. 建立信任关系，增强合作意愿。例如，在之前的项目中，我会定期与业务部门举行会议，用通俗的语言解释技术方案，并且通过原型演示等方式，让业务部门更好地理解技术实现和业务价值。",
     },
     {
       id: 8,
-      question: '你有什么问题要问我吗？',
-      type: 'behavioral',
-      difficulty: 'expert',
-      category: '面试结尾',
-      tips: '问一些关于公司战略、业务发展或团队建设的问题',
-      exampleAnswer: '是的，我想了解一下贵公司未来 3-5 年的业务发展规划是什么？另外，公司对技术团队的期望和定位是怎样的？'
-    }
+      question: "你有什么问题要问我吗？",
+      type: "behavioral",
+      difficulty: "expert",
+      category: "面试结尾",
+      tips: "问一些关于公司战略、业务发展或团队建设的问题",
+      exampleAnswer:
+        "是的，我想了解一下贵公司未来 3-5 年的业务发展规划是什么？另外，公司对技术团队的期望和定位是怎样的？",
+    },
   ],
   5: [
     {
       id: 1,
-      question: '你如何定义技术愿景？',
-      type: 'behavioral',
-      difficulty: 'master',
-      category: '技术愿景',
-      tips: '分享定义技术愿景的方法和考虑因素',
-      exampleAnswer: '定义技术愿景需要考虑以下因素：1. 业务战略：技术愿景应该支持业务战略的实现；2. 技术趋势：关注技术发展的长期趋势；3. 市场竞争：了解竞争对手的技术布局；4. 内部能力：评估公司的技术能力和资源；5. 行业标准：参考行业最佳实践。技术愿景应该具有前瞻性、可行性和激励性，能够指导公司在技术方面的长期发展。'
+      question: "你如何定义技术愿景？",
+      type: "behavioral",
+      difficulty: "master",
+      category: "技术愿景",
+      tips: "分享定义技术愿景的方法和考虑因素",
+      exampleAnswer:
+        "定义技术愿景需要考虑以下因素：1. 业务战略：技术愿景应该支持业务战略的实现；2. 技术趋势：关注技术发展的长期趋势；3. 市场竞争：了解竞争对手的技术布局；4. 内部能力：评估公司的技术能力和资源；5. 行业标准：参考行业最佳实践。技术愿景应该具有前瞻性、可行性和激励性，能够指导公司在技术方面的长期发展。",
     },
     {
       id: 2,
-      question: '你如何推动技术创新？',
-      type: 'behavioral',
-      difficulty: 'master',
-      category: '技术创新',
-      tips: '分享推动技术创新的方法和经验',
-      exampleAnswer: '推动技术创新需要采取以下策略：1. 建立创新文化：鼓励团队成员提出新想法和解决方案；2. 提供资源支持：为创新项目提供必要的人力、物力和财力支持；3. 建立创新流程：建立规范化的创新流程，从想法产生到实施；4. 学习和合作：与行业伙伴、学术机构合作，学习最新的技术和理念；5. 激励机制：建立激励机制，奖励创新成果。例如，在之前的公司，我建立了内部创新孵化项目，鼓励团队成员提出创新想法，通过评审的项目可以获得资源支持，并且对成功的创新项目给予奖励。'
+      question: "你如何推动技术创新？",
+      type: "behavioral",
+      difficulty: "master",
+      category: "技术创新",
+      tips: "分享推动技术创新的方法和经验",
+      exampleAnswer:
+        "推动技术创新需要采取以下策略：1. 建立创新文化：鼓励团队成员提出新想法和解决方案；2. 提供资源支持：为创新项目提供必要的人力、物力和财力支持；3. 建立创新流程：建立规范化的创新流程，从想法产生到实施；4. 学习和合作：与行业伙伴、学术机构合作，学习最新的技术和理念；5. 激励机制：建立激励机制，奖励创新成果。例如，在之前的公司，我建立了内部创新孵化项目，鼓励团队成员提出创新想法，通过评审的项目可以获得资源支持，并且对成功的创新项目给予奖励。",
     },
     {
       id: 3,
-      question: '你如何评估技术投资的回报？',
-      type: 'behavioral',
-      difficulty: 'master',
-      category: '投资评估',
-      tips: '分享评估技术投资回报的方法和考虑因素',
-      exampleAnswer: '评估技术投资的回报需要考虑以下因素：1. 直接收益：技术投资带来的直接经济效益，如成本降低、收入增加等；2. 间接收益：技术投资带来的间接效益，如提高效率、增强竞争力等；3. 风险评估：技术投资的风险和不确定性；4. 长期影响：技术投资对公司长期发展的影响；5. 机会成本：技术投资的机会成本。具体方法包括：成本效益分析、投资回报率（ROI）计算、净现值（NPV）分析等。'
+      question: "你如何评估技术投资的回报？",
+      type: "behavioral",
+      difficulty: "master",
+      category: "投资评估",
+      tips: "分享评估技术投资回报的方法和考虑因素",
+      exampleAnswer:
+        "评估技术投资的回报需要考虑以下因素：1. 直接收益：技术投资带来的直接经济效益，如成本降低、收入增加等；2. 间接收益：技术投资带来的间接效益，如提高效率、增强竞争力等；3. 风险评估：技术投资的风险和不确定性；4. 长期影响：技术投资对公司长期发展的影响；5. 机会成本：技术投资的机会成本。具体方法包括：成本效益分析、投资回报率（ROI）计算、净现值（NPV）分析等。",
     },
     {
       id: 4,
-      question: '你如何应对技术变革？',
-      type: 'behavioral',
-      difficulty: 'master',
-      category: '变革管理',
-      tips: '分享应对技术变革的方法和经验',
-      exampleAnswer: '应对技术变革需要采取以下策略：1. 持续学习：保持对新技术的关注和学习；2. 风险评估：评估技术变革的风险和影响；3. 分阶段实施：分阶段实施技术变革，降低风险；4. 培训和沟通：对团队成员进行培训，确保他们能够适应新技术；5. 监控和调整：监控技术变革的实施效果，及时调整策略。例如，在之前的公司，我们实施了从传统架构向微服务架构的转型，通过分阶段实施、持续培训和沟通，成功完成了转型，提高了系统的可扩展性和可靠性。'
+      question: "你如何应对技术变革？",
+      type: "behavioral",
+      difficulty: "master",
+      category: "变革管理",
+      tips: "分享应对技术变革的方法和经验",
+      exampleAnswer:
+        "应对技术变革需要采取以下策略：1. 持续学习：保持对新技术的关注和学习；2. 风险评估：评估技术变革的风险和影响；3. 分阶段实施：分阶段实施技术变革，降低风险；4. 培训和沟通：对团队成员进行培训，确保他们能够适应新技术；5. 监控和调整：监控技术变革的实施效果，及时调整策略。例如，在之前的公司，我们实施了从传统架构向微服务架构的转型，通过分阶段实施、持续培训和沟通，成功完成了转型，提高了系统的可扩展性和可靠性。",
     },
     {
       id: 5,
-      question: '你如何与高管团队合作？',
-      type: 'behavioral',
-      difficulty: 'master',
-      category: '高管合作',
-      tips: '分享与高管团队合作的方法和经验',
-      exampleAnswer: '与高管团队合作需要采取以下方法：1. 了解业务战略：了解公司的业务战略和目标；2. 用业务语言沟通：用高管团队能够理解的业务语言沟通技术问题；3. 提供数据支持：用数据和事实支持技术决策；4. 关注业务价值：强调技术对业务价值的贡献；5. 定期汇报：定期向高管团队汇报技术进展和成果。例如，在之前的公司，我会定期向高管团队汇报技术战略的实施情况，用业务指标来展示技术投资的回报，并且与高管团队保持密切沟通，确保技术战略与业务战略保持一致。'
+      question: "你如何与高管团队合作？",
+      type: "behavioral",
+      difficulty: "master",
+      category: "高管合作",
+      tips: "分享与高管团队合作的方法和经验",
+      exampleAnswer:
+        "与高管团队合作需要采取以下方法：1. 了解业务战略：了解公司的业务战略和目标；2. 用业务语言沟通：用高管团队能够理解的业务语言沟通技术问题；3. 提供数据支持：用数据和事实支持技术决策；4. 关注业务价值：强调技术对业务价值的贡献；5. 定期汇报：定期向高管团队汇报技术进展和成果。例如，在之前的公司，我会定期向高管团队汇报技术战略的实施情况，用业务指标来展示技术投资的回报，并且与高管团队保持密切沟通，确保技术战略与业务战略保持一致。",
     },
     {
       id: 6,
-      question: '你有什么问题要问我吗？',
-      type: 'behavioral',
-      difficulty: 'master',
-      category: '面试结尾',
-      tips: '问一些关于公司愿景、战略规划或企业文化的问题',
-      exampleAnswer: '是的，我想了解一下贵公司的长期愿景是什么？另外，公司在技术创新方面的战略规划是怎样的？'
-    }
-  ]
-}
+      question: "你有什么问题要问我吗？",
+      type: "behavioral",
+      difficulty: "master",
+      category: "面试结尾",
+      tips: "问一些关于公司愿景、战略规划或企业文化的问题",
+      exampleAnswer:
+        "是的，我想了解一下贵公司的长期愿景是什么？另外，公司在技术创新方面的战略规划是怎样的？",
+    },
+  ],
+};
 
 // 状态管理
-const currentLevel = ref(levels.find(level => level.id === levelId.value) || levels[0])
-const currentQuestionIndex = ref(0)
-const timeRemaining = ref((currentLevel.value?.timeLimit || 30) * 60)
-const isPlaying = ref(false)
-const isPaused = ref(false)
-const soundEnabled = ref(true)
-const showResult = ref(false)
-const score = ref(0)
-const answeredQuestions = ref(0)
-const correctAnswers = ref(0)
-const userAnswer = ref('')
-const showFeedback = ref(false)
-const currentFeedback = ref('')
-const isRecording = ref(false)
-const showTips = ref(false)
-const showExampleAnswer = ref(false)
+const currentLevel = ref(
+  levels.find((level) => level.id === levelId.value) || levels[0],
+);
+const currentQuestionIndex = ref(0);
+const timeRemaining = ref((currentLevel.value?.timeLimit || 30) * 60);
+const isPlaying = ref(false);
+const isPaused = ref(false);
+const soundEnabled = ref(true);
+const showResult = ref(false);
+const score = ref(0);
+const answeredQuestions = ref(0);
+const correctAnswers = ref(0);
+const userAnswer = ref("");
+const showFeedback = ref(false);
+const currentFeedback = ref("");
+const isRecording = ref(false);
+const showTips = ref(false);
+const showExampleAnswer = ref(false);
 
 // 计算属性
 const currentQuestion = computed(() => {
-  const level = levelId.value as keyof typeof interviewQuestions
-  return interviewQuestions[level][currentQuestionIndex.value]
-})
+  const level = levelId.value as keyof typeof interviewQuestions;
+  return interviewQuestions[level][currentQuestionIndex.value];
+});
 const totalQuestions = computed(() => {
-  const level = levelId.value as keyof typeof interviewQuestions
-  return interviewQuestions[level].length
-})
-const progress = computed(() => (currentQuestionIndex.value / totalQuestions.value) * 100)
+  const level = levelId.value as keyof typeof interviewQuestions;
+  return interviewQuestions[level].length;
+});
+const progress = computed(
+  () => (currentQuestionIndex.value / totalQuestions.value) * 100,
+);
 const formattedTime = computed(() => {
-  const minutes = Math.floor(timeRemaining.value / 60)
-  const seconds = timeRemaining.value % 60
-  return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
-})
+  const minutes = Math.floor(timeRemaining.value / 60);
+  const seconds = timeRemaining.value % 60;
+  return `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+});
 const accuracy = computed(() => {
-  if (answeredQuestions.value === 0) return 0
-  return Math.round((correctAnswers.value / answeredQuestions.value) * 100)
-})
+  if (answeredQuestions.value === 0) return 0;
+  return Math.round((correctAnswers.value / answeredQuestions.value) * 100);
+});
 
 // 方法
 const startInterview = () => {
-  isPlaying.value = true
-  startTimer()
-}
+  isPlaying.value = true;
+  startTimer();
+};
 
 const startTimer = () => {
   const timer = setInterval(() => {
     if (!isPaused.value && isPlaying.value) {
       if (timeRemaining.value > 0) {
-        timeRemaining.value--
+        timeRemaining.value--;
       } else {
-        clearInterval(timer)
-        endInterview()
+        clearInterval(timer);
+        endInterview();
       }
     }
-  }, 1000)
-}
+  }, 1000);
+};
 
 const togglePause = () => {
-  isPaused.value = !isPaused.value
-}
+  isPaused.value = !isPaused.value;
+};
 
 const toggleSound = () => {
-  soundEnabled.value = !soundEnabled.value
-}
+  soundEnabled.value = !soundEnabled.value;
+};
 
 const submitAnswer = () => {
-  if (!isPlaying.value || !userAnswer.value.trim()) return
-  
-  answeredQuestions.value++
-  
+  if (!isPlaying.value || !userAnswer.value.trim()) return;
+
+  answeredQuestions.value++;
+
   // 模拟评分逻辑
-  const scoreValue = Math.floor(Math.random() * 30) + 70
-  score.value += scoreValue
-  
+  const scoreValue = Math.floor(Math.random() * 30) + 70;
+  score.value += scoreValue;
+
   if (scoreValue >= 80) {
-    correctAnswers.value++
-    currentFeedback.value = '回答得很好！你的回答结构清晰，内容充实，能够很好地展示你的能力和经验。'
+    correctAnswers.value++;
+    currentFeedback.value =
+      "回答得很好！你的回答结构清晰，内容充实，能够很好地展示你的能力和经验。";
   } else if (scoreValue >= 60) {
-    currentFeedback.value = '回答还可以改进。建议你在回答时更加结构化，突出重点，并且结合具体的例子来支持你的观点。'
+    currentFeedback.value =
+      "回答还可以改进。建议你在回答时更加结构化，突出重点，并且结合具体的例子来支持你的观点。";
   } else {
-    currentFeedback.value = '回答需要较大的改进。建议你多了解相关知识，在回答时更加有条理，并且结合具体的例子来支持你的观点。'
+    currentFeedback.value =
+      "回答需要较大的改进。建议你多了解相关知识，在回答时更加有条理，并且结合具体的例子来支持你的观点。";
   }
-  
-  showFeedback.value = true
-  
+
+  showFeedback.value = true;
+
   // 延迟后进入下一题
   setTimeout(() => {
-    showFeedback.value = false
-    nextQuestion()
-  }, 3000)
-}
+    showFeedback.value = false;
+    nextQuestion();
+  }, 3000);
+};
 
 const nextQuestion = () => {
   if (currentQuestionIndex.value < totalQuestions.value - 1) {
-    currentQuestionIndex.value++
-    userAnswer.value = ''
-    showFeedback.value = false
-    currentFeedback.value = ''
-    showTips.value = false
-    showExampleAnswer.value = false
+    currentQuestionIndex.value++;
+    userAnswer.value = "";
+    showFeedback.value = false;
+    currentFeedback.value = "";
+    showTips.value = false;
+    showExampleAnswer.value = false;
   } else {
-    endInterview()
+    endInterview();
   }
-}
+};
 
 const endInterview = () => {
-  isPlaying.value = false
-  showResult.value = true
-}
+  isPlaying.value = false;
+  showResult.value = true;
+};
 
 const restartLevel = () => {
-  currentQuestionIndex.value = 0
-  timeRemaining.value = (currentLevel.value?.timeLimit || 30) * 60
-  isPlaying.value = false
-  isPaused.value = false
-  showResult.value = false
-  score.value = 0
-  answeredQuestions.value = 0
-  correctAnswers.value = 0
-  userAnswer.value = ''
-  showFeedback.value = false
-  currentFeedback.value = ''
-  showTips.value = false
-  showExampleAnswer.value = false
-  startInterview()
-}
+  currentQuestionIndex.value = 0;
+  timeRemaining.value = (currentLevel.value?.timeLimit || 30) * 60;
+  isPlaying.value = false;
+  isPaused.value = false;
+  showResult.value = false;
+  score.value = 0;
+  answeredQuestions.value = 0;
+  correctAnswers.value = 0;
+  userAnswer.value = "";
+  showFeedback.value = false;
+  currentFeedback.value = "";
+  showTips.value = false;
+  showExampleAnswer.value = false;
+  startInterview();
+};
 
 const backToLevels = () => {
-  router.push('/game-interview')
-}
+  router.push("/game-interview");
+};
 
 const toggleRecording = () => {
-  isRecording.value = !isRecording.value
-}
+  isRecording.value = !isRecording.value;
+};
 
 const toggleTips = () => {
-  showTips.value = !showTips.value
-}
+  showTips.value = !showTips.value;
+};
 
 const toggleExampleAnswer = () => {
-  showExampleAnswer.value = !showExampleAnswer.value
-}
+  showExampleAnswer.value = !showExampleAnswer.value;
+};
 
 // 摄像头和麦克风验证方法
 const startCameraVerification = async () => {
   try {
-    verificationError.value = ''
+    verificationError.value = "";
     // 请求摄像头权限
-    cameraStream.value = await navigator.mediaDevices.getUserMedia({ video: true })
-    cameraEnabled.value = true
-    
+    cameraStream.value = await navigator.mediaDevices.getUserMedia({
+      video: true,
+    });
+    cameraEnabled.value = true;
+
     // 请求麦克风权限
-    microphoneStream.value = await navigator.mediaDevices.getUserMedia({ audio: true })
-    microphoneEnabled.value = true
-    
+    microphoneStream.value = await navigator.mediaDevices.getUserMedia({
+      audio: true,
+    });
+    microphoneEnabled.value = true;
+
     // 验证成功后隐藏验证界面
     setTimeout(() => {
-      showCameraVerification.value = false
-      startInterview()
-    }, 1000)
+      showCameraVerification.value = false;
+      startInterview();
+    }, 1000);
   } catch (error) {
-    verificationError.value = '无法访问摄像头或麦克风，请检查权限设置'
-    console.error('摄像头或麦克风访问失败:', error)
+    verificationError.value = "无法访问摄像头或麦克风，请检查权限设置";
+    console.error("摄像头或麦克风访问失败:", error);
   }
-}
-
-
+};
 
 const skipVerification = () => {
-  showCameraVerification.value = false
-  startInterview()
-}
+  showCameraVerification.value = false;
+  startInterview();
+};
 
 onMounted(() => {
   // 初始化时显示摄像头和麦克风验证
-  startCameraVerification()
-})
+  startCameraVerification();
+});
 </script>
 
 <template>
   <div class="flex flex-col gap-8 max-w-7xl mx-auto">
     <!-- Header -->
     <div class="flex items-center justify-between">
-      <button @click="backToLevels" class="flex items-center gap-2 text-neutral-title font-bold hover:text-primary transition-colors">
+      <button
+        class="flex items-center gap-2 text-neutral-title font-bold hover:text-primary transition-colors"
+        @click="backToLevels"
+      >
         <ChevronLeft :size="24" />
         返回关卡列表
       </button>
       <div class="text-center">
-        <h1 class="text-3xl font-black text-neutral-title">{{ currentLevel?.name }}: {{ currentLevel?.title }}</h1>
-        <p class="text-sm text-neutral-helper">{{ currentLevel?.description }}</p>
+        <h1 class="text-3xl font-black text-neutral-title">
+          {{ currentLevel?.name }}: {{ currentLevel?.title }}
+        </h1>
+        <p class="text-sm text-neutral-helper">
+          {{ currentLevel?.description }}
+        </p>
       </div>
-      <div class="w-40"></div> <!-- 占位，保持标题居中 -->
+      <div class="w-40"></div>
+      <!-- 占位，保持标题居中 -->
     </div>
 
     <!-- 摄像头和麦克风验证 -->
-    <div v-if="showCameraVerification" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+    <div
+      v-if="showCameraVerification"
+      class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
+    >
       <div class="bg-white rounded-[32px] p-8 max-w-md w-full text-center">
-        <div class="w-20 h-20 rounded-full gradient-primary flex items-center justify-center mx-auto mb-6">
+        <div
+          class="w-20 h-20 rounded-full gradient-primary flex items-center justify-center mx-auto mb-6"
+        >
           <Video :size="40" class="text-white" />
         </div>
-        <h2 class="text-2xl font-black text-neutral-title mb-4">游戏式面试准备</h2>
-        <p class="text-neutral-body mb-8">请确保摄像头和麦克风正常工作，以获得最佳的面试体验</p>
-        
+        <h2 class="text-2xl font-black text-neutral-title mb-4">
+          游戏式面试准备
+        </h2>
+        <p class="text-neutral-body mb-8">
+          请确保摄像头和麦克风正常工作，以获得最佳的面试体验
+        </p>
+
         <div class="mb-6">
           <div class="flex items-center justify-center gap-8 mb-6">
             <div class="text-center">
-              <div class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-2" :class="cameraEnabled ? 'bg-auxiliary-green/10 text-auxiliary-green' : 'bg-neutral-border text-neutral-helper'">
+              <div
+                class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-2"
+                :class="
+                  cameraEnabled
+                    ? 'bg-auxiliary-green/10 text-auxiliary-green'
+                    : 'bg-neutral-border text-neutral-helper'
+                "
+              >
                 <Video :size="32" />
               </div>
               <p class="text-sm text-neutral-helper">摄像头</p>
             </div>
             <div class="text-center">
-              <div class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-2" :class="microphoneEnabled ? 'bg-auxiliary-green/10 text-auxiliary-green' : 'bg-neutral-border text-neutral-helper'">
+              <div
+                class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-2"
+                :class="
+                  microphoneEnabled
+                    ? 'bg-auxiliary-green/10 text-auxiliary-green'
+                    : 'bg-neutral-border text-neutral-helper'
+                "
+              >
                 <Mic :size="32" />
               </div>
               <p class="text-sm text-neutral-helper">麦克风</p>
             </div>
           </div>
-          
-          <div v-if="verificationError" class="p-4 bg-auxiliary-red/10 text-auxiliary-red rounded-xl mb-6">
+
+          <div
+            v-if="verificationError"
+            class="p-4 bg-auxiliary-red/10 text-auxiliary-red rounded-xl mb-6"
+          >
             {{ verificationError }}
           </div>
         </div>
-        
+
         <div class="flex flex-col gap-4">
-          <button @click="startCameraVerification" class="w-full py-4 bg-primary text-white font-bold rounded-2xl hover:bg-primary-dark transition-all flex items-center justify-center gap-2">
+          <button
+            class="w-full py-4 bg-primary text-white font-bold rounded-2xl hover:bg-primary-dark transition-all flex items-center justify-center gap-2"
+            @click="startCameraVerification"
+          >
             <RefreshCw :size="20" />
             开始验证
           </button>
-          <button @click="skipVerification" class="w-full py-4 bg-neutral-bg text-neutral-title font-bold rounded-2xl hover:bg-neutral-border/50 transition-all">
+          <button
+            class="w-full py-4 bg-neutral-bg text-neutral-title font-bold rounded-2xl hover:bg-neutral-border/50 transition-all"
+            @click="skipVerification"
+          >
             跳过验证
           </button>
         </div>
@@ -792,40 +890,64 @@ onMounted(() => {
     </div>
 
     <!-- Game Info -->
-    <div class="bg-white rounded-[32px] p-6 shadow-sm border border-neutral-border">
+    <div
+      class="bg-white rounded-[32px] p-6 shadow-sm border border-neutral-border"
+    >
       <div class="flex flex-wrap items-center justify-between gap-4">
         <div class="flex items-center gap-4">
           <div class="flex items-center gap-2">
             <Trophy :size="20" class="text-auxiliary-orange" />
-            <span class="text-sm font-bold text-neutral-title">难度: {{ currentLevel?.difficulty }}</span>
+            <span class="text-sm font-bold text-neutral-title"
+              >难度: {{ currentLevel?.difficulty }}</span
+            >
           </div>
           <div class="flex items-center gap-2">
             <Zap :size="20" class="text-primary" />
-            <span class="text-sm font-bold text-neutral-title">问题数: {{ currentQuestionIndex + 1 }}/{{ totalQuestions }}</span>
+            <span class="text-sm font-bold text-neutral-title"
+              >问题数: {{ currentQuestionIndex + 1 }}/{{ totalQuestions }}</span
+            >
           </div>
           <div class="flex items-center gap-2">
             <Trophy :size="20" class="text-auxiliary-purple" />
-            <span class="text-sm font-bold text-neutral-title">奖励: {{ currentLevel?.rewards }}</span>
+            <span class="text-sm font-bold text-neutral-title"
+              >奖励: {{ currentLevel?.rewards }}</span
+            >
           </div>
         </div>
         <div class="flex items-center gap-4">
-          <div class="flex items-center gap-2 bg-neutral-bg px-4 py-2 rounded-xl">
+          <div
+            class="flex items-center gap-2 bg-neutral-bg px-4 py-2 rounded-xl"
+          >
             <Clock :size="20" class="text-auxiliary-orange" />
-            <span class="font-bold text-neutral-title">{{ formattedTime }}</span>
+            <span class="font-bold text-neutral-title">{{
+              formattedTime
+            }}</span>
           </div>
           <div class="flex items-center gap-2">
-            <button @click="toggleSound" class="p-2 rounded-full" :class="soundEnabled ? 'bg-primary/10 text-primary' : 'bg-neutral-border text-neutral-helper'">
+            <button
+              class="p-2 rounded-full"
+              :class="
+                soundEnabled
+                  ? 'bg-primary/10 text-primary'
+                  : 'bg-neutral-border text-neutral-helper'
+              "
+              @click="toggleSound"
+            >
               <Volume2 v-if="soundEnabled" :size="20" />
               <VolumeX v-else :size="20" />
             </button>
-            <button @click="togglePause" class="p-2 rounded-full bg-primary/10 text-primary" v-if="isPlaying">
+            <button
+              v-if="isPlaying"
+              class="p-2 rounded-full bg-primary/10 text-primary"
+              @click="togglePause"
+            >
               <Pause v-if="!isPaused" :size="20" />
               <Play v-else :size="20" />
             </button>
           </div>
         </div>
       </div>
-      
+
       <!-- Progress Bar -->
       <div class="mt-6">
         <div class="flex justify-between text-xs text-neutral-helper mb-2">
@@ -833,7 +955,10 @@ onMounted(() => {
           <span>{{ Math.round(progress) }}%</span>
         </div>
         <div class="h-2 bg-neutral-border rounded-full overflow-hidden">
-          <div class="h-full bg-primary transition-all duration-500" :style="{width: progress + '%'}"></div>
+          <div
+            class="h-full bg-primary transition-all duration-500"
+            :style="{ width: progress + '%' }"
+          ></div>
         </div>
       </div>
     </div>
@@ -842,125 +967,193 @@ onMounted(() => {
     <div v-if="!showResult" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
       <!-- Interviewer Panel -->
       <div class="lg:col-span-1">
-        <div class="bg-white rounded-[32px] p-6 shadow-sm border border-neutral-border h-full">
+        <div
+          class="bg-white rounded-[32px] p-6 shadow-sm border border-neutral-border h-full"
+        >
           <div class="text-center mb-6">
-              <div class="w-24 h-24 rounded-full bg-neutral-bg flex items-center justify-center mx-auto mb-4">
-                <Bot :size="48" class="text-primary" />
-              </div>
-              <h3 class="font-bold text-neutral-title mb-1">{{ currentLevel?.面试官 }}</h3>
-              <p class="text-sm text-neutral-helper">{{ currentLevel?.公司 }}</p>
+            <div
+              class="w-24 h-24 rounded-full bg-neutral-bg flex items-center justify-center mx-auto mb-4"
+            >
+              <Bot :size="48" class="text-primary" />
             </div>
-            
-            <div class="space-y-4">
-              <div class="p-4 bg-neutral-bg rounded-[20px]">
-                <h4 class="font-bold text-neutral-title mb-2">面试信息</h4>
-                <div class="space-y-2">
-                  <div class="flex justify-between text-sm">
-                    <span class="text-neutral-helper">面试类型</span>
-                    <span class="font-bold text-neutral-title">{{ currentLevel?.面试类型 }}</span>
-                  </div>
-                  <div class="flex justify-between text-sm">
-                    <span class="text-neutral-helper">时间限制</span>
-                    <span class="font-bold text-neutral-title">{{ currentLevel?.timeLimit }} 分钟</span>
-                  </div>
-                  <div class="flex justify-between text-sm">
-                    <span class="text-neutral-helper">问题数量</span>
-                    <span class="font-bold text-neutral-title">{{ totalQuestions }} 题</span>
-                  </div>
+            <h3 class="font-bold text-neutral-title mb-1">
+              {{ currentLevel?.面试官 }}
+            </h3>
+            <p class="text-sm text-neutral-helper">{{ currentLevel?.公司 }}</p>
+          </div>
+
+          <div class="space-y-4">
+            <div class="p-4 bg-neutral-bg rounded-[20px]">
+              <h4 class="font-bold text-neutral-title mb-2">面试信息</h4>
+              <div class="space-y-2">
+                <div class="flex justify-between text-sm">
+                  <span class="text-neutral-helper">面试类型</span>
+                  <span class="font-bold text-neutral-title">{{
+                    currentLevel?.面试类型
+                  }}</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                  <span class="text-neutral-helper">时间限制</span>
+                  <span class="font-bold text-neutral-title"
+                    >{{ currentLevel?.timeLimit }} 分钟</span
+                  >
+                </div>
+                <div class="flex justify-between text-sm">
+                  <span class="text-neutral-helper">问题数量</span>
+                  <span class="font-bold text-neutral-title"
+                    >{{ totalQuestions }} 题</span
+                  >
                 </div>
               </div>
-            
+            </div>
+
             <div class="p-4 bg-neutral-bg rounded-[20px]">
               <h4 class="font-bold text-neutral-title mb-2">当前问题</h4>
-              <p class="text-sm text-neutral-body">{{ currentQuestion?.question }}</p>
+              <p class="text-sm text-neutral-body">
+                {{ currentQuestion?.question }}
+              </p>
             </div>
           </div>
         </div>
       </div>
-      
+
       <!-- User Panel -->
       <div class="lg:col-span-2">
-        <div class="bg-white rounded-[32px] p-6 shadow-sm border border-neutral-border h-full">
-          <h2 class="text-xl font-bold text-neutral-title mb-6">问题 {{ currentQuestionIndex + 1 }}/{{ totalQuestions }}</h2>
-          <p class="text-lg font-medium text-neutral-body mb-8">{{ currentQuestion?.question }}</p>
-          
+        <div
+          class="bg-white rounded-[32px] p-6 shadow-sm border border-neutral-border h-full"
+        >
+          <h2 class="text-xl font-bold text-neutral-title mb-6">
+            问题 {{ currentQuestionIndex + 1 }}/{{ totalQuestions }}
+          </h2>
+          <p class="text-lg font-medium text-neutral-body mb-8">
+            {{ currentQuestion?.question }}
+          </p>
+
           <!-- Question Category and Difficulty -->
           <div class="flex items-center gap-4 mb-6">
-            <span class="px-3 py-1 bg-primary/10 text-primary text-xs font-bold rounded-full">{{ currentQuestion?.category }}</span>
-            <span class="px-3 py-1 bg-neutral-bg text-neutral-title text-xs font-bold rounded-full">{{ currentQuestion?.difficulty === 'easy' ? '简单' : currentQuestion?.difficulty === 'medium' ? '中等' : currentQuestion?.difficulty === 'hard' ? '困难' : currentQuestion?.difficulty === 'expert' ? '专家' : '大师' }}</span>
+            <span
+              class="px-3 py-1 bg-primary/10 text-primary text-xs font-bold rounded-full"
+              >{{ currentQuestion?.category }}</span
+            >
+            <span
+              class="px-3 py-1 bg-neutral-bg text-neutral-title text-xs font-bold rounded-full"
+              >{{
+                currentQuestion?.difficulty === "easy"
+                  ? "简单"
+                  : currentQuestion?.difficulty === "medium"
+                    ? "中等"
+                    : currentQuestion?.difficulty === "hard"
+                      ? "困难"
+                      : currentQuestion?.difficulty === "expert"
+                        ? "专家"
+                        : "大师"
+              }}</span
+            >
           </div>
-          
+
           <!-- Answer Input -->
           <div class="mb-6">
-            <label class="block text-sm font-bold text-neutral-title mb-2">你的回答</label>
-            <textarea 
-              v-model="userAnswer" 
-              class="w-full p-4 border border-neutral-border rounded-[20px] focus:outline-none focus:border-primary transition-colors" 
-              rows="6" 
+            <label class="block text-sm font-bold text-neutral-title mb-2"
+              >你的回答</label
+            >
+            <textarea
+              v-model="userAnswer"
+              class="w-full p-4 border border-neutral-border rounded-[20px] focus:outline-none focus:border-primary transition-colors"
+              rows="6"
               placeholder="请输入你的回答..."
               :disabled="!isPlaying"
             ></textarea>
           </div>
-          
+
           <!-- Recording and Tips -->
           <div class="flex flex-wrap items-center gap-4 mb-6">
-            <button 
-              @click="toggleRecording" 
-              class="flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-sm transition-all" 
-              :class="isRecording ? 'bg-auxiliary-red text-white' : 'bg-neutral-bg text-neutral-title hover:bg-neutral-border/50'"
+            <button
+              class="flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-sm transition-all"
+              :class="
+                isRecording
+                  ? 'bg-auxiliary-red text-white'
+                  : 'bg-neutral-bg text-neutral-title hover:bg-neutral-border/50'
+              "
               :disabled="!isPlaying"
+              @click="toggleRecording"
             >
               <Mic v-if="!isRecording" :size="16" />
               <MicOff v-else :size="16" />
-              {{ isRecording ? '停止录音' : '开始录音' }}
+              {{ isRecording ? "停止录音" : "开始录音" }}
             </button>
-            
-            <button 
-              @click="toggleTips" 
+
+            <button
               class="flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-sm transition-all bg-neutral-bg text-neutral-title hover:bg-neutral-border/50"
+              @click="toggleTips"
             >
               <Info :size="16" />
               查看答题技巧
             </button>
-            
-            <button 
-              @click="toggleExampleAnswer" 
+
+            <button
               class="flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-sm transition-all bg-neutral-bg text-neutral-title hover:bg-neutral-border/50"
+              @click="toggleExampleAnswer"
             >
               <MessageSquare :size="16" />
               查看示例回答
             </button>
           </div>
-          
+
           <!-- Tips and Example Answer -->
-          <div v-if="showTips" class="mb-6 p-4 bg-primary/5 border border-primary/20 rounded-[20px]">
+          <div
+            v-if="showTips"
+            class="mb-6 p-4 bg-primary/5 border border-primary/20 rounded-[20px]"
+          >
             <h4 class="font-bold text-primary mb-2">答题技巧</h4>
             <p class="text-sm text-neutral-body">{{ currentQuestion?.tips }}</p>
           </div>
-          
-          <div v-if="showExampleAnswer" class="mb-6 p-4 bg-neutral-bg rounded-[20px]">
+
+          <div
+            v-if="showExampleAnswer"
+            class="mb-6 p-4 bg-neutral-bg rounded-[20px]"
+          >
             <h4 class="font-bold text-neutral-title mb-2">示例回答</h4>
-            <p class="text-sm text-neutral-body">{{ currentQuestion?.exampleAnswer }}</p>
+            <p class="text-sm text-neutral-body">
+              {{ currentQuestion?.exampleAnswer }}
+            </p>
           </div>
-          
+
           <!-- Feedback -->
-          <div v-if="showFeedback" class="mb-6 p-4 rounded-[20px]" :class="currentFeedback.includes('很好') ? 'bg-auxiliary-green/10 border border-auxiliary-green/30' : currentFeedback.includes('还可以') ? 'bg-auxiliary-orange/10 border border-auxiliary-orange/30' : 'bg-auxiliary-red/10 border border-auxiliary-red/30'">
+          <div
+            v-if="showFeedback"
+            class="mb-6 p-4 rounded-[20px]"
+            :class="
+              currentFeedback.includes('很好')
+                ? 'bg-auxiliary-green/10 border border-auxiliary-green/30'
+                : currentFeedback.includes('还可以')
+                  ? 'bg-auxiliary-orange/10 border border-auxiliary-orange/30'
+                  : 'bg-auxiliary-red/10 border border-auxiliary-red/30'
+            "
+          >
             <div class="flex items-start gap-3">
               <div class="mt-1">
-                <CheckCircle2 v-if="currentFeedback.includes('很好')" :size="20" class="text-auxiliary-green" />
-                <AlertCircle v-else-if="currentFeedback.includes('还可以')" :size="20" class="text-auxiliary-orange" />
+                <CheckCircle2
+                  v-if="currentFeedback.includes('很好')"
+                  :size="20"
+                  class="text-auxiliary-green"
+                />
+                <AlertCircle
+                  v-else-if="currentFeedback.includes('还可以')"
+                  :size="20"
+                  class="text-auxiliary-orange"
+                />
                 <AlertCircle v-else :size="20" class="text-auxiliary-red" />
               </div>
               <p class="text-sm text-neutral-body">{{ currentFeedback }}</p>
             </div>
           </div>
-          
+
           <!-- Submit Button -->
           <div class="flex justify-end">
-            <button 
-              @click="submitAnswer" 
+            <button
               class="px-8 py-3 bg-primary text-white font-bold rounded-xl hover:bg-primary-dark transition-all flex items-center gap-2"
               :disabled="!isPlaying || !userAnswer.trim()"
+              @click="submitAnswer"
             >
               <Send :size="16" />
               提交回答
@@ -971,8 +1164,13 @@ onMounted(() => {
     </div>
 
     <!-- Result Card -->
-    <div v-else class="bg-white rounded-[32px] p-8 shadow-sm border border-neutral-border text-center">
-      <div class="w-24 h-24 rounded-full gradient-primary flex items-center justify-center mx-auto mb-6">
+    <div
+      v-else
+      class="bg-white rounded-[32px] p-8 shadow-sm border border-neutral-border text-center"
+    >
+      <div
+        class="w-24 h-24 rounded-full gradient-primary flex items-center justify-center mx-auto mb-6"
+      >
         <Trophy :size="48" class="text-white" />
       </div>
       <h2 class="text-2xl font-black text-neutral-title mb-4">面试完成！</h2>
@@ -982,27 +1180,49 @@ onMounted(() => {
           <p class="text-xs text-neutral-helper uppercase font-bold">得分</p>
         </div>
         <div>
-          <p class="text-3xl font-black text-auxiliary-green">{{ correctAnswers }}/{{ totalQuestions }}</p>
-          <p class="text-xs text-neutral-helper uppercase font-bold">正确题数</p>
+          <p class="text-3xl font-black text-auxiliary-green">
+            {{ correctAnswers }}/{{ totalQuestions }}
+          </p>
+          <p class="text-xs text-neutral-helper uppercase font-bold">
+            正确题数
+          </p>
         </div>
         <div>
-          <p class="text-3xl font-black text-auxiliary-orange">{{ accuracy }}%</p>
+          <p class="text-3xl font-black text-auxiliary-orange">
+            {{ accuracy }}%
+          </p>
           <p class="text-xs text-neutral-helper uppercase font-bold">正确率</p>
         </div>
         <div>
-          <p class="text-3xl font-black text-auxiliary-blue">{{ (currentLevel?.timeLimit || 30) - Math.floor(timeRemaining / 60) }}分钟</p>
+          <p class="text-3xl font-black text-auxiliary-blue">
+            {{
+              (currentLevel?.timeLimit || 30) - Math.floor(timeRemaining / 60)
+            }}分钟
+          </p>
           <p class="text-xs text-neutral-helper uppercase font-bold">用时</p>
         </div>
       </div>
       <p class="text-sm text-neutral-body mb-8">
-        {{ accuracy >= 80 ? '恭喜你！表现优秀，获得了 ' + currentLevel?.rewards + '！' : accuracy >= 60 ? '不错的表现！继续努力，你会做得更好！' : '继续努力，多练习可以提高你的面试能力！' }}
+        {{
+          accuracy >= 80
+            ? "恭喜你！表现优秀，获得了 " + currentLevel?.rewards + "！"
+            : accuracy >= 60
+              ? "不错的表现！继续努力，你会做得更好！"
+              : "继续努力，多练习可以提高你的面试能力！"
+        }}
       </p>
       <div class="flex flex-wrap gap-4 justify-center">
-        <button @click="restartLevel" class="px-8 py-4 bg-primary text-white font-bold rounded-2xl shadow-lg hover:bg-primary-dark transition-all flex items-center gap-2">
+        <button
+          class="px-8 py-4 bg-primary text-white font-bold rounded-2xl shadow-lg hover:bg-primary-dark transition-all flex items-center gap-2"
+          @click="restartLevel"
+        >
           <Gamepad2 :size="20" />
           重新挑战
         </button>
-        <button @click="backToLevels" class="px-8 py-4 bg-neutral-bg text-neutral-title font-bold rounded-2xl hover:bg-neutral-border/50 transition-all flex items-center gap-2">
+        <button
+          class="px-8 py-4 bg-neutral-bg text-neutral-title font-bold rounded-2xl hover:bg-neutral-border/50 transition-all flex items-center gap-2"
+          @click="backToLevels"
+        >
           <ChevronLeft :size="20" />
           返回关卡列表
         </button>
