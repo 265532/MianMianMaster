@@ -135,7 +135,7 @@ router.beforeEach(async (to, _from, next) => {
       try {
         await userStore.initialize();
       } catch {
-        userStore.logout();
+        await userStore.logout();
         next({ path: "/login", query: { redirect: to.fullPath } });
         return;
       }

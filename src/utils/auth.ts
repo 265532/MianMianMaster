@@ -1,3 +1,4 @@
+import type { UserInfo } from "@/stores/user";
 import {
   TOKEN_KEY,
   REFRESH_TOKEN_KEY,
@@ -30,11 +31,11 @@ export function isLoggedIn(): boolean {
   return !!getToken();
 }
 
-export function getCachedUserInfo(): any {
+export function getCachedUserInfo(): UserInfo | null {
   const userInfo = localStorage.getItem(USER_INFO_KEY);
-  return userInfo ? JSON.parse(userInfo) : null;
+  return userInfo ? (JSON.parse(userInfo) as UserInfo) : null;
 }
 
-export function cacheUserInfo(userInfo: any): void {
+export function cacheUserInfo(userInfo: UserInfo): void {
   localStorage.setItem(USER_INFO_KEY, JSON.stringify(userInfo));
 }

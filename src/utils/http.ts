@@ -194,7 +194,11 @@ service.interceptors.response.use(
               { refresh_token: refreshTokenValue },
             );
             const newToken = refreshResponse.data.access_token;
+            const newRefreshToken = refreshResponse.data.refresh_token;
             setToken(newToken);
+            if (newRefreshToken) {
+              setRefreshToken(newRefreshToken);
+            }
             onTokenRefreshed(newToken);
 
             if (config) {

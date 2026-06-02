@@ -94,7 +94,7 @@
 
 1. 🟡 **[缺失] 通知偏好与设备注册**: 文档缺少 3 个接口：获取/更新通知偏好设置、设备推送 Token 注册。文档提到"当前无 WebSocket 推送"建议轮询，但前端已实现 `device-token` 注册（表明后端可能已支持或规划支持推送），文档描述与前端实现存在矛盾。
 
-2. 🟡 **[类型缺失] 通知类型定义**: 前端 [notification.types.ts](file:///d:/code/MianMianMaster/src/api/types/notification.types.ts#L1-L9) 定义了 `type: "system" | "interview" | "community" | "learning"` 四种通知类型，文档未列出。
+2. 🟡 **[类型缺失] 通知类型定义**: 前端 [notification.types.ts](file:///d:/code/MianMianMaster/src/api/types/notification.types.ts#L1-L9) 定义了 `type: "system" | "interview_result" | "community" | "learning"` 四种通知类型，文档未列出。
 
 3. 🟡 **[字段缺失] 通知链接**: 前端 `Notification` 类型包含 `link?: string` 字段（用于点击跳转），文档未提及。
 

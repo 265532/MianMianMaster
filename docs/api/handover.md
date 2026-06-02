@@ -1,11 +1,12 @@
 # API 基础设施联调 交接文档
 
 **模块**: 前端 API 基础设施联调准备
-**完成日期**: 2026-05-31
+**最后更新**: 2026-06-01
 **关联文档**:
 - 审查报告: [infrastructure-review-report.md](./infrastructure-review-report.md)
 - 修复清单: [fix-checklist.md](./fix-checklist.md)
 - 后端接口大纲: [frontend-api-integration-guide.md](./frontend-api-integration-guide.md)
+- 前端问题清单: [frontend-issues.md](./frontend-issues.md)
 - 前期交接: [docs/frontend-api/handover.md](../frontend-api/handover.md)
 
 ---
@@ -145,7 +146,78 @@ function log(...args: unknown[]): void {
 
 ---
 
-## 四、修改文件清单
+## 四、2026-06-01 前端接口对接缺陷修复（第二轮）
+
+### 背景
+
+基于 `docs/api/frontend-issues.md` 问题清单，对前端 API 层与后端接口文档不一致的 16 个问题进行系统性修复。涵盖 8 个严重问题（阻塞功能交付）和 8 个中等问题（功能不完整）。
+
+### 修复分类
+
+#### 🔴 严重问题（8/8 全部修复）
+
+| 编号 | 问题 | 文件 | 方案 |
+|------|------|------|------|
+| F-001 | Token 接口缺失 `refresh_token` | `api/types/auth.types.ts` | 添加 `refresh_token: string` |
+| F-002 | 登出接口未实现 | `api/modules/auth.api.ts` | 添加 `logout()` 方法 |
+| F-003 | 管理员解锁用户接口未实现 | `api/modules/auth.api.ts` | 添加 `unlockUser()` 方法 |
+| F-004 | SkillTreeNode 缺失高亮标记 | `api/types/job.types.ts` | 添加 `is_required` + `has_required_child` |
+| F-005 | 帖子编辑接口未实现 | `api/modules/community.api.ts` | 添加 `editPost()` 方法 |
+| F-006 | 帖子删除接口未实现 | `api/modules/community.api.ts` | 添加 `deletePost()` 方法（`del` 已在 request.ts 导出） |
+| F-007 | PostCreate/Post 缺失 `category` | `api/types/community.types.ts` | 新增 `PostCategory` 联合类型，补充 `category` 字段 |
+| F-008 | CommentCreate/Comment 缺失 `parent_id` | `api/types/community.types.ts` | 补充 `parent_id` 和 `replies` 字段 |
+
+#### 🟡 中等问题（6/6 全部修复）
+
+| 编号 | 问题 | 文件 | 方案 |
+|------|------|------|------|
+| F-009 | AI 点评内容无法获取 | `api/types/community.types.ts` | `AiReviewResult` + `Post` 补充 `ai_review_content` |
+| F-010 | 测评题目模型缺失 | `api/types/assessment.types.ts` | 新增 `AssessmentQuestion` 接口（含 3 种题型） |
+| F-011 | 测评提交结构不清晰 | `api/types/assessment.types.ts` + `api/modules/assessment.api.ts` | 新增 `AssessmentSubmit` 类型，重构 `submitAssessment` |
+| F-012 | Business 模块 9 接口缺失 | 新建 `api/types/business.types.ts` + `api/modules/business.api.ts` | 完整实现知识图谱/AI策略/面试配置/会话/Agent状态 |
+| F-013 | Role 模块 5 接口缺失 | 新建 `api/types/role.types.ts` + `api/modules/role.api.ts` | 完整实现角色/权限管理（复用已有 `RoleResponse`/`PermissionResponse`） |
+| F-014 | 系统配置/审计日志缺失 | `api/types/system.types.ts` + `api/modules/system.api.ts` | 新增 `AuditLog` 类型 + `createConfig()` + `getAuditLog()` |
+
+#### ⚠️ 未修复项（需后端确认）
+
+| 编号 | 问题 | 说明 |
+|------|------|------|
+| F-015 | 社区评论列表接口 | 前端已有 `getPostComments()`，需确认后端是否实现 `GET /community/posts/{id}/comments` |
+| F-016 | 19 个前端已实现接口 | 文档未列出但前端已实现，需逐项与后端确认兼容性 |
+
+### 本轮新增文件
+
+| 文件 | 说明 |
+|------|------|
+| `src/api/types/business.types.ts` | Business 模块类型（KnowledgeGraph/AiStrategy/InterviewConfig/InterviewSession/AgentState） |
+| `src/api/modules/business.api.ts` | Business 模块 9 个管理后台接口 |
+| `src/api/types/role.types.ts` | Role 模块类型（RoleCreate/AssignRolePermissions/AssignUserRoles） |
+| `src/api/modules/role.api.ts` | Role 模块 5 个权限管理接口 |
+
+### 本轮修改文件
+
+| 文件 | 改动内容 |
+|------|---------|
+| `src/api/types/auth.types.ts` | `Token` 添加 `refresh_token` |
+| `src/api/modules/auth.api.ts` | 添加 `logout()` + `unlockUser()` |
+| `src/api/types/job.types.ts` | `SkillTreeNode` 添加 `is_required` + `has_required_child` |
+| `src/api/types/community.types.ts` | 新增 `PostCategory` 类型；`Post`/`PostCreate` 添加 `category` + `ai_review_content`；`Comment`/`CommentCreate` 添加 `parent_id` + `replies`；`AiReviewResult` 添加 `ai_review_content` |
+| `src/api/modules/community.api.ts` | 导入 `put`/`del`；添加 `editPost()` + `deletePost()` |
+| `src/api/types/assessment.types.ts` | 新增 `AssessmentQuestion` + `AssessmentSubmit`；`AssessmentCreate` 改为 `questions` 字段 |
+| `src/api/modules/assessment.api.ts` | `submitAssessment` 签名改为接收 `AssessmentSubmit` |
+| `src/api/types/system.types.ts` | 新增 `AuditLog` 类型 |
+| `src/api/modules/system.api.ts` | 导入 `post` + `PaginationParams`；添加 `createConfig()` + `getAuditLog()` |
+
+### 验证结果
+
+| 检查项 | 结果 |
+|--------|------|
+| `vue-tsc --noEmit` | ✅ 零错误 |
+| `vite build` | ✅ 构建成功 (17.67s) |
+
+---
+
+## 五、修改文件清单
 
 ### 本轮新增文件
 
@@ -193,7 +265,7 @@ function log(...args: unknown[]): void {
 
 ---
 
-## 五、关键技术决策
+## 六、关键技术决策
 
 ### 1. Token 刷新采用请求队列
 
@@ -243,7 +315,7 @@ interface InterviewSession {
 
 ---
 
-## 六、踩坑记录
+## 七、踩坑记录
 
 ### 踩坑1: axios-mock-adapter 无法拦截 SSE 流
 
@@ -264,7 +336,7 @@ interface InterviewSession {
 
 ---
 
-## 七、验证方法
+## 八、验证方法
 
 ### 快速验证 SSE
 
@@ -289,7 +361,7 @@ vitest run                # 96 测试全部通过
 
 ---
 
-## 八、未完成事项
+## 九、未完成事项
 
 | 事项 | 优先级 | 阻塞原因 |
 |------|--------|---------|
@@ -302,7 +374,7 @@ vitest run                # 96 测试全部通过
 
 ---
 
-## 九、下一步开发建议
+## 十、下一步开发建议
 
 ### 🔴 联调期（优先）
 
@@ -324,7 +396,97 @@ vitest run                # 96 测试全部通过
 
 ---
 
-## 十、文档索引
+## 十一、Auth 模块联调（2026-06-02）
+
+### 背景
+
+根据 `docs/api/tasks/auth.md` 任务清单，对 Auth 模块进行前后端联调。后端服务已启动（Swagger UI 可访问），OpenAPI 规范在 `/api/v1/openapi.json`。
+
+### 已完成的关键修复
+
+| # | 问题 | 文件 | 方案 |
+|---|------|------|------|
+| A-1 | `login()` 不保存 `refresh_token` | `stores/user.ts` | 添加 `setRefreshToken(tokenData.refresh_token)` |
+| A-2 | `logout()` 不调用后端 API | `stores/user.ts` | 改为 `async`，先调 `authApi.logout()` 再清本地状态 |
+| A-3 | Mock 数据 `mockToken` 缺少 `refresh_token` | `mock/data/auth.mock.ts` | 补充 `refresh_token` 字段 |
+| A-4 | Mock handler 缺少 3 个端点 | `mock/handlers/auth.handler.ts` | 添加 `/auth/refresh`、`/auth/logout`、`/auth/unlock/{username}` |
+| A-5 | `swaggerLogin()` 后端不存在 | `api/modules/auth.api.ts` | 移除该方法 |
+| A-6 | `RefreshTokenRequest` 类型未定义 | `api/types/auth.types.ts` | 新增接口定义 |
+| A-7 | `refreshToken()` 参数类型不严谨 | `api/modules/auth.api.ts` | 改用 `RefreshTokenRequest` 类型替代内联对象 |
+| A-8 | `http.ts` Token 刷新不保存新 `refresh_token` | `utils/http.ts` | 刷新后同时保存新的 `refresh_token` |
+| A-9 | `ResponseModel<T = any>` 使用 `any` 默认值 | `api/types/response.types.ts` | 改为 `unknown` |
+| A-10 | Store 层错误消息不区分网络/超时 | `stores/user.ts` | 引入 `isNetworkError`/`isTimeoutError`，显示中文友好提示 |
+| A-11 | `router/index.ts` 中 `logout()` 未 await | `router/index.ts` | 添加 `await` |
+| A-12 | `useAuth.ts` 中 `logout()` 未 await | `composables/useAuth.ts` | 改为 `async`，添加 `await` |
+| A-13 | 测试 mock 数据与后端 schema 不一致 | `stores/__tests__/user.test.ts` | 修复 Token/UserResponse mock 数据 |
+
+### 修改文件清单
+
+| 文件 | 改动内容 |
+|------|---------|
+| `src/api/modules/auth.api.ts` | 移除 `swaggerLogin()`；`refreshToken()` 改用 `RefreshTokenRequest` 类型 |
+| `src/api/types/auth.types.ts` | 新增 `RefreshTokenRequest` 接口 |
+| `src/api/types/response.types.ts` | `ResponseModel`/`PaginatedData` 默认泛型从 `any` 改为 `unknown` |
+| `src/stores/user.ts` | `login()` 保存 `refresh_token`；`logout()` 改 async 调 API；`fetchUserInfo()` await logout；错误处理增加网络/超时检测 |
+| `src/utils/http.ts` | Token 刷新后同时保存新 `refresh_token` |
+| `src/mock/data/auth.mock.ts` | `mockToken` 添加 `refresh_token` |
+| `src/mock/handlers/auth.handler.ts` | 移除 `swagger-login` handler；添加 `/auth/refresh`、`/auth/logout`、`/auth/unlock` handler；所有 Token 响应添加 `refresh_token` |
+| `src/router/index.ts` | `logout()` 添加 `await` |
+| `src/composables/useAuth.ts` | `logout()` 改为 `async` + `await` |
+| `src/stores/__tests__/user.test.ts` | 修复 mock 数据对齐后端 schema；`logout` mock 补充；`setRefreshToken` mock 补充 |
+| `docs/api/tasks/auth.md` | 更新 checklist 状态 |
+| `docs/api/tasks/progress.md` | Auth 模块状态更新为"代码对齐完成" |
+
+### 验证结果
+
+| 检查项 | 结果 |
+|--------|------|
+| `vue-tsc --noEmit` | ✅ 零错误 |
+| `vite build` | ✅ 构建成功 |
+| 后端 `POST /auth/register` | ✅ 返回 `ResponseModel[User]`，字段与前端 `UserResponse` 一致 |
+| 后端 `POST /auth/login` | ⚠️ 超时（后端问题，非前端问题） |
+
+### 后端 API 对齐验证
+
+通过 OpenAPI 规范逐一比对，10 个 Auth 端点全部对齐：
+
+| 端点 | 后端 Schema | 前端类型 | 状态 |
+|------|------------|---------|------|
+| `POST /auth/login` | `LoginRequest` → `ResponseModel[Token]` | `LoginRequest` → `ResponseModel<Token>` | ✅ |
+| `POST /auth/register` | `UserCreate` → `ResponseModel[User]` | `RegisterRequest` → `ResponseModel<UserResponse>` | ✅ |
+| `GET /auth/me` | → `ResponseModel[User]` | → `ResponseModel<UserResponse>` | ✅ |
+| `POST /auth/refresh` | `RefreshTokenRequest` → `ResponseModel[Token]` | `RefreshTokenRequest` → `ResponseModel<Token>` | ✅ |
+| `POST /auth/logout` | → `ResponseModel[str]` | → `ResponseModel<string>` | ✅ |
+| `POST /auth/sms/send` | `SmsSendRequest` → `ResponseModel[str]` | `SmsSendRequest` → `ResponseModel<string>` | ✅ |
+| `POST /auth/sms/login` | `SmsLoginRequest` → `ResponseModel[Token]` | `SmsLoginRequest` → `ResponseModel<Token>` | ✅ |
+| `POST /auth/password/reset-token` | `PasswordResetTokenRequest` → `ResponseModel[str]` | `PasswordResetTokenRequest` → `ResponseModel<string>` | ✅ |
+| `POST /auth/password/reset` | `PasswordResetRequest` → `ResponseModel[str]` | `PasswordResetRequest` → `ResponseModel<string>` | ✅ |
+| `POST /auth/unlock/{username}` | → `ResponseModel[str]` | → `ResponseModel<string>` | ✅ |
+
+### 待完成事项（需浏览器验证或后端修复）
+
+| 事项 | 优先级 | 阻塞原因 |
+|------|--------|---------|
+| 3.3 获取当前用户 E2E 验证 | 🔴 P0 | 后端 `/auth/login` 超时 |
+| 3.4 路由守卫浏览器验证 | 🔴 P0 | 需登录成功后浏览器测试 |
+| 3.5 Token 持久化验证 | 🔴 P0 | 同上 |
+| 3.6 登录锁定提示 | 🟡 P1 | 需后端返回锁定信息格式确认 |
+| 3.7 Token 刷新 E2E 验证 | 🟡 P1 | 需登录成功后测试 |
+| 4.2/4.3 登出浏览器验证 | 🟡 P1 | 需登录成功后测试 |
+| 6.3 密码重置 E2E 验证 | 🟢 P2 | 需后端就绪 |
+
+### 踩坑记录
+
+**踩坑4: 后端 `/auth/login` 端点超时**
+
+- **现象**: `POST /api/v1/auth/login` 请求超时（60s+），但 `POST /api/v1/auth/register` 和 `GET /health` 正常
+- **可能原因**: bcrypt 哈希耗时过长 / 数据库连接问题 / 后端内部错误
+- **影响**: 无法完成登录流程的端到端验证
+- **建议**: 联系后端排查登录端点性能问题
+
+---
+
+## 十二、文档索引
 
 | 文档 | 路径 |
 |------|------|

@@ -4,11 +4,16 @@ import { authApi } from "@/api/modules/auth.api";
 import { userApi } from "@/api/modules/user.api";
 import {
   setToken,
+  setRefreshToken,
   removeToken,
   isLoggedIn as checkTokenExists,
   getCachedUserInfo,
   cacheUserInfo,
 } from "@/utils/auth";
+import {
+  isNetworkError,
+  isTimeoutError,
+} from "@/utils/error";
 import type {
   UserResponse,
   RoleResponse,
@@ -86,12 +91,21 @@ export const useUserStore = defineStore("user", () => {
       const tokenData = response.data;
 
       setToken(tokenData.access_token);
+      if (tokenData.refresh_token) {
+        setRefreshToken(tokenData.refresh_token);
+      }
 
       await fetchUserInfo();
 
       return true;
     } catch (err: any) {
-      error.value = err?.response?.data?.message || err?.message || "登录失败";
+      if (isNetworkError(err)) {
+        error.value = "网络连接失败，请检查网络";
+      } else if (isTimeoutError(err)) {
+        error.value = "请求超时，请稍后重试";
+      } else {
+        error.value = err?.response?.data?.message || err?.message || "登录失败";
+      }
       throw err;
     } finally {
       loading.value = false;
@@ -111,7 +125,13 @@ export const useUserStore = defineStore("user", () => {
       await authApi.register({ username, email, password, phone });
       return true;
     } catch (err: any) {
-      error.value = err?.response?.data?.message || err?.message || "注册失败";
+      if (isNetworkError(err)) {
+        error.value = "网络连接失败，请检查网络";
+      } else if (isTimeoutError(err)) {
+        error.value = "请求超时，请稍后重试";
+      } else {
+        error.value = err?.response?.data?.message || err?.message || "注册失败";
+      }
       throw err;
     } finally {
       loading.value = false;
@@ -127,7 +147,7 @@ export const useUserStore = defineStore("user", () => {
       cacheUserInfo(user.value);
     } catch (err) {
       if (DEBUG) console.error("[UserStore] fetchUserInfo error:", err);
-      logout();
+      await logout();
     }
   }
 
@@ -148,14 +168,20 @@ export const useUserStore = defineStore("user", () => {
     };
   }
 
-  function logout(): void {
-    removeToken();
-    user.value = { ...defaultUser };
-    interviewHistory.value = [];
-    abilityData.value = {};
-    gameInterviewData.value = null;
-    resumeData.value = null;
-    resumeDiagnosisResult.value = null;
+  async function logout(): Promise<void> {
+    try {
+      await authApi.logout();
+    } catch (err) {
+      if (DEBUG) console.warn("[UserStore] logout API failed:", err);
+    } finally {
+      removeToken();
+      user.value = { ...defaultUser };
+      interviewHistory.value = [];
+      abilityData.value = {};
+      gameInterviewData.value = null;
+      resumeData.value = null;
+      resumeDiagnosisResult.value = null;
+    }
   }
 
   async function updateProfile(profileData: Partial<UserInfo>): Promise<void> {

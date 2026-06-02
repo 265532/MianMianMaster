@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
+import { storeToRefs } from "pinia";
+import { useUserStore } from "@/stores/user";
+import LoginForm from "@/components/LoginForm.vue";
 import {
   Zap,
   Target,
@@ -27,23 +30,26 @@ import {
 } from "lucide-vue-next";
 
 const router = useRouter();
+const userStore = useUserStore();
+const { isLoggedIn } = storeToRefs(userStore);
 const isScrolled = ref(false);
 const isMobileMenuOpen = ref(false);
 const activeSection = ref("hero");
 
 // 登录与用户状态
-const isLoggedIn = ref(false);
 const showLoginModal = ref(false);
 const showUserMenu = ref(false);
 
-const handleLogin = () => {
-  // 模拟登录
-  isLoggedIn.value = true;
+const handleLoginSuccess = (): void => {
   showLoginModal.value = false;
 };
 
-const handleLogout = () => {
-  isLoggedIn.value = false;
+const handleLoginCancel = (): void => {
+  showLoginModal.value = false;
+};
+
+const handleLogout = async (): Promise<void> => {
+  await userStore.logout();
   showUserMenu.value = false;
 };
 
@@ -443,79 +449,13 @@ const toggleFaq = (index: number) => {
       >
         <div
           class="absolute inset-0 bg-black/60 backdrop-blur-sm"
-          @click="showLoginModal = false"
+          @click="handleLoginCancel"
         ></div>
-        <div
-          class="relative p-1 rounded-[40px] shadow-2xl w-full max-w-md animate-in zoom-in duration-300 overflow-hidden"
-          style="background: linear-gradient(135deg, #95e0e1 0%, #ffeac2 100%)"
-        >
-          <div
-            class="bg-white rounded-[38px] p-10 space-y-8 text-center relative z-10"
-          >
-            <button
-              class="absolute top-6 right-6 p-2 hover:bg-neutral-bg rounded-full transition-colors text-neutral-helper"
-              @click="showLoginModal = false"
-            >
-              <X :size="20" />
-            </button>
-
-            <div class="space-y-3">
-              <div
-                class="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto text-primary"
-              >
-                <Bot :size="32" />
-              </div>
-              <h3 class="text-2xl font-black text-neutral-title">
-                欢迎开启智能面试
-              </h3>
-              <p class="text-sm text-neutral-body">
-                登录后解锁 50+ 岗位模拟与 AI 报告
-              </p>
-            </div>
-
-            <div class="space-y-4">
-              <div class="space-y-2 text-left">
-                <label
-                  class="text-xs font-bold text-neutral-helper uppercase tracking-wider ml-1"
-                  >手机号 / 邮箱</label
-                >
-                <input
-                  type="text"
-                  placeholder="请输入您的账号"
-                  class="w-full px-6 py-4 bg-neutral-bg rounded-2xl border-2 border-transparent focus:border-primary/20 outline-none transition-all font-medium"
-                />
-              </div>
-              <div class="space-y-2 text-left">
-                <label
-                  class="text-xs font-bold text-neutral-helper uppercase tracking-wider ml-1"
-                  >密码</label
-                >
-                <input
-                  type="password"
-                  placeholder="请输入您的密码"
-                  class="w-full px-6 py-4 bg-neutral-bg rounded-2xl border-2 border-transparent focus:border-primary/20 outline-none transition-all font-medium"
-                />
-              </div>
-            </div>
-
-            <button
-              class="w-full py-4 bg-neutral-title text-[#FFC585] font-black rounded-2xl shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all"
-              @click="handleLogin"
-            >
-              立即登录
-            </button>
-
-            <div
-              class="flex items-center justify-between text-xs text-neutral-helper font-bold px-2"
-            >
-              <span class="hover:text-primary cursor-pointer">忘记密码？</span>
-              <span class="hover:text-primary cursor-pointer">注册新账号</span>
-            </div>
-          </div>
-          <!-- 装饰元素 -->
-          <div class="absolute -right-12 -bottom-12 opacity-10 text-primary">
-            <Bot :size="200" />
-          </div>
+        <div class="relative animate-in zoom-in duration-300 w-[500px] max-w-md overflow-hidden">
+          <LoginForm
+            @success="handleLoginSuccess"
+            @cancel="handleLoginCancel"
+          />
         </div>
       </div>
     </Transition>

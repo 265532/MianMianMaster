@@ -2,7 +2,7 @@ export interface Notification {
   id: number;
   title: string;
   content: string;
-  type: "system" | "interview" | "community" | "learning";
+  type: "system" | "interview_result" | "community" | "learning";
   is_read: boolean;
   created_at: string;
   link?: string;

@@ -35,6 +35,10 @@ export interface PasswordResetRequest {
   new_password: string;
 }
 
+export interface RefreshTokenRequest {
+  refresh_token: string;
+}
+
 export interface ChangePasswordRequest {
   old_password: string;
   new_password: string;

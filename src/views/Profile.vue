@@ -1082,16 +1082,16 @@ const handleResize = () => {
                       </p>
                       <div class="flex items-center justify-end gap-1">
                         <span
-                          v-for="tag in item.tags.slice(0, 2)"
+                          v-for="tag in (item.tags ?? []).slice(0, 2)"
                           :key="tag"
                           class="text-[9px] px-2 py-0.5 bg-primary/10 text-primary rounded-full"
                         >
                           {{ tag }}
                         </span>
                         <span
-                          v-if="item.tags.length > 2"
+                          v-if="(item.tags?.length ?? 0) > 2"
                           class="text-[9px] text-neutral-helper"
-                          >+{{ item.tags.length - 2 }}</span
+                          >+{{ (item.tags?.length ?? 0) - 2 }}</span
                         >
                       </div>
                     </div>
@@ -1206,7 +1206,7 @@ const handleResize = () => {
                         </h5>
                         <div class="flex flex-wrap gap-2">
                           <span
-                            v-for="tag in item.tags"
+                            v-for="tag in item.tags ?? []"
                             :key="tag"
                             class="text-[9px] px-2 py-0.5 bg-primary/10 text-primary rounded-full"
                           >
@@ -2156,16 +2156,16 @@ const handleResize = () => {
                     </p>
                     <div class="flex items-center justify-end gap-1">
                       <span
-                        v-for="tag in item.tags.slice(0, 2)"
+                        v-for="tag in (item.tags ?? []).slice(0, 2)"
                         :key="tag"
                         class="text-[9px] px-2 py-0.5 bg-primary/10 text-primary rounded-full"
                       >
                         {{ tag }}
                       </span>
                       <span
-                        v-if="item.tags.length > 2"
+                        v-if="(item.tags?.length ?? 0) > 2"
                         class="text-[9px] text-neutral-helper"
-                        >+{{ item.tags.length - 2 }}</span
+                        >+{{ (item.tags?.length ?? 0) - 2 }}</span
                       >
                     </div>
                   </div>
@@ -2278,7 +2278,7 @@ const handleResize = () => {
                       </h5>
                       <div class="flex flex-wrap gap-2">
                         <span
-                          v-for="tag in item.tags"
+                          v-for="tag in item.tags ?? []"
                           :key="tag"
                           class="text-[9px] px-2 py-0.5 bg-primary/10 text-primary rounded-full"
                         >

@@ -1,316 +1,73 @@
 ---
 alwaysApply: true
-description: 前端项目面向 AI 代码助手的统一开发规约。包含架构约束、技术栈选型、代码风格、Store重构规范、组件开发规范等核心规则，以及从实际踩坑中提炼的强制检查项。
+description: MianMianMaster 前端项目 AI 开发规约主索引。包含核心架构约束与代码风格精要，以及完整的子文档导航体系。
 ---
 # MianMianMaster Frontend - AI 开发规约
 
-> 本文档为 MianMianMaster 前端项目面向 AI 代码助手的统一开发规约。如有冲突，以此文件为准。
-> 本文档从实际开发踩坑中持续迭代，**红色标记的条目均为真实踩坑产生的强制规则**。
-
-## 1. 架构约束
-
-- **强制 Must**: 采用分层架构（View → Store → API → HTTP），禁止在 View 层直接调用 axios 或 HTTP 方法。
-- **强制 Must**: View 层只负责 UI 展示和用户交互，业务逻辑放在 Store 或 Composable 中。
-- **强制 Must**: API 层封装所有 HTTP 请求，Store 层通过调用 API 层方法获取数据。
-- **推荐 Should**: 复杂的可复用逻辑抽取为 Composable（`composables/*.ts`）。
-
-**正例**: View 通过 `storeToRefs(learningStore)` 获取响应式数据，通过 `learningStore.fetchCollections()` 触发数据加载。
-**反例**: 在 `<script setup>` 中直接 `axios.get('/api/v1/learning/collections')`。
-
-## 2. 技术栈版本
-
-- **强制 Must**:
-  - Vue 3.5+ (Composition API + `<script setup>`)
-  - TypeScript 5.x (strict 模式)
-  - Pinia 3.x (Setup Store 语法 `defineStore('name', () => {...})`)
-  - Vite 7.x
-  - Axios (HTTP 客户端)
-  - axios-mock-adapter (Mock 适配器)
-  - TailwindCSS 4.x
-
-## 3. 目录命名
-
-- **强制 Must**: 必须遵守以下 `src` 目录结构：
-  - `src/api/modules/`：API 服务层（按业务模块划分，如 `auth.api.ts`）
-  - `src/api/types/`：API 类型定义（与后端 Schema 对齐）
-  - `src/stores/`：Pinia Store（按业务域划分）
-  - `src/composables/`：组合式函数
-  - `src/mock/data/`：Mock 数据定义
-  - `src/mock/handlers/`：Mock 请求处理器
-  - `src/utils/`：工具函数（http、auth、error、storage 等）
-  - `src/views/`：页面组件
-  - `src/components/`：公共组件
-  - `src/router/`：路由配置
-  - `src/config/`：应用配置和常量
-- **强制 Must**: 文件名使用 `kebab-case` 或 `dot-separated`（如 `auth.api.ts`、`user.mock.ts`），组件文件名使用 `PascalCase.vue`。
-
-## 4. 代码风格
-
-- **强制 Must**: 必须包含完整的 TypeScript 类型提示，禁止使用 `any`（除非有充分理由并添加注释说明）。
-- **强制 Must**: 使用 `@/` 路径别名导入，禁止使用相对路径跨目录导入。
-- **强制 Must**: Store 使用 Setup Store 语法（`defineStore('name', () => {...})`），不使用 Options Store。
-- **推荐 Should**: View 层通过 `storeToRefs()` 解构 Store 的响应式状态，避免丢失响应性。
-
-## 5. 🔴 Store 重构后强制检查项（踩坑提炼）
-
-> **背景**: Phase 4 Store 层重构后，因模板中遗留旧变量名导致运行时崩溃（`savedQuestionBanks` → `collections`、`mistakeBook` → `wrongQuestions` 未同步替换）。
-
-- **强制 Must**: Store 重构涉及变量重命名时，**必须**在所有 `.vue` 文件的 `<template>` 和 `<script>` 中全局搜索旧变量名，确认无遗留引用。
-- **强制 Must**: Store 重构完成后，**必须**执行 `vue-tsc --noEmit` 类型检查和 `vite build` 生产构建，确保零错误。
-- **强制 Must**: Store 重构完成后，**必须**在浏览器中实际访问所有受影响的页面，验证渲染无报错。
-- **强制 Must**: 变量重命名时，应同步更新所有相关的计算属性、watch、事件处理函数中的引用。
-
-**检查清单**:
-```
-Store 重构完成后的必做检查：
-1. 全局搜索旧变量名 → 确认零匹配
-2. vue-tsc --noEmit → 零错误
-3. vite build → 构建成功
-4. 浏览器访问受影响页面 → 无控制台报错
-5. 检查 storeToRefs 解构是否完整覆盖模板中使用的所有变量
-```
-
-**正例**: 重构 `savedQuestionBanks` → `collections` 后，在 Profile.vue 模板中将所有 `savedQuestionBanks` 替换为 `collections`。
-**反例**: 只在 `<script setup>` 中定义了新变量 `collections`，但 `<template>` 中仍引用 `savedQuestionBanks`，导致运行时 `undefined` 崩溃。
-
-## 6. 🔴 ECharts 与条件渲染（踩坑提炼）
-
-> **背景**: Growth.vue 的 ECharts 图表容器在 `v-if` 条件渲染内，切换 Tab 后图表 DOM 被销毁再重建，但 ECharts 实例未重新初始化，导致 `cartesian2d cannot be found` 错误。Profile.vue 的 `initChart()` 多次调用 `echarts.init()` 但未先 `dispose()` 已有实例，导致 `There is a chart instance already initialized on the dom` 警告重复触发。
-
-- **强制 Must**: 所有 `echarts.init()` 调用前，**必须**先检查并 `dispose()` 已有实例，无论是否使用 `v-if` 条件渲染。
-- **强制 Must**: 当 ECharts 图表容器使用 `v-if` 条件渲染时，**必须**配合 `watch` 监听条件变化，在条件变为 `true` 时通过 `nextTick` 重新初始化图表。
-- **强制 Must**: 组件 `onUnmounted` 时，**必须**调用 `dispose()` 销毁所有 ECharts 实例并移除 resize 监听。
-- **推荐 Should**: 如果图表不需要频繁销毁重建，优先使用 `v-show`（仅隐藏 DOM，不销毁）替代 `v-if`。
-
-**ECharts + v-if 标准模式**:
-```typescript
-import { ref, onMounted, onUnmounted, nextTick, watch } from 'vue'
-import * as echarts from 'echarts'
-
-const activeTab = ref('growth')
-const chartRef = ref<HTMLElement>()
-const chartInstance = ref<echarts.ECharts>()
-
-const initChart = () => {
-  if (!chartRef.value) return
-  if (chartInstance.value) {
-    chartInstance.value.dispose()
-  }
-  chartInstance.value = echarts.init(chartRef.value)
-  chartInstance.value.setOption({ /* ... */ })
-}
-
-watch(activeTab, (newTab) => {
-  if (newTab === 'growth') {
-    nextTick(() => initChart())
-  }
-})
-
-onMounted(() => {
-  if (activeTab.value === 'growth') {
-    nextTick(() => initChart())
-  }
-})
-
-onUnmounted(() => {
-  window.removeEventListener('resize', handleResize)
-  chartInstance.value?.dispose()
-  chartInstance.value = null
-})
-```
-
-## 7. 🔴 Router-view 防御性编程（踩坑提炼）
-
-> **背景**: App.vue 使用 `<router-view v-slot="{ Component }">` + `<component :is="Component" />` 模式，当子组件渲染崩溃时 Vue 将 Component 设为 null，导致级联错误。
-
-- **强制 Must**: 使用 `<router-view>` 的 scoped slot 模式时，**必须**对 `Component` 添加 `v-if` 防御性检查。
-
-**正例**:
-```html
-<router-view v-slot="{ Component }">
-  <component :is="Component" v-if="Component" />
-</router-view>
-```
-
-**反例**:
-```html
-<router-view v-slot="{ Component }">
-  <component :is="Component" />
-</router-view>
-```
-
-## 8. 🔴 表单 autocomplete 属性（踩坑提炼）
-
-> **背景**: LoginForm.vue 的密码输入框缺少 `autocomplete` 属性，Chrome 浏览器持续发出 DOM 警告。
-
-- **强制 Must**: 所有涉及密码的 `<input>` 元素**必须**添加 `autocomplete` 属性：
-  - 登录表单：`autocomplete="current-password"`
-  - 注册表单：`autocomplete="new-password"`
-  - 用户名输入：`autocomplete="username"`
-- **推荐 Should**: 所有表单输入元素均应添加合适的 `autocomplete` 属性，提升浏览器自动填充体验。
-
-## 9. Mock 数据架构
-
-- **强制 Must**: Mock 数据结构与后端 API 响应格式完全一致（`ResponseModel<T>` 格式）。
-- **强制 Must**: Mock 处理器使用 `success<T>()` 辅助函数返回统一格式响应。
-- **强制 Must**: Mock 适配器设置 `onNoMatch: 'passthrough'`，未匹配的请求自动转发到真实后端。
-- **强制 Must**: 通过 `VITE_USE_MOCK` 环境变量控制 Mock 启用/禁用，业务代码中不得出现 Mock 相关的条件判断。
-- **推荐 Should**: 从 View 文件提取硬编码数据到 Mock 文件时，保留原始数据结构和字段名。
-
-## 10. API 类型定义
-
-- **强制 Must**: 前端 API 类型定义**必须**与后端 Pydantic Schema 保持一致，字段名使用 `snake_case`（与后端一致）。
-- **强制 Must**: API 服务层方法的返回类型**必须**明确声明，禁止省略或使用 `any`。
-- **强制 Must**: 类型导入路径必须正确，不得从错误的 types 文件中导入（如 `UserResponse` 应从 `user.types` 导入，不从 `auth.types` 导入）。
-
-## 11. 认证系统
-
-- **强制 Must**: JWT Token 存储在 localStorage 中，通过 `utils/auth.ts` 统一管理。
-- **强制 Must**: 所有需要认证的 API 请求自动注入 `Authorization: Bearer <token>` 头（通过 axios 拦截器）。
-- **强制 Must**: 401 响应自动清除 Token 并跳转登录页。
-- **强制 Must**: 路由守卫检查 Token 存在性，未登录访问受保护页面时跳转登录页并携带 `redirect` 参数。
-
-## 12. 环境变量
-
-- **强制 Must**: 所有环境相关配置通过 `VITE_` 前缀的环境变量管理，不得在代码中硬编码。
-- **强制 Must**: 环境变量类型声明必须在 `src/vite-env.d.ts` 中补充。
-- **推荐 Should**: 敏感配置（如 API Key）不得提交到版本控制。
-
-**必要的环境变量**:
-```bash
-VITE_API_BASE_URL=/api/v1     # API 基础路径
-VITE_USE_MOCK=true            # 是否启用 Mock
-VITE_MOCK_DELAY=300           # Mock 延迟(ms)
-```
-
-## 13. 🔴 构建验证（踩坑提炼）
-
-> **背景**: `vue-tsc --noEmit` 和 `vite build` 均通过，但浏览器运行时崩溃。原因是 Vue SFC 的模板编译在 build 阶段不检查变量是否在 `setup` 中定义。
-
-- **强制 Must**: 每次代码变更后，**必须**执行以下验证：
-  1. `vue-tsc --noEmit` — TypeScript 类型检查零错误
-  2. `vite build` — 生产构建成功
-  3. **浏览器实际访问受影响页面** — 无控制台报错（⚠️ 构建通过 ≠ 运行时无错）
-- **强制 Must**: 新增文件或修改导入路径后，**必须**确认 `tsconfig.app.json` 的 `paths` 配置能正确解析。
-- **强制 Must**: 每个 Phase 完成后，**必须**启动 `vite dev` 并在浏览器中逐页验证。
-- **推荐 Should**: 验证清单：登录页 → 首页 → 社区页 → 个人中心页 → 能力提升页 → 知识库页。
-
-## 14. 🔴 Store 数据空值防护（踩坑提炼）
-
-> **背景**: Store 中的 `gameInterviewData`、`resumeData` 等初始值为 `null`，模板直接访问 `.stats`、`.levels` 等属性会报错。
-
-- **强制 Must**: 模板中访问 Store 的 nullable 数据时，**必须**使用可选链 `?.` 或提供默认值 `|| []`。
-- **强制 Must**: Store 中初始值可能为 `null` 的响应式变量，在模板中使用前必须做空值判断。
-
-**正例**: `v-for="item in (gameInterviewData?.stats || [])"`
-**反例**: `v-for="item in gameInterviewData.stats"`
-
-## 15. 冲突裁决策略
-
-- **强制 Must**: 遇到多源文档对同一主题描述不一致时，**永远以当前项目正在生效的最新代码（`src/` 目录下的实现）为最高准则**。
-- **强制 Must**: 前后端字段名不一致时，API 类型定义以**后端 Schema** 为准，View 层展示可做映射。
-
-## 16. AI 记忆与交接规约
-
-- **强制 Must**: 每次完成特定业务模块的开发、重构或复杂 Debug 后，AI 助手**必须**在 `docs/` 目录下的对应模块子目录中生成或更新**模块交接文档**。
-- **强制 Must**: 交接文档内容必须包含：当前已实现的核心功能清单、未完成的 Todo 事项、关键技术决策说明、踩坑记录与经验教训、以及下一步开发的建议上下文。
-- **强制 Must**: 发现新的踩坑模式时，**必须**同步更新本规约文档（`frontend-development-specification.md`）中的对应红色标记条目。
-
-## 17. 🔴 SSE 流式响应（踩坑提炼）
-
-> **背景**: 后端面试模块 `/interview/sessions/{id}/chat` 使用 SSE 返回 `text/event-stream`，前端 `chatSSE()` 使用 `fetch()` 而非 axios，`axios-mock-adapter` 无法拦截。
-
-- **强制 Must**: SSE 流式响应的 Mock **必须**使用 Vite 中间件插件（`mock/plugins/`）在 HTTP 层拦截，**禁止**使用 `axios-mock-adapter` 模拟。
-- **强制 Must**: SSE 解析使用 `fetch()` + `ReadableStream.getReader()`，**禁止**使用 `EventSource`（不支持 POST + 自定义 Header）。
-- **强制 Must**: SSE 连接必须返回 `AbortController`，供调用方中断旧连接后发起新请求。
-- **强制 Must**: SSE 流解析日志必须记录：HTTP 状态/content-type → 流启动 → 每个 raw chunk → 每个 event 解析 → 流结束/异常。全部通过 `VITE_ENABLE_DEBUG_LOG` 控制。
-- **强制 Must**: 组件 `onUnmounted` 时必须 `stopChat()` 中断 SSE 连接。
-
-**SSE Mock 中间件标准模式**:
-```typescript
-// src/mock/plugins/mock-sse-plugin.ts
-import type { Plugin } from "vite";
-
-export function mockSsePlugin(): Plugin {
-  return {
-    name: "mock-sse-server",
-    configureServer(server) {
-      server.middlewares.use((req, res, next) => {
-        // 匹配 SSE endpoint
-        if (req.url?.match(/sse-pattern/) && req.method === "POST") {
-          // 读取请求体
-          // 设置 SSE headers
-          res.writeHead(200, {
-            "Content-Type": "text/event-stream",
-            "Cache-Control": "no-cache",
-            Connection: "keep-alive",
-          });
-          // 逐条发送 event: xxx\ndata: yyy\n\n
-          // 最后 res.end()
-          return;
-        }
-        next();
-      });
-    },
-  };
-}
-```
-
-**SSE API 层标准模式**:
-```typescript
-chatSSE(sessionId: string, message: string,
-  onEvent: (e: SseEvent) => void,
-  onError?: (e: Error) => void
-): AbortController {
-  const controller = new AbortController();
-  fetch(`${baseURL}/sessions/${sessionId}/chat`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-    body: JSON.stringify({ message }),
-    signal: controller.signal,
-  }).then(async (response) => {
-    const reader = response.body?.getReader();
-    // SSE 协议解析循环：event: xxx → data: yyy
-  }).catch(err => {
-    if (err.name !== "AbortError") onError?.(err);
-  });
-  return controller;
-}
-```
-
-## 18. 🔴 Mock 层级分工（踩坑提炼）
-
-> **背景**: 本轮发现 `axios-mock-adapter` 无法拦截 `fetch()` 请求，SSE 流式 Mock 需用 Vite 中间件。
-
-- **强制 Must**: Mock 体系分为两层：
-  - **axios 请求** → `axios-mock-adapter`（`mock/handlers/`）
-  - **fetch/SSE/WebSocket 请求** → Vite 中间件插件（`mock/plugins/`）
-- **强制 Must**: Vite 中间件插件必须在 `vite.config.ts` 的 `plugins` 中注册，并通过 `VITE_USE_MOCK` 条件启用。
-- **强制 Must**: 新增强制 HTTP 层的 Mock 需求时，先评估是 `axios-mock-adapter` 可拦截还是需要 Vite 中间件。
-
-## 19. 🔴 后端 API 对齐规范（踩坑提炼）
-
-> **背景**: P2-13 盲目将 Assessment BASE_URL 改为单数 `/assessment`，实际后端使用复数 `/assessments`。Interview Session 字段使用 camelCase（`jobTitle`），后端使用 snake_case（`job_title`）。
-
-- **强制 Must**: 前后端字段命名的唯一权威来源是**后端代码/Schema/接口文档**（本项目中为 `docs/api/frontend-api-integration-guide.md`）。禁止凭猜测或"风格一致"来修改。
-- **强制 Must**: API 类型定义（`src/api/types/`）字段名**必须**与后端 snake_case 严格一致。
-- **强制 Must**: 修改 `BASE_URL` 或端点路径前，**必须**与后端文档核对后端的实际路由前缀。
-- **推荐 Should**: 在 `docs/api/` 目录维护一份后端接口清单，作为联调时的字段对齐参考。
+> 本文档为项目规约体系的主入口。详细的领域规约已拆分为独立子文档，按需查阅。
+> **最高准则**：当代码与任何外部认知发生冲突时，以 `src/` 目录下的实际代码为准。
 
 ---
 
-## 踩坑记录索引
+## 核心约束（AI 必须始终遵守）
 
-| 日期 | 问题 | 规约条目 | Debug 文档 |
-|------|------|----------|-----------|
-| 2026-05-10 | Store 重构后模板遗留旧变量名导致渲染崩溃 | §5 Store 重构后强制检查项 | [frontend-render-errors-and-warnings.md](/docs/debug/2026-05-10-frontend-render-errors-and-warnings.md) |
-| 2026-05-10 | 构建通过但运行时崩溃（Vue SFC 模板编译限制） | §13 构建验证 | 同上 |
-| 2026-05-10 | ECharts + v-if 导致 cartesian2d 错误 | §6 ECharts 与条件渲染 | 同上 |
-| 2026-05-10 | ECharts 重复初始化警告（Profile.vue initChart 未 dispose） | §6 ECharts 与条件渲染 | 同上 |
-| 2026-05-10 | Router-view Component 为 null 导致级联错误 | §7 Router-view 防御性编程 | 同上 |
-| 2026-05-10 | LoginForm 缺少 autocomplete 属性 | §8 表单 autocomplete 属性 | 同上 |
-| 2026-05-10 | Store 数据为 null 时模板直接访问属性报错 | §14 Store 数据空值防护 | 同上 |
-| 2026-05-10 | 类型导入路径错误（UserResponse 从 auth.types 导入） | §10 API 类型定义 | [handover.md](/docs/frontend-api/handover.md) |
-| 2026-05-10 | tsconfig 缺少 paths 配置导致 @/ 导入类型检查失败 | §13 构建验证 | [handover.md](/docs/frontend-api/handover.md) |
-| 2026-05-31 | axios-mock-adapter 无法拦截 fetch/SSE 流式请求 | §17 SSE 流式响应 + §18 Mock 层级分工 | [handover.md](/docs/api/handover.md) |
-| 2026-05-31 | 盲目修改 API 路径/字段名而不核对后端文档 | §19 后端 API 对齐规范 | [handover.md](/docs/api/handover.md) |
+### 1. 分层架构
+
+**强制 Must**: View → Store → API → HTTP 四层架构。View 层禁止直接调用 axios 或 HTTP 方法。
+
+| 层级 | 职责 | 目录 |
+|------|------|------|
+| View | UI 展示与用户交互 | `src/views/`, `src/components/` |
+| Store | 业务状态与副作用 | `src/stores/` |
+| API | HTTP 请求封装 | `src/api/modules/` |
+| HTTP | 请求/响应拦截 | `src/utils/http.ts` |
+
+### 2. 技术栈
+
+Vue 3 (`^3.5.25`) + TypeScript (`~5.9.3`, strict) + Pinia 3 (`^3.0.4`) + Vite 7 (`^7.3.1`) + Tailwind CSS 4 (`^4.2.1`)
+
+### 3. 代码风格精要
+
+- **SFC 顺序**: `<script setup lang="ts">` → `<template>` → `<style scoped>`
+- **类型**: 所有 ref/函数参数/返回值必须显式标注类型；`any` 仅允许在 `catch` 子句；未知 Schema 用 `Record<string, unknown>` 过渡
+- **导入**: 使用 `@/` 别名（`import { X } from '@/stores/x'`），禁止跨目录相对路径
+- **Store**: 仅使用 Setup Store 语法（`defineStore('name', () => {...})`），禁止 Options Store
+- **响应式**: View 层通过 `storeToRefs()` 解构 Store 状态
+
+### 4. 冲突裁决
+
+以 `src/` 目录下的实际代码为最高准则。AI 生成代码前应阅读同目录下至少 1~2 个现有文件。
+
+---
+
+## 规约文档体系
+
+| 编号 | 文档 | 适用范围 | 说明 |
+|------|------|----------|------|
+| 01 | [核心架构与基础规范](./01-core-architecture.md) | 全局 | 分层架构、技术栈版本表、包管理、目录结构、代码风格、导入路径、环境变量、冲突策略 |
+| 02 | [Pinia Store 开发规范](./02-pinia-store.md) | `src/stores/` | Store 结构顺序、重构检查清单、模板空值防护（🔴 踩坑） |
+| 03 | [Vue 组件开发规范](./03-vue-component.md) | `src/views/`, `src/components/` | Props/Emits、样式色板、图标库、动画过渡、路由、ECharts 防御、表单 autocomplete（🔴 踩坑） |
+| 04 | [API 与 Mock 开发规范](./04-api-and-mock.md) | `src/api/`, `src/mock/` | Mock 架构、API 类型定义、JWT 认证、SSE 流式响应、Mock 层级分工、后端对齐（🔴 踩坑） |
+| 05 | [构建与质量管理规范](./05-build-and-quality.md) | 全局 | 构建验证流程、日志策略、性能优化、测试策略、Git 规范、CodeReview 门禁（🔴 踩坑） |
+| 06 | [AI 协作与交接规范](./06-ai-handover.md) | AI 工作流 | 模块交接文档、踩坑记录索引、调试文档生成 |
+
+---
+
+## 快速参考
+
+| 场景 | 查阅文档 |
+|------|----------|
+| 新建 Store 模块 | [02](./02-pinia-store.md) §1 |
+| Store 重命名 | [02](./02-pinia-store.md) §2（🔴 强制检查清单） |
+| 模板访问 Store 数据 | [02](./02-pinia-store.md) §3（🔴 空值防护） |
+| 新建 Vue 组件 | [03](./03-vue-component.md) §1-3 |
+| 使用图标 | [03](./03-vue-component.md) §3（仅 lucide-vue-next） |
+| 使用主题色 | [03](./03-vue-component.md) §2（主题色板表） |
+| 使用 ECharts | [03](./03-vue-component.md) §7（🔴 dispose + watch） |
+| 新建路由 | [03](./03-vue-component.md) §5, [03](./03-vue-component.md) §6（🔴 v-if Component） |
+| 新建 API 接口 | [04](./04-api-and-mock.md) §2（snake_case 对齐） |
+| 添加 Mock 数据 | [04](./04-api-and-mock.md) §1, §5（层级分工） |
+| 处理 SSE 流 | [04](./04-api-and-mock.md) §4（fetch + AbortController） |
+| 调试日志 | [05](./05-build-and-quality.md) §2（VITE_ENABLE_DEBUG_LOG） |
+| 提交代码前 | [05](./05-build-and-quality.md) §1（三步验证）, §6（门禁） |
+| 完成模块开发后 | [06](./06-ai-handover.md) §1（生成交接文档） |

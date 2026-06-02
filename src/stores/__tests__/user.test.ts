@@ -6,6 +6,7 @@ vi.mock("@/api/modules/auth.api", () => ({
     login: vi.fn(),
     register: vi.fn(),
     getUserInfo: vi.fn(),
+    logout: vi.fn(),
   },
 }));
 
@@ -23,6 +24,7 @@ vi.mock("@/api/modules/user.api", () => ({
 vi.mock("@/utils/auth", () => ({
   getToken: vi.fn(),
   setToken: vi.fn(),
+  setRefreshToken: vi.fn(),
   removeToken: vi.fn(),
   isLoggedIn: vi.fn(() => false),
   getCachedUserInfo: vi.fn(() => null),
@@ -48,7 +50,7 @@ describe("useUserStore integration", () => {
         data: {
           access_token: "mock-jwt-token",
           token_type: "bearer",
-          expires_in: 3600,
+          refresh_token: "mock-refresh-token",
         },
       });
 
@@ -59,12 +61,11 @@ describe("useUserStore integration", () => {
           id: 1,
           email: "wang@example.com",
           username: "王同学",
-          avatar_url: "",
           is_active: true,
-          role: "user",
           created_at: "2026-01-01T00:00:00Z",
           updated_at: "2026-05-09T00:00:00Z",
-          profile: { skills: ["Vue3", "TypeScript"] },
+          roles: [{ id: 1, name: "user", description: "普通用户", created_at: "2026-01-01T00:00:00Z", updated_at: "2026-01-01T00:00:00Z", permissions: [] }],
+          profile: null,
         },
       });
 
@@ -109,11 +110,11 @@ describe("useUserStore integration", () => {
           id: 2,
           email: "new@example.com",
           username: "新用户",
-          avatar_url: "",
           is_active: true,
-          role: "user",
           created_at: "2026-05-10T00:00:00Z",
           updated_at: "2026-05-10T00:00:00Z",
+          roles: [],
+          profile: null,
         },
       });
 
@@ -137,7 +138,7 @@ describe("useUserStore integration", () => {
       const { removeToken } = await import("@/utils/auth");
       const store = useUserStore();
 
-      store.logout();
+      await store.logout();
 
       expect(store.user.isAuthenticated).toBe(false);
       expect(store.user.name).toBe("");

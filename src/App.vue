@@ -23,6 +23,7 @@ import { useUserStore } from "./stores/user";
 import { useAuth } from "./composables/useAuth";
 import { useErrorBoundary } from "./composables/useErrorBoundary";
 import { useCrossTabSync } from "./composables/useCrossTabSync";
+import ToastContainer from "./components/ToastContainer.vue";
 
 useErrorBoundary({
   handler: (err, _instance, info) => {
@@ -313,6 +314,8 @@ onMounted(async () => {
       </div>
     </Transition>
   </div>
+  <!-- 全局 Toast 容器 -->
+  <ToastContainer />
 </template>
 
 <style>

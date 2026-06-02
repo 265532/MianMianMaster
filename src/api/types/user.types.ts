@@ -57,9 +57,9 @@ export interface InterviewHistoryItem {
   type: string;
   score: number;
   status: string;
-  tags: string[];
-  feedback: string;
-  details: {
+  tags?: string[];
+  feedback?: string;
+  details?: {
     technical: number;
     communication: number;
     logic: number;

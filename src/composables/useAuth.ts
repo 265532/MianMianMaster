@@ -35,8 +35,8 @@ export function useAuth() {
     return userStore.login(username, password);
   }
 
-  function logout() {
-    userStore.logout();
+  async function logout() {
+    await userStore.logout();
     router.push("/login");
   }
 

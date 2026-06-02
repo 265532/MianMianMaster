@@ -5,6 +5,7 @@ import { mockUser } from "./user.mock";
 export const mockToken: Token = {
   access_token: "mock_jwt_token_" + Date.now(),
   token_type: "bearer",
+  refresh_token: "mock_refresh_token_" + Date.now(),
 };
 
 export const mockLoginResponse = {
