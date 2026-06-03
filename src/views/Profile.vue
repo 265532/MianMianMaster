@@ -60,24 +60,32 @@ const positions = [
   "UI 设计师",
 ];
 
+const defaultAbilityItem = {
+  current: [0, 0, 0, 0, 0, 0, 0],
+  required: [0, 0, 0, 0, 0, 0, 0],
+  indicators: [
+    { name: "技术深度", max: 100 },
+    { name: "逻辑思维", max: 100 },
+    { name: "表达能力", max: 100 },
+    { name: "项目经验", max: 100 },
+    { name: "学习潜力", max: 100 },
+    { name: "工程化能力", max: 100 },
+    { name: "团队协作", max: 100 },
+  ],
+  gap_skills: [],
+  strengths: [],
+};
+
 const currentAbilityData = computed(() => {
-  return (
-    abilityData.value?.abilities?.[0] || {
-      current: [0, 0, 0, 0, 0, 0, 0],
-      required: [0, 0, 0, 0, 0, 0, 0],
-      indicators: [
-        { name: "技术深度", max: 100 },
-        { name: "逻辑思维", max: 100 },
-        { name: "表达能力", max: 100 },
-        { name: "项目经验", max: 100 },
-        { name: "学习潜力", max: 100 },
-        { name: "工程化能力", max: 100 },
-        { name: "团队协作", max: 100 },
-      ],
-      gap_skills: [],
-      strengths: [],
-    }
-  );
+  const item = abilityData.value?.abilities?.[0];
+  if (!item) return defaultAbilityItem;
+  return {
+    current: item.current ?? defaultAbilityItem.current,
+    required: item.required ?? defaultAbilityItem.required,
+    indicators: item.indicators ?? defaultAbilityItem.indicators,
+    gap_skills: item.gap_skills ?? defaultAbilityItem.gap_skills,
+    strengths: item.strengths ?? defaultAbilityItem.strengths,
+  };
 });
 
 const abilityGap = computed(() => {
