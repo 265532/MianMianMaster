@@ -24,6 +24,7 @@ import { useAuth } from "./composables/useAuth";
 import { useErrorBoundary } from "./composables/useErrorBoundary";
 import { useCrossTabSync } from "./composables/useCrossTabSync";
 import ToastContainer from "./components/ToastContainer.vue";
+import LoginForm from "./components/LoginForm.vue";
 
 useErrorBoundary({
   handler: (err, _instance, info) => {
@@ -65,6 +66,11 @@ const navigateTo = (path: string) => {
 
 onMounted(async () => {
   await userStore.initialize();
+
+  // 监听全局401未授权事件，显示登录弹窗
+  window.addEventListener("auth:unauthorized", () => {
+    userStore.openLoginModal();
+  });
 });
 </script>
 
@@ -316,6 +322,25 @@ onMounted(async () => {
   </div>
   <!-- 全局 Toast 容器 -->
   <ToastContainer />
+
+  <!-- 全局登录弹窗 (401未授权时显示) -->
+  <Transition name="fade">
+    <div
+      v-if="userStore.showLoginModal"
+      class="fixed inset-0 z-[200] flex items-center justify-center p-6"
+    >
+      <div
+        class="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        @click="userStore.closeLoginModal()"
+      ></div>
+      <div class="relative animate-in zoom-in duration-300 w-[500px] max-w-md overflow-hidden">
+        <LoginForm
+          @success="userStore.closeLoginModal()"
+          @cancel="userStore.closeLoginModal()"
+        />
+      </div>
+    </div>
+  </Transition>
 </template>
 
 <style>
@@ -350,6 +375,26 @@ onMounted(async () => {
 .slide-enter-from,
 .slide-leave-to {
   transform: translateX(-100%);
+}
+
+/* 登录弹窗动画 */
+.animate-in {
+  animation-fill-mode: forwards;
+}
+
+@keyframes zoom-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.zoom-in {
+  animation: zoom-in 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Hide scrollbar for Chrome, Safari and Opera */

@@ -5,11 +5,16 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host",
-    "build": "vue-tsc -b && vite build",
+    "build": "npm run schema:generate && vue-tsc -b && vite build",
     "preview": "vite preview --host",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "schema:merge": "node scripts/merge-openapi.mjs",
+    "schema:types": "npx openapi-typescript docs/api/openapi.json -o src/api/generated/api-schema.d.ts",
+    "schema:generate": "npm run schema:merge && npm run schema:types",
+    "schema:validate": "node scripts/validate-schemas.mjs",
+    "schema:check": "node scripts/check-coverage.mjs"
   },
   "dependencies": {
     "axios": "^1.16.0",
@@ -36,6 +41,7 @@
     "happy-dom": "^20.9.0",
     "jsdom": "^29.1.1",
     "mockjs": "^1.1.0",
+    "openapi-typescript": "^7.13.0",
     "postcss": "^8.5.6",
     "prettier": "^3.8.1",
     "tailwindcss": "^4.2.1",

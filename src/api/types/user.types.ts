@@ -1,3 +1,15 @@
+import type { components } from "@/api/generated/api-schema";
+
+/**
+ * User API 类型定义
+ *
+ * 所有字段统一使用 snake_case，匹配后端线格式。
+ * 后端已有 Schema 的类型从生成文件 re-export。
+ */
+
+// ─── 从后端 Schema 派生的类型 ─────────────────────────
+
+/** 用户信息（来自 /auth/me 响应） */
 export interface UserResponse {
   id: number;
   username: string;
@@ -10,6 +22,7 @@ export interface UserResponse {
   profile?: UserProfileResponse;
 }
 
+/** 用户画像 */
 export interface UserProfileResponse {
   id: number;
   user_id: number;
@@ -21,6 +34,8 @@ export interface UserProfileResponse {
   updated_at: string;
 }
 
+// ─── 请求类型 ────────────────────────────────────────
+
 export interface UserProfileUpdateRequest {
   avatar_url?: string;
   education?: string;
@@ -28,6 +43,7 @@ export interface UserProfileUpdateRequest {
   work_years?: number;
 }
 
+/** 角色（后端 Schema 中有，暂在 role 模块统一处理） */
 export interface RoleResponse {
   id: number;
   name: string;
@@ -35,9 +51,9 @@ export interface RoleResponse {
   parent_id?: number;
   created_at: string;
   updated_at: string;
-  permissions: PermissionResponse[];
 }
 
+/** 权限 */
 export interface PermissionResponse {
   id: number;
   name: string;
@@ -47,6 +63,8 @@ export interface PermissionResponse {
   created_at: string;
   updated_at: string;
 }
+
+// ─── 面试历史（蛇形命名） ─────────────────────────────
 
 export interface InterviewHistoryItem {
   id: number;
@@ -74,6 +92,8 @@ export interface InterviewHistoryResponse {
   page_size: number;
 }
 
+// ─── 能力数据 ────────────────────────────────────────
+
 export interface AbilityDataIndicator {
   name: string;
   max: number;
@@ -94,9 +114,11 @@ export interface AbilityDataItem {
   current: number[];
   required: number[];
   indicators: AbilityDataIndicator[];
-  gapSkills: AbilityDataGapSkill[];
+  gap_skills: AbilityDataGapSkill[];
   strengths: AbilityDataStrength[];
 }
+
+// ─── 游戏化面试数据 ───────────────────────────────────
 
 export interface GameStatItem {
   label: string;
@@ -109,6 +131,8 @@ export interface GameInterviewDataResponse {
   achievements: import("@/api/types/interview.types").GameAchievement[];
   leaderboard: import("@/api/types/interview.types").LeaderboardEntry[];
 }
+
+// ─── 简历数据 ────────────────────────────────────────
 
 export interface ResumeBasicInfo {
   name: string;
@@ -139,7 +163,7 @@ export interface ResumeProject {
 }
 
 export interface ResumeData {
-  basicInfo: ResumeBasicInfo;
+  basic_info: ResumeBasicInfo;
   education: ResumeEducation[];
   experience: ResumeExperience[];
   skills: string[];
@@ -147,9 +171,9 @@ export interface ResumeData {
 }
 
 export interface ResumeDiagnosisResult {
-  overallScore: number;
+  overall_score: number;
   strengths: string[];
   weaknesses: string[];
-  matchRate: { position: string; rate: number }[];
+  match_rate: { position: string; rate: number }[];
   suggestions: string[];
 }

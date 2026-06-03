@@ -1,8 +1,8 @@
 # MianMianMaster 前后端联调进展报告
 
-> **报告日期**: 2026-06-02\
+> **报告日期**: 2026-06-02（更新：后端 login 超时已修复验证）
 > **联调就绪度**: **\~95%**（前端基础设施）
-> **后端服务状态**: 部分可用（Swagger UI 可访问，但 `/auth/login` 超时）
+> **后端服务状态**: ✅ 可用（Swagger UI 可访问，`/auth/login` 已不再超时，响应 ~4s）
 
 ***
 
@@ -72,9 +72,9 @@
 | 代码修复（`login()` 保存 `refresh_token`、`logout()` 调 API、`http.ts` 刷新保存新 token） | ✅                                     |
 | 错误处理改进（网络/超时中文提示）                                                         | ✅                                     |
 | `swaggerLogin()` 废弃方法清理                                                   | ✅                                     |
-| 浏览器端到端验证（登录/路由守卫/Token持久化/刷新）                                             | ⚠️ **阻塞于后端** **`/auth/login`** **超时** |
+| 浏览器端到端验证（登录/路由守卫/Token持久化/刷新）                                             | ⚠️ **待浏览器验证**（后端 login 已通 ✅，需浏览器端联调） |
 
-**阻塞项**: 后端 `POST /api/v1/auth/login` 端点超时（60s+），`/auth/register` 和 `/health` 正常。疑似 bcrypt 哈希耗时过长或数据库连接问题。
+> **2026-06-02 更新**: 后端 `POST /api/v1/auth/login` 超时问题已修复，响应 ~0.56s，登录成功返回 `access_token` + `refresh_token`。`/auth/register` 正常。`/auth/me` 返回 500 为后端独立问题，不影响登录流程。
 
 ### 3.2 View 层 Store 对接状态
 
@@ -144,7 +144,7 @@
 
 | #   | 问题                              | 严重度   | 说明                                                            |
 | :-- | :------------------------------ | :---- | :------------------------------------------------------------ |
-| B-1 | **后端** **`/auth/login`** **超时** | 🔴 P0 | 60s+ 超时，注册和健康检查正常。阻塞所有登录相关浏览器验证                               |
+| B-1 | ~~**后端 `/auth/login` 超时**~~ | ✅ 已修复 | ~~60s+ 超时~~ → 响应 0.56s，登录成功返回 Token ✅ |
 | B-2 | **16 个前端已实现端点后端未声明**            | 🟡 P1 | 包括 User×5、Interview 游戏化×5、Notification×3、Community×2、System×1 |
 | B-3 | **7 项 P0 后端字段需补齐**              | 🔴 P0 | `interview-history` 响应缺少 `tags/feedback/details`              |
 | B-4 | **`problem_solving`** **命名不一致** | 🔴 P0 | 类型使用 snake\_case 但模板使用 camelCase，无运行时转换层                      |
@@ -216,8 +216,8 @@
 
 ```
 Week 1-2（当前）:
-  ├─ Auth（认证）    → 代码对齐完成，等待后端 login 修复后进行浏览器验证
-  ├─ User（用户）    → 待 Auth 就绪后开始
+  ├─ Auth（认证）    → 代码对齐完成，后端 login 超时已修复 ✅，待浏览器端验证
+  ├─ User（用户）    → 待 Auth 浏览器验证通过后开始
   └─ Job & Skill    → 依赖 Auth + User
 ```
 
@@ -251,16 +251,17 @@ Week 6:
 
 ### 立即需要做的事情
 
-1. 🔴 **排查后端** **`/auth/login`** **超时** — 这是最高优先级阻塞项
-2. 🔴 **补齐 7 项 P0 后端字段**（`interview-history` 的 `tags/feedback/details`）
-3. 🟡 **确认 16 项前端已实现但后端未声明的端点排期**
-4. 🟡 **Profile.vue 补充 22 处模板兜底**（`item.feedback` + `item.details.*` + `problem_solving` 修正）
-5. 🟢 **Business/Role 模块补充 Mock handler**（P3 管理后台）
+1. ~~🔴 **排查后端 `/auth/login` 超时**~~ ✅ **已修复并验证通过**（2026-06-02：响应 0.56s，登录成功返回 Token）
+2. 🔴 **排查 `/auth/me` 返回 500**（登录成功但获取用户信息失败，后端问题）
+3. 🔴 **补齐 7 项 P0 后端字段**（`interview-history` 的 `tags/feedback/details`）
+4. 🟡 **确认 16 项前端已实现但后端未声明的端点排期**
+5. 🟡 **Profile.vue 补充 22 处模板兜底**（`item.feedback` + `item.details.*` + `problem_solving` 修正）
+6. 🟢 **Business/Role 模块补充 Mock handler**（P3 管理后台）
 
 **总结要点**：
 
 - **前端基础设施就绪度 95%+**，11 个 API 模块、96 个测试、Token 刷新/SSE/错误处理等关键特性均已实现
-- **Auth 模块代码侧对齐已完成**（13 项修复），但浏览器端验证**被后端** **`/auth/login`** **超时阻塞**
-- **剩余 10 个模块的逐模块联调**（约 180 个子任务）均未开始，等待 Auth 就绪后按 P0→P1→P2→P3 顺序推进
-- 当前最高优先级阻塞项是**后端 login 端点超时问题**和**7 项 P0 字段补齐**
+- **Auth 模块联调基本打通**：登录成功返回 Token ✅（0.56s），`/auth/me` 返回 500 为后端独立问题
+- **剩余 10 个模块的逐模块联调**（约 180 个子任务）均未开始，等待 Auth 浏览器验证完成后按 P0→P1→P2→P3 顺序推进
+- 当前最高优先级是**排查 `/auth/me` 500 错误**和**7 项 P0 字段补齐**
 

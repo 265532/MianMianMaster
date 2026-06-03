@@ -1,0 +1,143 @@
+{
+    "openapi": "3.1.0",
+    "info": {
+        "title": "MianMianMaster API",
+        "description": "MianMianMaster 前后端统一接口契约。以前端 UI 需求为准，前端类型从本 Schema 自动生成，后端按本 Schema 实现。",
+        "version": "0.1.0"
+    },
+    "servers": [
+        {
+            "url": "/api/v1",
+            "description": "API v1（通过 Vite 代理或 Nginx 反代）"
+        }
+    ],
+    "components": {
+        "securitySchemes": {
+            "OAuth2PasswordBearer": {
+                "type": "oauth2",
+                "flows": {
+                    "password": {
+                        "scopes": {},
+                        "tokenUrl": "/api/v1/auth/swagger-login"
+                    }
+                }
+            }
+        },
+        "schemas": {
+            "ResponseModel[T]": {
+                "description": "统一响应包装。所有业务错误的 HTTP 状态码均为 200，错误码在 code 字段中。",
+                "properties": {
+                    "code": {
+                        "type": "integer",
+                        "title": "Code",
+                        "description": "业务状态码，200 表示成功",
+                        "default": 200
+                    },
+                    "message": {
+                        "type": "string",
+                        "title": "Message",
+                        "description": "响应消息",
+                        "default": "success"
+                    },
+                    "data": {
+                        "title": "Data",
+                        "description": "响应数据，错误时为 null"
+                    }
+                },
+                "type": "object",
+                "title": "ResponseModel[T]"
+            },
+            "PaginatedResponse[T]": {
+                "description": "分页响应包装",
+                "properties": {
+                    "code": {
+                        "type": "integer",
+                        "title": "Code",
+                        "default": 200
+                    },
+                    "message": {
+                        "type": "string",
+                        "title": "Message",
+                        "default": "success"
+                    },
+                    "data": {
+                        "properties": {
+                            "items": {
+                                "title": "Items",
+                                "description": "当前页数据列表"
+                            },
+                            "total": {
+                                "type": "integer",
+                                "title": "Total",
+                                "description": "总记录数"
+                            },
+                            "page": {
+                                "type": "integer",
+                                "title": "Page",
+                                "description": "当前页码",
+                                "default": 1
+                            },
+                            "page_size": {
+                                "type": "integer",
+                                "title": "Page Size",
+                                "description": "每页条数",
+                                "default": 20
+                            }
+                        },
+                        "type": "object",
+                        "required": ["items", "total", "page", "page_size"],
+                        "title": "PaginatedData[T]"
+                    }
+                },
+                "type": "object",
+                "title": "PaginatedResponse[T]"
+            },
+            "HTTPValidationError": {
+                "properties": {
+                    "detail": {
+                        "items": {
+                            "$ref": "#/components/schemas/ValidationError"
+                        },
+                        "type": "array",
+                        "title": "Detail"
+                    }
+                },
+                "type": "object",
+                "title": "HTTPValidationError"
+            },
+            "ValidationError": {
+                "properties": {
+                    "loc": {
+                        "items": {
+                            "anyOf": [
+                                {"type": "string"},
+                                {"type": "integer"}
+                            ]
+                        },
+                        "type": "array",
+                        "title": "Location"
+                    },
+                    "msg": {
+                        "type": "string",
+                        "title": "Message"
+                    },
+                    "type": {
+                        "type": "string",
+                        "title": "Error Type"
+                    },
+                    "input": {
+                        "title": "Input"
+                    },
+                    "ctx": {
+                        "type": "object",
+                        "title": "Context"
+                    }
+                },
+                "type": "object",
+                "required": ["loc", "msg", "type"],
+                "title": "ValidationError"
+            }
+        }
+    },
+    "paths": {}
+}

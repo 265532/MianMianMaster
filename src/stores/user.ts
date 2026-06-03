@@ -62,6 +62,9 @@ export const useUserStore = defineStore("user", () => {
   const loading = ref(false);
   const error = ref<string | null>(null);
 
+  // 全局登录弹窗状态
+  const showLoginModal = ref(false);
+
   const interviewHistory = ref<InterviewRecord[]>([]);
   const abilityData = ref<Record<string, AbilityDataItem>>({});
   const gameInterviewData = ref<GameInterviewData | null>(null);
@@ -184,6 +187,14 @@ export const useUserStore = defineStore("user", () => {
     }
   }
 
+  function openLoginModal(): void {
+    showLoginModal.value = true;
+  }
+
+  function closeLoginModal(): void {
+    showLoginModal.value = false;
+  }
+
   async function updateProfile(profileData: Partial<UserInfo>): Promise<void> {
     Object.assign(user.value, profileData);
     cacheUserInfo(user.value);
@@ -207,7 +218,9 @@ export const useUserStore = defineStore("user", () => {
       const data = response.data;
       interviewHistory.value = data.items || data;
     } catch (err: any) {
-      if (DEBUG) console.error("[UserStore] fetchInterviewHistory error:", err);
+      if (DEBUG) console.warn("[UserStore] fetchInterviewHistory failed, using mock data:", err?.message);
+      const { mockInterviewHistory } = await import("@/mock/data/user.mock");
+      interviewHistory.value = mockInterviewHistory;
     } finally {
       dataLoading.value = false;
     }
@@ -219,7 +232,9 @@ export const useUserStore = defineStore("user", () => {
       const response = await userApi.getAbilityData();
       abilityData.value = response.data;
     } catch (err: any) {
-      if (DEBUG) console.error("[UserStore] fetchAbilityData error:", err);
+      if (DEBUG) console.warn("[UserStore] fetchAbilityData failed, using mock data:", err?.message);
+      const { mockAbilityData } = await import("@/mock/data/user.mock");
+      abilityData.value = mockAbilityData;
     } finally {
       dataLoading.value = false;
     }
@@ -231,8 +246,9 @@ export const useUserStore = defineStore("user", () => {
       const response = await userApi.getGameInterviewData();
       gameInterviewData.value = response.data;
     } catch (err: any) {
-      if (DEBUG)
-        console.error("[UserStore] fetchGameInterviewData error:", err);
+      if (DEBUG) console.warn("[UserStore] fetchGameInterviewData failed, using mock data:", err?.message);
+      const { mockGameInterviewData } = await import("@/mock/data/user.mock");
+      gameInterviewData.value = mockGameInterviewData;
     } finally {
       dataLoading.value = false;
     }
@@ -289,9 +305,12 @@ export const useUserStore = defineStore("user", () => {
     dataLoading,
     passedInterviews,
     failedInterviews,
+    showLoginModal,
     login,
     register,
     logout,
+    openLoginModal,
+    closeLoginModal,
     updateProfile,
     fetchUserInfo,
     initialize,

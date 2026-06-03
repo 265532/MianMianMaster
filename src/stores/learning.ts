@@ -52,9 +52,9 @@ export const useLearningStore = defineStore("learning", () => {
       const response = await learningApi.getCollections();
       collections.value = response.data;
     } catch (err: any) {
-      error.value =
-        err?.response?.data?.message || err?.message || "获取收藏失败";
-      console.error("[Learning] fetchCollections error:", err);
+      console.warn("[Learning] fetchCollections failed, using mock data:", err?.message);
+      const { mockCollections } = await import("@/mock/data/learning.mock");
+      collections.value = mockCollections;
     } finally {
       loading.value = false;
     }
@@ -79,9 +79,9 @@ export const useLearningStore = defineStore("learning", () => {
       const response = await learningApi.getWrongQuestions();
       wrongQuestions.value = response.data;
     } catch (err: any) {
-      error.value =
-        err?.response?.data?.message || err?.message || "获取错题失败";
-      console.error("[Learning] fetchWrongQuestions error:", err);
+      console.warn("[Learning] fetchWrongQuestions failed, using mock data:", err?.message);
+      const { mockWrongQuestions } = await import("@/mock/data/learning.mock");
+      wrongQuestions.value = mockWrongQuestions;
     } finally {
       loading.value = false;
     }

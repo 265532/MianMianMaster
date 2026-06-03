@@ -166,8 +166,8 @@ service.interceptors.response.use(
           const refreshTokenValue = getRefreshToken();
           if (!refreshTokenValue) {
             removeToken();
-            const currentPath = window.location.pathname + window.location.search;
-            window.location.href = `/login?redirect=${encodeURIComponent(currentPath)}`;
+            // 派发全局401事件，触发登录弹窗
+            window.dispatchEvent(new CustomEvent("auth:unauthorized"));
             break;
           }
 
@@ -209,8 +209,8 @@ service.interceptors.response.use(
           } catch (refreshError) {
             onRefreshFailed(refreshError);
             removeToken();
-            const currentPath = window.location.pathname + window.location.search;
-            window.location.href = `/login?redirect=${encodeURIComponent(currentPath)}`;
+            // 刷新token失败，派发全局401事件，触发登录弹窗
+            window.dispatchEvent(new CustomEvent("auth:unauthorized"));
             return Promise.reject(refreshError);
           } finally {
             isRefreshing = false;

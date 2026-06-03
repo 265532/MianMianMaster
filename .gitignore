@@ -118,3 +118,7 @@ debug.log
 *.backup
 
 .env
+
+# Generated API artifacts
+src/api/generated/
+docs/api/schemas/openapi.json

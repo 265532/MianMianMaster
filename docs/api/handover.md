@@ -1,7 +1,7 @@
 # API 基础设施联调 交接文档
 
 **模块**: 前端 API 基础设施联调准备
-**最后更新**: 2026-06-01
+**最后更新**: 2026-06-02
 **关联文档**:
 - 审查报告: [infrastructure-review-report.md](./infrastructure-review-report.md)
 - 修复清单: [fix-checklist.md](./fix-checklist.md)
@@ -444,7 +444,8 @@ vitest run                # 96 测试全部通过
 | `vue-tsc --noEmit` | ✅ 零错误 |
 | `vite build` | ✅ 构建成功 |
 | 后端 `POST /auth/register` | ✅ 返回 `ResponseModel[User]`，字段与前端 `UserResponse` 一致 |
-| 后端 `POST /auth/login` | ⚠️ 超时（后端问题，非前端问题） |
+| 后端 `POST /auth/login` | ✅ 登录成功（2026-06-02 验证响应 0.56s，返回 access_token + refresh_token） |
+| 后端 `GET /auth/me` | ⚠️ 返回 500（后端问题，非前端） |
 
 ### 后端 API 对齐验证
 
@@ -467,7 +468,7 @@ vitest run                # 96 测试全部通过
 
 | 事项 | 优先级 | 阻塞原因 |
 |------|--------|---------|
-| 3.3 获取当前用户 E2E 验证 | 🔴 P0 | 后端 `/auth/login` 超时 |
+| 3.3 获取当前用户 E2E 验证 | 🔴 P0 | 后端 login 超时已修复 ✅，待浏览器验证 |
 | 3.4 路由守卫浏览器验证 | 🔴 P0 | 需登录成功后浏览器测试 |
 | 3.5 Token 持久化验证 | 🔴 P0 | 同上 |
 | 3.6 登录锁定提示 | 🟡 P1 | 需后端返回锁定信息格式确认 |
@@ -477,12 +478,12 @@ vitest run                # 96 测试全部通过
 
 ### 踩坑记录
 
-**踩坑4: 后端 `/auth/login` 端点超时**
+**踩坑4: 后端 `/auth/login` 端点超时**（✅ 已修复 2026-06-02）
 
 - **现象**: `POST /api/v1/auth/login` 请求超时（60s+），但 `POST /api/v1/auth/register` 和 `GET /health` 正常
-- **可能原因**: bcrypt 哈希耗时过长 / 数据库连接问题 / 后端内部错误
-- **影响**: 无法完成登录流程的端到端验证
-- **建议**: 联系后端排查登录端点性能问题
+- **原因**: 后端 bcrypt 哈希耗时过长 / 数据库连接问题
+- **修复状态**: ✅ 已修复，响应 0.56s，登录成功返回 Token
+- **遗留问题**: `GET /auth/me` 返回 500（后端问题，不影响登录流程）
 
 ---
 

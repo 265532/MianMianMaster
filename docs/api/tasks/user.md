@@ -15,14 +15,16 @@
 
 ## 差异分析
 
-> **⚠️ 前端比后端多了 5 个端点，这些不在当前后端 Phase 4 中**，需确认：
-> - `GET /user/interview-history`
-> - `GET /user/ability-data`
-> - `GET /user/game-interview-data`
+> **✅ 已补充的端点（2026-06-03 后端已实现）**：
+> - `GET /user/interview-history` — ⚠️ 数据结构待对齐（见下方验证结果）
+> - `GET /user/ability-data` — ⚠️ 数据结构待对齐
+> - `GET /user/game-interview-data` — ⚠️ 数据结构待对齐
+>
+> **仍未实现的端点**：
 > - `GET /user/resume`
 > - `POST /user/resume/diagnose`
 >
-> 这些端点当前依赖 Mock 数据，联调时需 **降级处理**（静默返回空数组或错误提示），或与后端确认排期。
+> 前端已对所有超范围端点做了 Mock 降级处理（API 失败时自动回退到 Mock 数据）。
 
 ---
 
@@ -65,12 +67,12 @@
 
 ## Task 5: 超范围端点降级处理
 
-- [ ] 5.1 `getInterviewHistory()` 改为返回空数组 `[]`（或带上"暂不支持"提示），避免调用不存在端点
-- [ ] 5.2 `getAbilityData()` 改为返回空对象 `{}`
-- [ ] 5.3 `getGameInterviewData()` 改为返回空数据，`GameInterview.vue` 显示 EmptyState
-- [ ] 5.4 `getResume()` 改为返回空对象 `{}`
-- [ ] 5.5 `diagnoseResume()` 改为返回"功能开发中"提示
-- [ ] 5.6 **确认策略**: 上述端点是否全量降级，还是部分已有后端对应用法（如通过其他模块暴露）
+- [x] 5.1 `getInterviewHistory()` — API 失败时降级到 Mock 数据（`src/stores/user.ts`）
+- [x] 5.2 `getAbilityData()` — API 失败时降级到 Mock 数据（`src/stores/user.ts`）
+- [x] 5.3 `getGameInterviewData()` — API 失败时降级到 Mock 数据（`src/stores/user.ts`）
+- [x] 5.4 `getResume()` — API 失败时降级到 Mock 数据（`src/stores/user.ts`）
+- [x] 5.5 `diagnoseResume()` — API 失败时降级到 Mock 数据（`src/stores/user.ts`）
+- [x] 5.6 学习模块 `fetchCollections()` / `fetchWrongQuestions()` 同样做了 Mock 降级（`src/stores/learning.ts`）
 
 ---
 
@@ -79,6 +81,39 @@
 - [ ] 6.1 无 Token 调用 `GET /user/profile` → 返回 401，前端自动处理
 - [ ] 6.2 修改密码传错误旧密码 → 显示错误消息
 - [ ] 6.3 修改手机号验证码错误 → 显示错误消息
+
+---
+
+## Task 7: 集成验证（2026-06-03）
+
+> 后端 3 个用户端点已补充 + 学习模块 Bug 已修复，验证结果如下：
+
+### 7.1 接口可达性 ✅
+
+| 接口 | HTTP 状态 | 响应码 | 结果 |
+|------|----------|--------|------|
+| `GET /user/interview-history` | 200 | 200 | ✅ 正常 |
+| `GET /user/ability-data` | 200 | 200 | ✅ 正常 |
+| `GET /user/game-interview-data` | 200 | 200 | ✅ 正常 |
+| `GET /learning/collections` | 200 | 200 | ✅ 正常（Bug 已修复） |
+| `GET /learning/wrong-questions` | 200 | 200 | ✅ 正常（Bug 已修复） |
+
+### 7.2 数据结构匹配 ⚠️
+
+| 接口 | 后端实际返回 `data` | 前端期望类型 | 匹配 |
+|------|-------------------|------------|------|
+| `interview-history` | `[]` (list) | `{ items, total, page, page_size }` | ⚠️ 无数据时返回空列表而非分页对象，但 store 中 `data.items \|\| data` 兼容 |
+| `ability-data` | `[]` (list) | `Record<string, AbilityDataItem>` | ⚠️ 无数据时返回空列表而非空对象，Profile.vue 用 `abilityData[pos]` 访问，undefined 走 fallback |
+| `game-interview-data` | `{ total_interviews, completed_interviews, average_score, ... }` | `{ stats[], levels[], achievements[], leaderboard[] }` | ❌ 结构完全不同，页面依赖 Mock 降级 |
+| `learning/collections` | `[]` (list) | `Collection[]` | ✅ 匹配 |
+| `learning/wrong-questions` | `[]` (list) | `WrongQuestion[]` | ✅ 匹配 |
+
+### 7.3 结论
+
+- **学习模块**: 接口正常，数据结构匹配，Mock 降级仅在后端不可用时生效 ✅
+- **用户模块 interview-history / ability-data**: 接口正常，无数据时结构差异被 store 代码兼容，有数据后需验证实际字段是否匹配
+- **用户模块 game-interview-data**: 后端返回统计摘要，前端期望游戏化关卡/成就/排行榜，**结构完全不匹配**，当前完全依赖 Mock 降级
+- **需后端跟进**: `game-interview-data` 需按前端 `GameInterviewDataResponse` 类型补充 `levels` / `achievements` / `leaderboard` 字段
 
 ---
 

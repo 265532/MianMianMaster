@@ -52,8 +52,8 @@
 ## Task 3: 登录流程端到端验证
 
 - [x] 3.1 **注册新用户**: 调用 `POST /auth/register` → 验证返回 `{"code": 200, "data": <UserResponse>}`（已通过 curl 验证）
-- [x] 3.2 **账号密码登录**: 调用 `POST /auth/login` → 代码已修复（`refresh_token` 现在正确保存），但后端登录端点超时待解决
-- [ ] 3.3 **获取当前用户**: 登录后调用 `GET /auth/me` → 验证 `UserInfo` 字段映射（`username → name`, `roles → role`）— 需后端登录端点就绪后验证
+- [x] 3.2 **账号密码登录**: 调用 `POST /auth/login` → ✅ 登录成功（2026-06-02 验证响应 0.56s，返回 access_token + refresh_token），待浏览器端联调验证
+- [ ] 3.3 **获取当前用户**: 登录后调用 `GET /auth/me` → 后端返回 500（后端问题，非前端），待后端修复后验证
 - [ ] 3.4 **路由守卫验证**: 
   - 无 Token 访问受保护页面 → 跳转 `/login?redirect=原路径`
   - 已登录访问 `/login` → 重定向至 `/`
