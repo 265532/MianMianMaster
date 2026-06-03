@@ -28,6 +28,7 @@ const service: AxiosInstance = axios.create({
 const DEBUG = import.meta.env.VITE_ENABLE_DEBUG_LOG === "true";
 
 let isRefreshing = false;
+let isUnauthorized = false;
 let pendingRequests: Array<{
   resolve: (token: string) => void;
   reject: (error: unknown) => void;
@@ -41,6 +42,18 @@ function onTokenRefreshed(newToken: string): void {
 function onRefreshFailed(error: unknown): void {
   pendingRequests.forEach(({ reject }) => reject(error));
   pendingRequests = [];
+}
+
+/** 派发全局401事件（防重入：同一轮未授权只派发一次） */
+function dispatchUnauthorized(): void {
+  if (isUnauthorized) return;
+  isUnauthorized = true;
+  window.dispatchEvent(new CustomEvent("auth:unauthorized"));
+}
+
+/** 登录成功后调用，重置防重入标志 */
+export function resetUnauthorizedFlag(): void {
+  isUnauthorized = false;
 }
 
 const apiMetrics = {
@@ -123,6 +136,12 @@ service.interceptors.response.use(
       console.log(`[API Response] ${config.url}`, data);
     }
 
+    if (data.code !== undefined && data.code === 401) {
+      removeToken();
+      dispatchUnauthorized();
+      return Promise.reject(new Error(data.message || "登录已过期，请重新登录"));
+    }
+
     if (data.code !== undefined && data.code !== 200) {
       handleApiError(data);
       return Promise.reject(new Error(data.message || "请求失败"));
@@ -166,8 +185,7 @@ service.interceptors.response.use(
           const refreshTokenValue = getRefreshToken();
           if (!refreshTokenValue) {
             removeToken();
-            // 派发全局401事件，触发登录弹窗
-            window.dispatchEvent(new CustomEvent("auth:unauthorized"));
+            dispatchUnauthorized();
             break;
           }
 
@@ -209,8 +227,7 @@ service.interceptors.response.use(
           } catch (refreshError) {
             onRefreshFailed(refreshError);
             removeToken();
-            // 刷新token失败，派发全局401事件，触发登录弹窗
-            window.dispatchEvent(new CustomEvent("auth:unauthorized"));
+            dispatchUnauthorized();
             return Promise.reject(refreshError);
           } finally {
             isRefreshing = false;

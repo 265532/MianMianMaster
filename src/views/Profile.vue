@@ -62,7 +62,7 @@ const positions = [
 
 const currentAbilityData = computed(() => {
   return (
-    abilityData.value[targetPosition.value] || {
+    abilityData.value?.abilities?.[0] || {
       current: [0, 0, 0, 0, 0, 0, 0],
       required: [0, 0, 0, 0, 0, 0, 0],
       indicators: [
@@ -74,7 +74,7 @@ const currentAbilityData = computed(() => {
         { name: "工程化能力", max: 100 },
         { name: "团队协作", max: 100 },
       ],
-      gapSkills: [],
+      gap_skills: [],
       strengths: [],
     }
   );
@@ -159,9 +159,9 @@ const filteredInterviews = computed(() => {
 
   result.sort((a, b) => {
     if (sortBy.value === "date") {
-      return new Date(b.date).getTime() - new Date(a.date).getTime();
+      return new Date(b.start_time || b.created_at).getTime() - new Date(a.start_time || a.created_at).getTime();
     } else if (sortBy.value === "score") {
-      return b.score - a.score;
+      return (b.score ?? 0) - (a.score ?? 0);
     }
     return 0;
   });
@@ -177,7 +177,7 @@ const practiceAgain = (interview: any) => {
   isLoading.value = true;
   setTimeout(() => {
     isLoading.value = false;
-    alert(`正在为您生成 ${interview.position} 的相似面试练习...`);
+    alert(`正在为您生成 ${interview.job_position_title} 的相似面试练习...`);
   }, 1000);
 };
 
@@ -219,11 +219,8 @@ const stats = computed(() => [
     color: "text-auxiliary-orange",
   },
   {
-    label: "AI 能力认证",
-    value: String(
-      gameInterviewData.value?.stats?.find((s: any) => s.label === "技能认证")
-        ?.value || "0",
-    ),
+    label: "完成场次",
+    value: String(gameInterviewData.value?.completed_sessions ?? 0),
     icon: ShieldCheck,
     color: "text-auxiliary-green",
   },
@@ -349,16 +346,9 @@ const isDiagnosing = ref(false);
 const isProfileUpdateModalOpen = ref(false);
 const isSavingProfile = ref(false);
 const profileForm = ref({
-  name: "王同学",
-  major: "计算机专业",
-  grade: "大三",
-  school: "北京大学",
-  email: "wang@example.com",
-  phone: "13800138000",
-  skills: "Vue3, React, TypeScript, Java, Python",
-  experience: "2年前端开发经验，参与过多个企业级项目",
-  education: "北京大学计算机科学与技术专业，2022年入学",
-  certifications: "英语四级，计算机二级，AI能力认证",
+  education: "",
+  target_position: "",
+  work_years: 0,
 });
 
 const switchGameTab = (tab: string) => {
@@ -369,13 +359,8 @@ const toggleLevelExpand = (id: number) => {
   expandedLevelId.value = expandedLevelId.value === id ? null : id;
 };
 
-const showLevelDetail = (id: number) => {
-  const levels = gameInterviewData.value?.levels || [];
-  const level = levels.find((l) => l.id === id);
-  if (level) {
-    currentLevel.value = level;
-    isLevelDetailModalOpen.value = true;
-  }
+const showLevelDetail = (_id: number) => {
+  // 游戏化面试关卡详情暂不可用，后端仅返回统计数据
 };
 
 const startLevel = (id: number) => {
@@ -409,9 +394,10 @@ const closeResumeDiagnosisModal = () => {
 };
 
 const startResumeDiagnosis = async () => {
+  if (!resumeData.value?.id) return;
   isDiagnosing.value = true;
   try {
-    await userStore.diagnoseResume();
+    await userStore.diagnoseResume(resumeData.value.id, targetPosition.value);
   } catch {
     alert("诊断失败，请稍后重试");
   } finally {
@@ -431,44 +417,16 @@ const saveProfile = async () => {
   isSavingProfile.value = true;
   try {
     await userStore.updateProfile({
-      name: profileForm.value.name,
-    } as any);
+      education: profileForm.value.education,
+      target_position: profileForm.value.target_position,
+      work_years: profileForm.value.work_years,
+    });
     closeProfileUpdateModal();
     alert("个人档案更新成功！");
   } catch {
     alert("保存失败，请稍后重试");
   } finally {
     isSavingProfile.value = false;
-  }
-};
-
-const getSkillLevelText = (level: string) => {
-  switch (level) {
-    case "beginner":
-      return "入门";
-    case "intermediate":
-      return "中级";
-    case "advanced":
-      return "高级";
-    case "expert":
-      return "专家";
-    default:
-      return "未知";
-  }
-};
-
-const getSkillLevelColor = (level: string) => {
-  switch (level) {
-    case "beginner":
-      return "bg-auxiliary-green/10 text-auxiliary-green";
-    case "intermediate":
-      return "bg-auxiliary-orange/10 text-auxiliary-orange";
-    case "advanced":
-      return "bg-primary/10 text-primary";
-    case "expert":
-      return "bg-auxiliary-purple/10 text-auxiliary-purple";
-    default:
-      return "bg-neutral-bg text-neutral-body";
   }
 };
 
@@ -826,7 +784,7 @@ const handleResize = () => {
                   </p>
                   <div class="space-y-3">
                     <div
-                      v-for="skill in currentAbilityData.gapSkills"
+                      v-for="skill in currentAbilityData.gap_skills"
                       :key="skill.name"
                       :class="[
                         'p-3 rounded-2xl border flex items-center justify-between transition-all hover:shadow-sm',
@@ -891,7 +849,7 @@ const handleResize = () => {
                   </div>
                   <p class="text-xs text-neutral-body leading-relaxed">
                     针对<span class="font-bold text-neutral-title">{{
-                      currentAbilityData.gapSkills[0]?.name
+                      currentAbilityData.gap_skills[0]?.name
                     }}</span
                     >，建议通过实际项目实践和源码学习来提升，可参考官方文档和优质教程。
                   </p>
@@ -904,7 +862,7 @@ const handleResize = () => {
                   </div>
                   <p class="text-xs text-neutral-body leading-relaxed">
                     增强<span class="font-bold text-neutral-title">{{
-                      currentAbilityData.gapSkills[1]?.name
+                      currentAbilityData.gap_skills[1]?.name
                     }}</span
                     >，可参与开源项目或搭建完整的工程化架构，积累实战经验。
                   </p>
@@ -973,22 +931,22 @@ const handleResize = () => {
                     <button
                       :class="[
                         'px-3 py-1 text-xs font-bold transition-all',
-                        filterStatus === '已通过'
+                        filterStatus === 'completed'
                           ? 'bg-auxiliary-green text-white rounded-lg'
                           : 'text-neutral-body hover:bg-neutral-border/50 rounded-lg',
                       ]"
-                      @click="filterStatus = '已通过'"
+                      @click="filterStatus = 'completed'"
                     >
-                      已通过
+                      已完成
                     </button>
                     <button
                       :class="[
                         'px-3 py-1 text-xs font-bold transition-all',
-                        filterStatus === '未通过'
+                        filterStatus === 'failed'
                           ? 'bg-auxiliary-red text-white rounded-lg'
                           : 'text-neutral-body hover:bg-neutral-border/50 rounded-lg',
                       ]"
-                      @click="filterStatus = '未通过'"
+                      @click="filterStatus = 'failed'"
                     >
                       未通过
                     </button>
@@ -1046,54 +1004,36 @@ const handleResize = () => {
                         <h4
                           class="text-sm font-bold text-neutral-title group-hover:text-primary transition-colors truncate"
                         >
-                          {{ item.position }}
+                          {{ item.job_position_title || '面试记录' }}
                         </h4>
                         <span
                           class="text-[10px] font-bold px-2 py-0.5 rounded-full"
                           :class="
-                            item.status === '已通过'
+                            item.status === 'completed'
                               ? 'bg-auxiliary-green/10 text-auxiliary-green'
                               : 'bg-auxiliary-red/10 text-auxiliary-red'
                           "
-                          >{{ item.status }}</span
+                          >{{ item.status === 'completed' ? '已完成' : '未通过' }}</span
                         >
                       </div>
                       <div
                         class="flex flex-wrap items-center gap-2 text-[11px] text-neutral-helper"
                       >
-                        <span>{{ item.company }}</span>
-                        <span>·</span>
-                        <span>{{ item.date }}</span>
-                        <span>·</span>
-                        <span>{{ item.round }}</span>
-                        <span>·</span>
-                        <span>{{ item.type }}</span>
+                        <span>{{ item.start_time ? new Date(item.start_time).toLocaleDateString() : new Date(item.created_at).toLocaleDateString() }}</span>
+                        <span v-if="item.current_round">·</span>
+                        <span v-if="item.current_round">第 {{ item.current_round }} 轮</span>
                       </div>
                     </div>
                   </div>
                   <div class="flex items-center gap-4">
                     <div class="text-right">
                       <p class="text-lg font-black text-neutral-title">
-                        {{ item.score
+                        {{ item.score ?? '-'
                         }}<span
                           class="text-[10px] font-normal opacity-40 ml-0.5"
                           >分</span
                         >
                       </p>
-                      <div class="flex items-center justify-end gap-1">
-                        <span
-                          v-for="tag in (item.tags ?? []).slice(0, 2)"
-                          :key="tag"
-                          class="text-[9px] px-2 py-0.5 bg-primary/10 text-primary rounded-full"
-                        >
-                          {{ tag }}
-                        </span>
-                        <span
-                          v-if="(item.tags?.length ?? 0) > 2"
-                          class="text-[9px] text-neutral-helper"
-                          >+{{ (item.tags?.length ?? 0) - 2 }}</span
-                        >
-                      </div>
                     </div>
                     <ChevronRight
                       :size="16"
@@ -1108,112 +1048,16 @@ const handleResize = () => {
                   v-if="isExpanded === item.id"
                   class="mt-2 p-4 bg-neutral-bg rounded-[20px] border border-neutral-border animate-fadeIn"
                 >
-                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                    <!-- 能力评分 -->
-                    <div>
-                      <h5 class="text-xs font-bold text-neutral-title mb-3">
-                        能力评分
-                      </h5>
-                      <div class="space-y-2">
-                        <div class="space-y-1">
-                          <div
-                            class="flex justify-between text-[10px] font-medium"
-                          >
-                            <span>技术能力</span>
-                            <span>{{ item.details.technical }}%</span>
-                          </div>
-                          <div
-                            class="h-1.5 bg-white rounded-full overflow-hidden"
-                          >
-                            <div
-                              class="h-full bg-primary"
-                              :style="{ width: item.details.technical + '%' }"
-                            ></div>
-                          </div>
-                        </div>
-                        <div class="space-y-1">
-                          <div
-                            class="flex justify-between text-[10px] font-medium"
-                          >
-                            <span>沟通表达</span>
-                            <span>{{ item.details.communication }}%</span>
-                          </div>
-                          <div
-                            class="h-1.5 bg-white rounded-full overflow-hidden"
-                          >
-                            <div
-                              class="h-full bg-primary"
-                              :style="{
-                                width: item.details.communication + '%',
-                              }"
-                            ></div>
-                          </div>
-                        </div>
-                        <div class="space-y-1">
-                          <div
-                            class="flex justify-between text-[10px] font-medium"
-                          >
-                            <span>逻辑思维</span>
-                            <span>{{ item.details.logic }}%</span>
-                          </div>
-                          <div
-                            class="h-1.5 bg-white rounded-full overflow-hidden"
-                          >
-                            <div
-                              class="h-full bg-primary"
-                              :style="{ width: item.details.logic + '%' }"
-                            ></div>
-                          </div>
-                        </div>
-                        <div class="space-y-1">
-                          <div
-                            class="flex justify-between text-[10px] font-medium"
-                          >
-                            <span>问题解决</span>
-                            <span>{{ item.details.problemSolving }}%</span>
-                          </div>
-                          <div
-                            class="h-1.5 bg-white rounded-full overflow-hidden"
-                          >
-                            <div
-                              class="h-full bg-primary"
-                              :style="{
-                                width: item.details.problemSolving + '%',
-                              }"
-                            ></div>
-                          </div>
-                        </div>
-                      </div>
+                  <div class="space-y-3 mb-4">
+                    <div class="flex items-center gap-2 text-xs text-neutral-body">
+                      <Calendar :size="14" class="text-primary" />
+                      <span>开始: {{ item.start_time ? new Date(item.start_time).toLocaleString() : '-' }}</span>
+                      <span class="text-neutral-helper">→</span>
+                      <span>结束: {{ item.end_time ? new Date(item.end_time).toLocaleString() : '-' }}</span>
                     </div>
-
-                    <!-- 面试反馈 -->
-                    <div>
-                      <h5 class="text-xs font-bold text-neutral-title mb-3">
-                        面试反馈
-                      </h5>
-                      <div
-                        class="p-3 bg-white rounded-xl border border-neutral-border"
-                      >
-                        <p class="text-xs text-neutral-body leading-relaxed">
-                          {{ item.feedback }}
-                        </p>
-                      </div>
-
-                      <!-- 标签 -->
-                      <div class="mt-4">
-                        <h5 class="text-xs font-bold text-neutral-title mb-2">
-                          相关技能标签
-                        </h5>
-                        <div class="flex flex-wrap gap-2">
-                          <span
-                            v-for="tag in item.tags ?? []"
-                            :key="tag"
-                            class="text-[9px] px-2 py-0.5 bg-primary/10 text-primary rounded-full"
-                          >
-                            {{ tag }}
-                          </span>
-                        </div>
-                      </div>
+                    <div v-if="item.current_round" class="flex items-center gap-2 text-xs text-neutral-body">
+                      <Target :size="14" class="text-auxiliary-orange" />
+                      <span>当前轮次: 第 {{ item.current_round }} 轮</span>
                     </div>
                   </div>
 
@@ -1684,58 +1528,62 @@ const handleResize = () => {
               >
                 概览
               </button>
-              <button
-                :class="[
-                  'flex-shrink-0 px-4 py-2 rounded-xl font-bold text-sm transition-all',
-                  activeGameTab === 'levels'
-                    ? 'bg-primary text-white'
-                    : 'bg-neutral-bg text-neutral-body hover:bg-neutral-border/50',
-                ]"
-                @click="switchGameTab('levels')"
-              >
-                关卡
-              </button>
-              <button
-                :class="[
-                  'flex-shrink-0 px-4 py-2 rounded-xl font-bold text-sm transition-all',
-                  activeGameTab === 'achievements'
-                    ? 'bg-primary text-white'
-                    : 'bg-neutral-bg text-neutral-body hover:bg-neutral-border/50',
-                ]"
-                @click="switchGameTab('achievements')"
-              >
-                成就
-              </button>
-              <button
-                :class="[
-                  'flex-shrink-0 px-4 py-2 rounded-xl font-bold text-sm transition-all',
-                  activeGameTab === 'leaderboard'
-                    ? 'bg-primary text-white'
-                    : 'bg-neutral-bg text-neutral-body hover:bg-neutral-border/50',
-                ]"
-                @click="switchGameTab('leaderboard')"
-              >
-                排行榜
-              </button>
             </div>
 
             <!-- 概览标签页 -->
             <div v-if="activeGameTab === 'overview'">
               <div class="grid grid-cols-2 gap-4">
                 <div
-                  v-for="stat in gameInterviewData?.stats || []"
-                  :key="stat.label"
                   class="p-4 bg-neutral-bg rounded-2xl flex flex-col items-center justify-center gap-2 group hover:bg-white hover:shadow-md transition-all border border-transparent hover:border-neutral-border"
                 >
                   <div
                     class="w-10 h-10 rounded-2xl bg-white flex items-center justify-center text-primary shadow-sm group-hover:gradient-primary group-hover:text-white transition-all"
                   >
-                    <component :is="stat.icon" :size="20" :class="stat.color" />
+                    <Gamepad2 :size="20" class="text-primary" />
                   </div>
                   <p class="text-lg font-black text-neutral-title">
-                    {{ stat.value }}
+                    {{ gameInterviewData?.total_sessions ?? 0 }}
                   </p>
-                  <p class="text-xs text-neutral-helper">{{ stat.label }}</p>
+                  <p class="text-xs text-neutral-helper">累计场次</p>
+                </div>
+                <div
+                  class="p-4 bg-neutral-bg rounded-2xl flex flex-col items-center justify-center gap-2 group hover:bg-white hover:shadow-md transition-all border border-transparent hover:border-neutral-border"
+                >
+                  <div
+                    class="w-10 h-10 rounded-2xl bg-white flex items-center justify-center text-auxiliary-green shadow-sm group-hover:gradient-primary group-hover:text-white transition-all"
+                  >
+                    <CheckCircle :size="20" class="text-auxiliary-green" />
+                  </div>
+                  <p class="text-lg font-black text-neutral-title">
+                    {{ gameInterviewData?.completed_sessions ?? 0 }}
+                  </p>
+                  <p class="text-xs text-neutral-helper">已完成</p>
+                </div>
+                <div
+                  class="p-4 bg-neutral-bg rounded-2xl flex flex-col items-center justify-center gap-2 group hover:bg-white hover:shadow-md transition-all border border-transparent hover:border-neutral-border"
+                >
+                  <div
+                    class="w-10 h-10 rounded-2xl bg-white flex items-center justify-center text-auxiliary-orange shadow-sm group-hover:gradient-primary group-hover:text-white transition-all"
+                  >
+                    <Target :size="20" class="text-auxiliary-orange" />
+                  </div>
+                  <p class="text-lg font-black text-neutral-title">
+                    {{ gameInterviewData?.average_score?.toFixed(1) ?? '-' }}
+                  </p>
+                  <p class="text-xs text-neutral-helper">平均分数</p>
+                </div>
+                <div
+                  class="p-4 bg-neutral-bg rounded-2xl flex flex-col items-center justify-center gap-2 group hover:bg-white hover:shadow-md transition-all border border-transparent hover:border-neutral-border"
+                >
+                  <div
+                    class="w-10 h-10 rounded-2xl bg-white flex items-center justify-center text-auxiliary-yellow shadow-sm group-hover:gradient-primary group-hover:text-white transition-all"
+                  >
+                    <Trophy :size="20" class="text-auxiliary-yellow" />
+                  </div>
+                  <p class="text-lg font-black text-neutral-title">
+                    {{ gameInterviewData?.best_streak ?? 0 }}
+                  </p>
+                  <p class="text-xs text-neutral-helper">最佳连胜</p>
                 </div>
               </div>
               <div
@@ -1745,323 +1593,36 @@ const handleResize = () => {
                   <div
                     class="w-10 h-10 rounded-2xl gradient-primary flex items-center justify-center text-white shadow-md"
                   >
-                    <Gamepad2 :size="20" />
+                    <Activity :size="20" />
                   </div>
                   <h4 class="text-sm font-bold text-neutral-title">
-                    游戏式面试进度
+                    当前连续练习
                   </h4>
                 </div>
                 <div class="space-y-4">
                   <div class="space-y-2">
                     <div class="flex justify-between text-xs font-bold">
-                      <span>总体进度</span>
-                      <span>83%</span>
+                      <span>当前连胜</span>
+                      <span>{{ gameInterviewData?.current_streak ?? 0 }} 天</span>
                     </div>
                     <div class="h-2 bg-white rounded-full overflow-hidden">
                       <div
                         class="h-full gradient-primary transition-all duration-1000 ease-out"
-                        style="width: 83%"
+                        :style="{ width: Math.min(((gameInterviewData?.current_streak ?? 0) / 30) * 100, 100) + '%' }"
                       ></div>
                     </div>
                   </div>
                   <div class="space-y-2">
                     <div class="flex justify-between text-xs font-bold">
-                      <span>技能覆盖度</span>
-                      <span>75%</span>
+                      <span>完成率</span>
+                      <span>{{ gameInterviewData?.total_sessions ? Math.round(((gameInterviewData?.completed_sessions ?? 0) / gameInterviewData.total_sessions) * 100) : 0 }}%</span>
                     </div>
                     <div class="h-2 bg-white rounded-full overflow-hidden">
                       <div
                         class="h-full gradient-cyan-yellow transition-all duration-1000 ease-out"
-                        style="width: 75%"
+                        :style="{ width: (gameInterviewData?.total_sessions ? Math.round(((gameInterviewData?.completed_sessions ?? 0) / gameInterviewData.total_sessions) * 100) : 0) + '%' }"
                       ></div>
                     </div>
-                  </div>
-                  <div class="space-y-2">
-                    <div class="flex justify-between text-xs font-bold">
-                      <span>连续打卡</span>
-                      <span>12/30天</span>
-                    </div>
-                    <div class="h-2 bg-white rounded-full overflow-hidden">
-                      <div
-                        class="h-full gradient-yellow-orange transition-all duration-1000 ease-out"
-                        style="width: 40%"
-                      ></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- 关卡标签页 -->
-            <div v-if="activeGameTab === 'levels'" class="space-y-4">
-              <div
-                v-for="level in gameInterviewData?.levels || []"
-                :key="level.id"
-                class="group"
-              >
-                <!-- 关卡卡片 -->
-                <div
-                  class="p-4 bg-neutral-bg rounded-2xl flex items-center justify-between group cursor-pointer hover:bg-white hover:shadow-md transition-all border border-transparent hover:border-neutral-border"
-                  @click="toggleLevelExpand(level.id)"
-                >
-                  <div class="flex items-center gap-4">
-                    <div
-                      class="w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-md"
-                      :class="
-                        level.completed
-                          ? 'gradient-primary'
-                          : 'bg-neutral-border'
-                      "
-                    >
-                      <span class="font-black text-lg">{{ level.id }}</span>
-                    </div>
-                    <div class="flex-1 min-w-0">
-                      <div class="flex items-center gap-3 mb-1">
-                        <h4
-                          class="text-sm font-bold text-neutral-title group-hover:text-primary transition-colors truncate"
-                        >
-                          {{ level.name }}
-                        </h4>
-                        <span
-                          class="text-[10px] font-bold px-2 py-0.5"
-                          :class="getDifficultyColor(level.difficulty)"
-                          >{{ getDifficultyText(level.difficulty) }}</span
-                        >
-                        <span
-                          v-if="level.completed"
-                          class="text-[10px] font-bold px-2 py-0.5 bg-auxiliary-green/10 text-auxiliary-green"
-                          >已完成</span
-                        >
-                        <span
-                          v-else-if="level.progress > 0"
-                          class="text-[10px] font-bold px-2 py-0.5 bg-auxiliary-orange/10 text-auxiliary-orange"
-                          >进行中</span
-                        >
-                        <span
-                          v-else
-                          class="text-[10px] font-bold px-2 py-0.5 bg-neutral-border/30 text-neutral-helper"
-                          >未开始</span
-                        >
-                      </div>
-                      <div class="space-y-1 mb-2">
-                        <div
-                          class="flex justify-between text-[10px] font-medium"
-                        >
-                          <span>进度</span>
-                          <span>{{ level.progress }}%</span>
-                        </div>
-                        <div
-                          class="h-1.5 bg-white rounded-full overflow-hidden"
-                        >
-                          <div
-                            class="h-full gradient-primary transition-all duration-1000 ease-out"
-                            :style="{ width: level.progress + '%' }"
-                          ></div>
-                        </div>
-                      </div>
-                      <div
-                        class="flex flex-wrap items-center gap-2 text-[11px] text-neutral-helper"
-                      >
-                        <span>{{ level.questions }} 题</span>
-                        <span>·</span>
-                        <span
-                          >{{
-                            Math.round((level.correct / level.questions) * 100)
-                          }}% 正确率</span
-                        >
-                        <span>·</span>
-                        <span>{{ level.timeSpent }}</span>
-                        <span v-if="level.badge" class="text-[12px]">{{
-                          getBadgeIcon(level.badge)
-                        }}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <ChevronRight
-                    :size="16"
-                    class="text-neutral-helper group-hover:text-primary transition-colors transform transition-transform"
-                    :class="expandedLevelId === level.id ? 'rotate-90' : ''"
-                  />
-                </div>
-
-                <!-- 展开的关卡详情 -->
-                <div
-                  v-if="expandedLevelId === level.id"
-                  class="mt-2 p-4 bg-neutral-bg rounded-[20px] border border-neutral-border animate-fadeIn"
-                >
-                  <div class="space-y-4">
-                    <div>
-                      <h5 class="text-xs font-bold text-neutral-title mb-3">
-                        相关技能
-                      </h5>
-                      <div class="flex flex-wrap gap-2">
-                        <span
-                          v-for="skill in level.skills"
-                          :key="skill"
-                          class="text-[9px] px-2 py-1 bg-primary/10 text-primary rounded-full"
-                        >
-                          {{ skill }}
-                        </span>
-                      </div>
-                    </div>
-                    <div class="flex gap-3">
-                      <button
-                        v-if="level.completed"
-                        class="flex-1 py-3 bg-primary text-white text-xs font-bold rounded-xl hover:bg-primary-dark transition-all flex items-center justify-center gap-2"
-                        @click.stop="startLevel(level.id)"
-                      >
-                        <Zap :size="14" />
-                        重新练习
-                      </button>
-                      <button
-                        v-else-if="level.progress > 0"
-                        class="flex-1 py-3 bg-primary text-white text-xs font-bold rounded-xl hover:bg-primary-dark transition-all flex items-center justify-center gap-2"
-                        @click.stop="continueLevel(level.id)"
-                      >
-                        <Zap :size="14" />
-                        继续练习
-                      </button>
-                      <button
-                        v-else
-                        class="flex-1 py-3 bg-primary text-white text-xs font-bold rounded-xl hover:bg-primary-dark transition-all flex items-center justify-center gap-2"
-                        @click.stop="startLevel(level.id)"
-                      >
-                        <Zap :size="14" />
-                        开始练习
-                      </button>
-                      <button
-                        class="px-4 py-3 bg-neutral-bg text-neutral-title text-xs font-bold rounded-xl hover:bg-neutral-border/50 transition-all flex items-center justify-center gap-2"
-                        @click.stop="showLevelDetail(level.id)"
-                      >
-                        <FileText :size="14" />
-                        查看详情
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- 成就标签页 -->
-            <div v-if="activeGameTab === 'achievements'" class="space-y-4">
-              <div
-                v-for="achievement in gameInterviewData?.achievements || []"
-                :key="achievement.id"
-                class="p-4 bg-neutral-bg rounded-2xl flex items-center gap-4 group hover:bg-white hover:shadow-md transition-all border border-transparent hover:border-neutral-border"
-              >
-                <div
-                  class="w-12 h-12 rounded-2xl flex items-center justify-center shadow-md"
-                  :class="
-                    achievement.unlocked
-                      ? 'gradient-primary text-white'
-                      : 'bg-neutral-border text-neutral-helper'
-                  "
-                >
-                  <component :is="achievement.icon" :size="24" />
-                </div>
-                <div class="flex-1 min-w-0">
-                  <div class="flex items-center gap-2 mb-1">
-                    <h4
-                      class="text-sm font-bold text-neutral-title group-hover:text-primary transition-colors truncate"
-                    >
-                      {{ achievement.name }}
-                    </h4>
-                    <span
-                      v-if="achievement.unlocked"
-                      class="text-[10px] font-bold px-2 py-0.5 bg-auxiliary-green/10 text-auxiliary-green"
-                      >已解锁</span
-                    >
-                    <span
-                      v-else
-                      class="text-[10px] font-bold px-2 py-0.5 bg-auxiliary-orange/10 text-auxiliary-orange"
-                      >进行中</span
-                    >
-                  </div>
-                  <p class="text-xs text-neutral-body mb-2">
-                    {{ achievement.description }}
-                  </p>
-                  <div
-                    v-if="achievement.unlocked"
-                    class="text-[10px] text-neutral-helper"
-                  >
-                    解锁于：{{ achievement.unlockedAt }}
-                  </div>
-                  <div v-else class="space-y-1">
-                    <div class="flex justify-between text-[10px] font-medium">
-                      <span>进度</span>
-                      <span>{{ achievement.progress }}%</span>
-                    </div>
-                    <div class="h-1.5 bg-white rounded-full overflow-hidden">
-                      <div
-                        class="h-full gradient-primary transition-all duration-1000 ease-out"
-                        :style="{ width: achievement.progress + '%' }"
-                      ></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- 排行榜标签页 -->
-            <div v-if="activeGameTab === 'leaderboard'" class="space-y-4">
-              <div
-                class="p-4 bg-primary/5 rounded-2xl border border-primary/20 mb-4"
-              >
-                <div class="flex items-center gap-2">
-                  <div
-                    class="w-8 h-8 rounded-full bg-white flex items-center justify-center text-primary shadow-sm"
-                  >
-                    <Trophy :size="16" />
-                  </div>
-                  <h4 class="text-sm font-bold text-neutral-title">
-                    当前排名：第 5 名
-                  </h4>
-                </div>
-                <p class="text-xs text-neutral-helper mt-2">
-                  继续努力，提升排名！
-                </p>
-              </div>
-              <div class="space-y-3">
-                <div
-                  v-for="item in gameInterviewData?.leaderboard || []"
-                  :key="item.rank"
-                  class="p-4 rounded-2xl flex items-center gap-4 transition-all"
-                  :class="
-                    item.isCurrentUser
-                      ? 'bg-primary/10 border border-primary/30'
-                      : 'bg-neutral-bg border border-transparent hover:border-neutral-border hover:bg-white hover:shadow-sm'
-                  "
-                >
-                  <div
-                    class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm"
-                    :class="{
-                      'bg-auxiliary-yellow text-white': item.rank === 1,
-                      'bg-gray-300 text-white': item.rank === 2,
-                      'bg-auxiliary-orange/30 text-auxiliary-orange':
-                        item.rank === 3,
-                      'bg-neutral-border text-neutral-title': item.rank > 3,
-                    }"
-                  >
-                    {{ item.rank }}
-                  </div>
-                  <div
-                    class="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm"
-                  >
-                    <span class="text-xl">{{ item.avatar }}</span>
-                  </div>
-                  <div class="flex-1 min-w-0">
-                    <h4 class="text-sm font-bold text-neutral-title truncate">
-                      {{ item.name }}
-                    </h4>
-                    <p class="text-xs text-neutral-helper">
-                      {{ item.score }} 分
-                    </p>
-                  </div>
-                  <div
-                    v-if="item.isCurrentUser"
-                    class="px-3 py-1 bg-primary text-white text-[10px] font-bold rounded-full"
-                  >
-                    你
                   </div>
                 </div>
               </div>
@@ -2121,53 +1682,35 @@ const handleResize = () => {
                       <h4
                         class="text-sm font-bold text-neutral-title group-hover:text-primary transition-colors truncate"
                       >
-                        {{ item.position }}
+                        {{ item.job_position_title || '面试记录' }}
                       </h4>
                       <span
                         class="text-[10px] font-bold px-2 py-0.5 rounded-full"
                         :class="
-                          item.status === '已通过'
+                          item.status === 'completed'
                             ? 'bg-auxiliary-green/10 text-auxiliary-green'
                             : 'bg-auxiliary-red/10 text-auxiliary-red'
                         "
-                        >{{ item.status }}</span
+                        >{{ item.status === 'completed' ? '已完成' : '未通过' }}</span
                       >
                     </div>
                     <div
                       class="flex flex-wrap items-center gap-2 text-[11px] text-neutral-helper"
                     >
-                      <span>{{ item.company }}</span>
-                      <span>·</span>
-                      <span>{{ item.date }}</span>
-                      <span>·</span>
-                      <span>{{ item.round }}</span>
-                      <span>·</span>
-                      <span>{{ item.type }}</span>
+                      <span>{{ item.start_time ? new Date(item.start_time).toLocaleDateString() : new Date(item.created_at).toLocaleDateString() }}</span>
+                      <span v-if="item.current_round">·</span>
+                      <span v-if="item.current_round">第 {{ item.current_round }} 轮</span>
                     </div>
                   </div>
                 </div>
                 <div class="flex items-center gap-4">
                   <div class="text-right">
                     <p class="text-lg font-black text-neutral-title">
-                      {{ item.score
+                      {{ item.score ?? '-'
                       }}<span class="text-[10px] font-normal opacity-40 ml-0.5"
                         >分</span
                       >
                     </p>
-                    <div class="flex items-center justify-end gap-1">
-                      <span
-                        v-for="tag in (item.tags ?? []).slice(0, 2)"
-                        :key="tag"
-                        class="text-[9px] px-2 py-0.5 bg-primary/10 text-primary rounded-full"
-                      >
-                        {{ tag }}
-                      </span>
-                      <span
-                        v-if="(item.tags?.length ?? 0) > 2"
-                        class="text-[9px] text-neutral-helper"
-                        >+{{ (item.tags?.length ?? 0) - 2 }}</span
-                      >
-                    </div>
                   </div>
                   <ChevronRight
                     :size="16"
@@ -2182,110 +1725,16 @@ const handleResize = () => {
                 v-if="isExpanded === item.id"
                 class="mt-2 p-4 bg-neutral-bg rounded-[20px] border border-neutral-border animate-fadeIn"
               >
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                  <!-- 能力评分 -->
-                  <div>
-                    <h5 class="text-xs font-bold text-neutral-title mb-3">
-                      能力评分
-                    </h5>
-                    <div class="space-y-2">
-                      <div class="space-y-1">
-                        <div
-                          class="flex justify-between text-[10px] font-medium"
-                        >
-                          <span>技术能力</span>
-                          <span>{{ item.details.technical }}%</span>
-                        </div>
-                        <div
-                          class="h-1.5 bg-white rounded-full overflow-hidden"
-                        >
-                          <div
-                            class="h-full bg-primary"
-                            :style="{ width: item.details.technical + '%' }"
-                          ></div>
-                        </div>
-                      </div>
-                      <div class="space-y-1">
-                        <div
-                          class="flex justify-between text-[10px] font-medium"
-                        >
-                          <span>沟通表达</span>
-                          <span>{{ item.details.communication }}%</span>
-                        </div>
-                        <div
-                          class="h-1.5 bg-white rounded-full overflow-hidden"
-                        >
-                          <div
-                            class="h-full bg-primary"
-                            :style="{ width: item.details.communication + '%' }"
-                          ></div>
-                        </div>
-                      </div>
-                      <div class="space-y-1">
-                        <div
-                          class="flex justify-between text-[10px] font-medium"
-                        >
-                          <span>逻辑思维</span>
-                          <span>{{ item.details.logic }}%</span>
-                        </div>
-                        <div
-                          class="h-1.5 bg-white rounded-full overflow-hidden"
-                        >
-                          <div
-                            class="h-full bg-primary"
-                            :style="{ width: item.details.logic + '%' }"
-                          ></div>
-                        </div>
-                      </div>
-                      <div class="space-y-1">
-                        <div
-                          class="flex justify-between text-[10px] font-medium"
-                        >
-                          <span>问题解决</span>
-                          <span>{{ item.details.problemSolving }}%</span>
-                        </div>
-                        <div
-                          class="h-1.5 bg-white rounded-full overflow-hidden"
-                        >
-                          <div
-                            class="h-full bg-primary"
-                            :style="{
-                              width: item.details.problemSolving + '%',
-                            }"
-                          ></div>
-                        </div>
-                      </div>
-                    </div>
+                <div class="space-y-3 mb-4">
+                  <div class="flex items-center gap-2 text-xs text-neutral-body">
+                    <Calendar :size="14" class="text-primary" />
+                    <span>开始: {{ item.start_time ? new Date(item.start_time).toLocaleString() : '-' }}</span>
+                    <span class="text-neutral-helper">→</span>
+                    <span>结束: {{ item.end_time ? new Date(item.end_time).toLocaleString() : '-' }}</span>
                   </div>
-
-                  <!-- 面试反馈 -->
-                  <div>
-                    <h5 class="text-xs font-bold text-neutral-title mb-3">
-                      面试反馈
-                    </h5>
-                    <div
-                      class="p-3 bg-white rounded-xl border border-neutral-border"
-                    >
-                      <p class="text-xs text-neutral-body leading-relaxed">
-                        {{ item.feedback }}
-                      </p>
-                    </div>
-
-                    <!-- 标签 -->
-                    <div class="mt-4">
-                      <h5 class="text-xs font-bold text-neutral-title mb-2">
-                        相关技能标签
-                      </h5>
-                      <div class="flex flex-wrap gap-2">
-                        <span
-                          v-for="tag in item.tags ?? []"
-                          :key="tag"
-                          class="text-[9px] px-2 py-0.5 bg-primary/10 text-primary rounded-full"
-                        >
-                          {{ tag }}
-                        </span>
-                      </div>
-                    </div>
+                  <div v-if="item.current_round" class="flex items-center gap-2 text-xs text-neutral-body">
+                    <Target :size="14" class="text-auxiliary-orange" />
+                    <span>当前轮次: 第 {{ item.current_round }} 轮</span>
                   </div>
                 </div>
 
@@ -2816,25 +2265,25 @@ const handleResize = () => {
                     <div>
                       <p class="text-xs text-neutral-helper mb-1">姓名</p>
                       <p class="text-sm font-medium text-neutral-body">
-                        {{ resumeData?.basicInfo?.name }}
+                        {{ resumeData?.name }}
                       </p>
                     </div>
                     <div>
-                      <p class="text-xs text-neutral-helper mb-1">专业</p>
+                      <p class="text-xs text-neutral-helper mb-1">邮箱</p>
                       <p class="text-sm font-medium text-neutral-body">
-                        {{ resumeData?.basicInfo?.major }}
+                        {{ resumeData?.email || '-' }}
                       </p>
                     </div>
                     <div>
-                      <p class="text-xs text-neutral-helper mb-1">年级</p>
+                      <p class="text-xs text-neutral-helper mb-1">电话</p>
                       <p class="text-sm font-medium text-neutral-body">
-                        {{ resumeData?.basicInfo?.grade }}
+                        {{ resumeData?.phone || '-' }}
                       </p>
                     </div>
                     <div>
-                      <p class="text-xs text-neutral-helper mb-1">学校</p>
+                      <p class="text-xs text-neutral-helper mb-1">个人简介</p>
                       <p class="text-sm font-medium text-neutral-body">
-                        {{ resumeData?.basicInfo?.school }}
+                        {{ resumeData?.summary || '-' }}
                       </p>
                     </div>
                   </div>
@@ -2856,7 +2305,7 @@ const handleResize = () => {
                           {{ edu.school }}
                         </h6>
                         <span class="text-xs text-neutral-helper"
-                          >{{ edu.startDate }} - {{ edu.endDate }}</span
+                          >{{ edu.period }}</span
                         >
                       </div>
                       <p class="text-xs text-neutral-body">
@@ -2882,7 +2331,7 @@ const handleResize = () => {
                           {{ exp.company }}
                         </h6>
                         <span class="text-xs text-neutral-helper"
-                          >{{ exp.startDate }} - {{ exp.endDate }}</span
+                          >{{ exp.period }}</span
                         >
                       </div>
                       <p class="text-xs font-medium text-neutral-body mb-2">
@@ -2904,42 +2353,10 @@ const handleResize = () => {
                     <span
                       v-for="(skill, index) in resumeData?.skills || []"
                       :key="index"
-                      :class="[
-                        'px-3 py-1.5 text-xs font-bold rounded-xl',
-                        getSkillLevelColor(skill.level),
-                      ]"
+                      class="px-3 py-1.5 text-xs font-bold rounded-xl bg-primary/10 text-primary"
                     >
-                      {{ skill.name }} ({{ getSkillLevelText(skill.level) }})
+                      {{ skill }}
                     </span>
-                  </div>
-                </div>
-
-                <!-- 项目经历 -->
-                <div>
-                  <h5 class="text-sm font-bold text-neutral-title mb-3">
-                    项目经历
-                  </h5>
-                  <div class="space-y-3">
-                    <div
-                      v-for="(proj, index) in resumeData?.projects || []"
-                      :key="index"
-                      class="bg-white rounded-xl p-4 border border-neutral-border"
-                    >
-                      <div class="flex items-center justify-between mb-2">
-                        <h6 class="text-sm font-bold text-neutral-title">
-                          {{ proj.name }}
-                        </h6>
-                        <span class="text-xs text-primary">{{
-                          proj.role
-                        }}</span>
-                      </div>
-                      <p class="text-xs text-neutral-body mb-2">
-                        {{ proj.description }}
-                      </p>
-                      <p class="text-xs text-neutral-helper">
-                        技术栈：{{ proj.technologies }}
-                      </p>
-                    </div>
                   </div>
                 </div>
               </div>
@@ -2957,7 +2374,7 @@ const handleResize = () => {
                     class="w-24 h-24 rounded-full gradient-primary flex items-center justify-center text-white shadow-lg"
                   >
                     <span class="text-3xl font-black">{{
-                      resumeDiagnosisResult.overallScore
+                      resumeDiagnosisResult.overall_score
                     }}</span>
                   </div>
                   <div class="flex-1">
@@ -2966,127 +2383,47 @@ const handleResize = () => {
                         >简历综合评分</span
                       >
                       <span class="text-lg font-black text-primary"
-                        >{{ resumeDiagnosisResult.overallScore }}/100</span
+                        >{{ resumeDiagnosisResult.overall_score }}/100</span
                       >
                     </div>
                     <div class="h-2 bg-white rounded-full overflow-hidden">
                       <div
                         class="h-full gradient-primary transition-all duration-1000 ease-out"
                         :style="{
-                          width: resumeDiagnosisResult.overallScore + '%',
+                          width: resumeDiagnosisResult.overall_score + '%',
                         }"
                       ></div>
                     </div>
                     <p class="text-xs text-neutral-helper mt-2">
-                      您的简历在同年级学生中处于前 15% 水平
+                      {{ resumeDiagnosisResult.summary }}
                     </p>
                   </div>
                 </div>
               </div>
 
-              <!-- 优势与不足 -->
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- 优势 -->
-                <div class="bg-primary/10 rounded-2xl p-6">
-                  <h4
-                    class="text-sm font-bold text-primary mb-4 flex items-center gap-2"
-                  >
-                    <CheckCircle :size="16" />
-                    优势
-                  </h4>
-                  <div class="space-y-3">
-                    <div
-                      v-for="(
-                        strength, index
-                      ) in resumeDiagnosisResult.strengths"
-                      :key="index"
-                      class="flex items-center justify-between p-3 bg-white rounded-xl border border-primary/30"
-                    >
-                      <span class="text-xs font-medium">{{
-                        strength.name
-                      }}</span>
-                      <span class="text-xs font-bold text-primary"
-                        >{{ strength.score }}%</span
-                      >
-                    </div>
-                  </div>
-                </div>
-
-                <!-- 不足 -->
-                <div class="bg-auxiliary-red/10 rounded-2xl p-6">
-                  <h4
-                    class="text-sm font-bold text-auxiliary-red mb-4 flex items-center gap-2"
-                  >
-                    <FileWarning :size="16" />
-                    不足
-                  </h4>
-                  <div class="space-y-3">
-                    <div
-                      v-for="(
-                        weakness, index
-                      ) in resumeDiagnosisResult.weaknesses"
-                      :key="index"
-                      class="flex items-center justify-between p-3 bg-white rounded-xl border border-auxiliary-red/30"
-                    >
-                      <span class="text-xs font-medium">{{
-                        weakness.name
-                      }}</span>
-                      <span class="text-xs font-bold text-auxiliary-red"
-                        >{{ weakness.score }}%</span
-                      >
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- 岗位匹配度 -->
-              <div class="bg-neutral-bg rounded-2xl p-6">
+              <!-- 分项评分 -->
+              <div v-if="resumeDiagnosisResult.scores?.length" class="bg-neutral-bg rounded-2xl p-6">
                 <h4 class="text-sm font-bold text-neutral-title mb-4">
-                  岗位匹配度
+                  分项评分
                 </h4>
                 <div class="space-y-3">
                   <div
-                    v-for="(rate, position) in resumeDiagnosisResult.matchRate"
-                    :key="position"
+                    v-for="(scoreItem, index) in resumeDiagnosisResult.scores"
+                    :key="index"
                     class="space-y-1"
                   >
                     <div class="flex justify-between text-xs font-medium">
-                      <span>{{ position }}</span>
-                      <span>{{ rate }}%</span>
+                      <span>{{ scoreItem.category }}</span>
+                      <span>{{ scoreItem.score }}/100</span>
                     </div>
                     <div class="h-2 bg-white rounded-full overflow-hidden">
                       <div
                         class="h-full gradient-primary transition-all duration-1000 ease-out"
-                        :style="{ width: rate + '%' }"
+                        :style="{ width: scoreItem.score + '%' }"
                       ></div>
                     </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- 改进建议 -->
-              <div class="bg-neutral-bg rounded-2xl p-6">
-                <h4
-                  class="text-sm font-bold text-neutral-title mb-4 flex items-center gap-2"
-                >
-                  <Sparkles :size="16" class="text-primary" />
-                  改进建议
-                </h4>
-                <div class="space-y-3">
-                  <div
-                    v-for="(
-                      suggestion, index
-                    ) in resumeDiagnosisResult.suggestions"
-                    :key="index"
-                    class="flex items-start gap-3 p-3 bg-white rounded-xl border border-neutral-border"
-                  >
-                    <div
-                      class="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-primary flex-shrink-0 mt-0.5"
-                    >
-                      {{ Number(index) + 1 }}
-                    </div>
-                    <p class="text-xs text-neutral-body leading-relaxed">
-                      {{ suggestion }}
+                    <p v-if="scoreItem.suggestion" class="text-[10px] text-neutral-helper mt-1">
+                      {{ scoreItem.suggestion }}
                     </p>
                   </div>
                 </div>
@@ -3171,123 +2508,47 @@ const handleResize = () => {
 
           <div class="p-8">
             <form class="space-y-6" @submit.prevent="saveProfile">
-              <!-- 基本信息 -->
+              <!-- 画像信息 -->
               <div class="space-y-4">
-                <h4 class="text-lg font-bold text-neutral-title">基本信息</h4>
+                <h4 class="text-lg font-bold text-neutral-title">画像信息</h4>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label
                       class="block text-xs font-bold text-neutral-helper uppercase tracking-wider mb-2"
-                      >姓名</label
+                      >教育背景</label
                     >
                     <input
-                      v-model="profileForm.name"
+                      v-model="profileForm.education"
                       type="text"
                       class="w-full px-4 py-3 bg-neutral-bg rounded-xl border-2 border-transparent focus:border-primary/20 outline-none transition-all font-medium"
+                      placeholder="例如：北京大学计算机科学与技术专业"
                     />
                   </div>
                   <div>
                     <label
                       class="block text-xs font-bold text-neutral-helper uppercase tracking-wider mb-2"
-                      >专业</label
+                      >目标岗位</label
                     >
                     <input
-                      v-model="profileForm.major"
+                      v-model="profileForm.target_position"
                       type="text"
                       class="w-full px-4 py-3 bg-neutral-bg rounded-xl border-2 border-transparent focus:border-primary/20 outline-none transition-all font-medium"
+                      placeholder="例如：前端开发工程师"
                     />
                   </div>
                   <div>
                     <label
                       class="block text-xs font-bold text-neutral-helper uppercase tracking-wider mb-2"
-                      >年级</label
+                      >工作年限</label
                     >
                     <input
-                      v-model="profileForm.grade"
-                      type="text"
+                      v-model.number="profileForm.work_years"
+                      type="number"
+                      min="0"
                       class="w-full px-4 py-3 bg-neutral-bg rounded-xl border-2 border-transparent focus:border-primary/20 outline-none transition-all font-medium"
+                      placeholder="例如：2"
                     />
                   </div>
-                  <div>
-                    <label
-                      class="block text-xs font-bold text-neutral-helper uppercase tracking-wider mb-2"
-                      >学校</label
-                    >
-                    <input
-                      v-model="profileForm.school"
-                      type="text"
-                      class="w-full px-4 py-3 bg-neutral-bg rounded-xl border-2 border-transparent focus:border-primary/20 outline-none transition-all font-medium"
-                    />
-                  </div>
-                  <div>
-                    <label
-                      class="block text-xs font-bold text-neutral-helper uppercase tracking-wider mb-2"
-                      >邮箱</label
-                    >
-                    <input
-                      v-model="profileForm.email"
-                      type="email"
-                      class="w-full px-4 py-3 bg-neutral-bg rounded-xl border-2 border-transparent focus:border-primary/20 outline-none transition-all font-medium"
-                    />
-                  </div>
-                  <div>
-                    <label
-                      class="block text-xs font-bold text-neutral-helper uppercase tracking-wider mb-2"
-                      >电话</label
-                    >
-                    <input
-                      v-model="profileForm.phone"
-                      type="tel"
-                      class="w-full px-4 py-3 bg-neutral-bg rounded-xl border-2 border-transparent focus:border-primary/20 outline-none transition-all font-medium"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <!-- 其他信息 -->
-              <div class="space-y-4">
-                <h4 class="text-lg font-bold text-neutral-title">其他信息</h4>
-                <div>
-                  <label
-                    class="block text-xs font-bold text-neutral-helper uppercase tracking-wider mb-2"
-                    >技能</label
-                  >
-                  <input
-                    v-model="profileForm.skills"
-                    type="text"
-                    class="w-full px-4 py-3 bg-neutral-bg rounded-xl border-2 border-transparent focus:border-primary/20 outline-none transition-all font-medium"
-                    placeholder="例如：Vue3, React, TypeScript"
-                  />
-                </div>
-                <div>
-                  <label
-                    class="block text-xs font-bold text-neutral-helper uppercase tracking-wider mb-2"
-                    >工作经验</label
-                  >
-                  <textarea
-                    v-model="profileForm.experience"
-                    class="w-full px-4 py-3 bg-neutral-bg rounded-xl border-2 border-transparent focus:border-primary/20 outline-none transition-all font-medium min-h-[100px]"
-                  ></textarea>
-                </div>
-                <div>
-                  <label
-                    class="block text-xs font-bold text-neutral-helper uppercase tracking-wider mb-2"
-                    >教育背景</label
-                  >
-                  <textarea
-                    v-model="profileForm.education"
-                    class="w-full px-4 py-3 bg-neutral-bg rounded-xl border-2 border-transparent focus:border-primary/20 outline-none transition-all font-medium min-h-[100px]"
-                  ></textarea>
-                </div>
-                <div>
-                  <label
-                    class="block text-xs font-bold text-neutral-helper uppercase tracking-wider mb-2"
-                    >证书</label
-                  >
-                  <textarea
-                    v-model="profileForm.certifications"
-                    class="w-full px-4 py-3 bg-neutral-bg rounded-xl border-2 border-transparent focus:border-primary/20 outline-none transition-all font-medium min-h-[100px]"
-                  ></textarea>
                 </div>
               </div>
 

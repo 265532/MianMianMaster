@@ -18,6 +18,7 @@ export interface RegisterRequest {
   email: string;
   password: string;
   phone?: string;
+  is_active?: boolean;
   role_ids?: number[];
 }
 
@@ -59,6 +60,6 @@ export interface ChangePhoneRequest {
 
 export interface Token {
   access_token: string;
-  token_type: string;
+  token_type?: string;
   refresh_token: string;
 }

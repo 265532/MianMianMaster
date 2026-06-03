@@ -14,22 +14,23 @@ import {
   isNetworkError,
   isTimeoutError,
 } from "@/utils/error";
+import { resetUnauthorizedFlag } from "@/utils/http";
 import type {
   UserResponse,
   RoleResponse,
   InterviewHistoryItem,
   AbilityDataItem,
-  GameStatItem,
+  AbilityDataResponse,
   GameInterviewDataResponse,
   ResumeData,
-  ResumeDiagnosisResult,
+  ResumeDiagnoseResult,
+  UserProfileUpdateRequest,
 } from "@/api/types/user.types";
 
 export type {
-  GameStatItem,
   GameInterviewDataResponse as GameInterviewData,
   ResumeData,
-  ResumeDiagnosisResult,
+  ResumeDiagnoseResult,
   InterviewHistoryItem as InterviewRecord,
   AbilityDataItem,
 } from "@/api/types/user.types";
@@ -66,10 +67,10 @@ export const useUserStore = defineStore("user", () => {
   const showLoginModal = ref(false);
 
   const interviewHistory = ref<InterviewRecord[]>([]);
-  const abilityData = ref<Record<string, AbilityDataItem>>({});
+  const abilityData = ref<AbilityDataResponse | null>(null);
   const gameInterviewData = ref<GameInterviewData | null>(null);
   const resumeData = ref<ResumeData | null>(null);
-  const resumeDiagnosisResult = ref<ResumeDiagnosisResult | null>(null);
+  const resumeDiagnosisResult = ref<ResumeDiagnoseResult | null>(null);
   const dataLoading = ref(false);
 
   const isLoggedIn = computed(
@@ -78,7 +79,7 @@ export const useUserStore = defineStore("user", () => {
   const hasSkills = computed(() => user.value.skills.length > 0);
 
   const passedInterviews = computed(() =>
-    interviewHistory.value.filter((i) => i.status === "passed"),
+    interviewHistory.value.filter((i) => i.status === "completed"),
   );
 
   const failedInterviews = computed(() =>
@@ -97,6 +98,7 @@ export const useUserStore = defineStore("user", () => {
       if (tokenData.refresh_token) {
         setRefreshToken(tokenData.refresh_token);
       }
+      resetUnauthorizedFlag();
 
       await fetchUserInfo();
 
@@ -180,7 +182,7 @@ export const useUserStore = defineStore("user", () => {
       removeToken();
       user.value = { ...defaultUser };
       interviewHistory.value = [];
-      abilityData.value = {};
+      abilityData.value = null;
       gameInterviewData.value = null;
       resumeData.value = null;
       resumeDiagnosisResult.value = null;
@@ -195,9 +197,16 @@ export const useUserStore = defineStore("user", () => {
     showLoginModal.value = false;
   }
 
-  async function updateProfile(profileData: Partial<UserInfo>): Promise<void> {
-    Object.assign(user.value, profileData);
-    cacheUserInfo(user.value);
+  async function updateProfile(profileData: UserProfileUpdateRequest): Promise<void> {
+    try {
+      const response = await userApi.updateProfile(profileData);
+      const updatedProfile = response.data;
+      user.value.profile = updatedProfile as Record<string, unknown>;
+      cacheUserInfo(user.value);
+    } catch (err: any) {
+      if (DEBUG) console.error("[UserStore] updateProfile error:", err);
+      throw err;
+    }
   }
 
   async function initialize(): Promise<void> {
@@ -211,12 +220,11 @@ export const useUserStore = defineStore("user", () => {
     }
   }
 
-  async function fetchInterviewHistory(): Promise<void> {
+  async function fetchInterviewHistory(params?: { skip?: number; limit?: number }): Promise<void> {
     dataLoading.value = true;
     try {
-      const response = await userApi.getInterviewHistory();
-      const data = response.data;
-      interviewHistory.value = data.items || data;
+      const response = await userApi.getInterviewHistory(params);
+      interviewHistory.value = response.data;
     } catch (err: any) {
       if (DEBUG) console.warn("[UserStore] fetchInterviewHistory failed, using mock data:", err?.message);
       const { mockInterviewHistory } = await import("@/mock/data/user.mock");
@@ -266,10 +274,16 @@ export const useUserStore = defineStore("user", () => {
     }
   }
 
-  async function diagnoseResume(): Promise<void> {
+  async function diagnoseResume(
+    resumeId: number,
+    targetPosition?: string,
+  ): Promise<void> {
     dataLoading.value = true;
     try {
-      const response = await userApi.diagnoseResume();
+      const response = await userApi.diagnoseResume({
+        resume_id: resumeId,
+        target_position: targetPosition,
+      });
       resumeDiagnosisResult.value = response.data;
     } catch (err: any) {
       if (DEBUG) console.error("[UserStore] diagnoseResume error:", err);

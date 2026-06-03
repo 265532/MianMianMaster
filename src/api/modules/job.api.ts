@@ -3,7 +3,6 @@ import type {
   JobPosition,
   JobPositionCreate,
   SkillTreeNode,
-  JobMatchResult,
 } from "../types/job.types";
 import type { ResponseModel, PaginationParams } from "../types/response.types";
 
@@ -21,15 +20,17 @@ export const jobApi = {
   ): Promise<ResponseModel<JobPosition[]>> {
     return get<ResponseModel<JobPosition[]>>(
       `${BASE_URL}`,
-      params as Record<string, any>,
+      params as Record<string, unknown>,
     );
   },
 
-  getSkillTree(jobId: number): Promise<ResponseModel<SkillTreeNode>> {
-    return get<ResponseModel<SkillTreeNode>>(`${BASE_URL}/${jobId}/skill-tree`);
+  /** GET /jobs/{job_id}/skill-tree — 后端暂返回空对象，前端用 SkillTreeNode 渲染 */
+  getSkillTree(jobId: number): Promise<ResponseModel<Record<string, unknown>>> {
+    return get<ResponseModel<Record<string, unknown>>>(`${BASE_URL}/${jobId}/skill-tree`);
   },
 
-  getJobMatch(jobId: number): Promise<ResponseModel<JobMatchResult>> {
-    return get<ResponseModel<JobMatchResult>>(`${BASE_URL}/${jobId}/match`);
+  /** GET /jobs/{job_id}/match — 后端返回 number (匹配度分数) */
+  getJobMatch(jobId: number): Promise<ResponseModel<number>> {
+    return get<ResponseModel<number>>(`${BASE_URL}/${jobId}/match`);
   },
 };

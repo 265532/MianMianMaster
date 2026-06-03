@@ -3,6 +3,7 @@ import { ref, onMounted, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
 import { useUserStore } from "@/stores/user";
+import { useAuth } from "@/composables/useAuth";
 import LoginForm from "@/components/LoginForm.vue";
 import {
   Zap,
@@ -31,6 +32,7 @@ import {
 
 const router = useRouter();
 const userStore = useUserStore();
+const { logout: authLogout } = useAuth();
 const { isLoggedIn } = storeToRefs(userStore);
 const isScrolled = ref(false);
 const isMobileMenuOpen = ref(false);
@@ -49,8 +51,8 @@ const handleLoginCancel = (): void => {
 };
 
 const handleLogout = async (): Promise<void> => {
-  await userStore.logout();
   showUserMenu.value = false;
+  await authLogout();
 };
 
 // 页脚官方渠道数据

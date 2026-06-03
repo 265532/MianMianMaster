@@ -8,7 +8,7 @@ import type { JobPosition, SkillTreeNode } from "@/api/types/job.types";
 export const useKnowledgeStore = defineStore("knowledge", () => {
   const courses = ref<Course[]>([]);
   const jobPositions = ref<JobPosition[]>([]);
-  const skillTrees = ref<Record<number, SkillTreeNode>>({});
+  const skillTrees = ref<Record<number, SkillTreeNode | Record<string, unknown>>>({});
   const loading = ref(false);
   const error = ref<string | null>(null);
 

@@ -127,10 +127,7 @@ export function getAuthErrorMessage(
   const httpStatus = err.response?.status;
   const serverMessage = err.response?.data?.message;
 
-  if (
-    typeof businessCode === "number" &&
-    BUSINESS_CODE_MESSAGES[businessCode]
-  ) {
+  if (typeof businessCode === "number" && BUSINESS_CODE_MESSAGES[businessCode]) {
     return BUSINESS_CODE_MESSAGES[businessCode];
   }
 

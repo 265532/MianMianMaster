@@ -22,4 +22,5 @@ export const mockRegisterUser: UserResponse = {
   updated_at: new Date().toISOString(),
   roles: [],
   profile: undefined,
+  phone: undefined,
 };

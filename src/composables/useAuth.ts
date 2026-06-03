@@ -2,10 +2,12 @@ import { computed } from "vue";
 import { useUserStore } from "@/stores/user";
 import { isLoggedIn as checkTokenExists } from "@/utils/auth";
 import { useRouter } from "vue-router";
+import { useToast } from "@/composables/useToast";
 
 export function useAuth() {
   const userStore = useUserStore();
   const router = useRouter();
+  const toast = useToast();
 
   const isAuthenticated = computed(() => userStore.isLoggedIn);
   const currentUser = computed(() => userStore.user);
@@ -37,7 +39,8 @@ export function useAuth() {
 
   async function logout() {
     await userStore.logout();
-    router.push("/login");
+    toast.success("退出登录成功", 3000);
+    userStore.openLoginModal();
   }
 
   return {

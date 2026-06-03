@@ -22,8 +22,8 @@ export function registerUserHandlers(mock: MockAdapter): void {
   mock.onPut("/user/profile").reply((config) => {
     const data = JSON.parse(config.data);
     return success({
-      ...mockUser,
-      profile: { ...mockUser.profile, ...data },
+      ...mockUser.profile,
+      ...data,
     });
   });
 
@@ -36,12 +36,7 @@ export function registerUserHandlers(mock: MockAdapter): void {
   });
 
   mock.onGet("/user/interview-history").reply(() => {
-    return success({
-      items: mockInterviewHistory,
-      total: mockInterviewHistory.length,
-      page: 1,
-      page_size: 10,
-    });
+    return success(mockInterviewHistory);
   });
 
   mock.onGet("/user/ability-data").reply(() => {
@@ -56,8 +51,13 @@ export function registerUserHandlers(mock: MockAdapter): void {
     return success(mockResumeData);
   });
 
-  mock.onPost("/user/resume/diagnose").reply(() => {
-    return success(mockResumeDiagnosisResult);
+  mock.onPost("/user/resume/diagnose").reply((config) => {
+    const body = config.data ? JSON.parse(config.data) : {};
+    const result = {
+      ...mockResumeDiagnosisResult,
+      resume_id: body.resume_id ?? mockResumeDiagnosisResult.resume_id,
+    };
+    return success(result);
   });
 
   console.log("[Mock] User handlers registered");

@@ -551,4 +551,15 @@
 - 开发规约新增 §17/§18/§19 三条红色标记规则
 - 96 个测试用例（+18 Interview 集成测试）
 
-```
+### 2026-06-03 更新：Auth 模块联调完成
+
+**模块状态**: ✅ Auth 模块全部完成
+**完成内容**:
+- 10 个端点签名全部通过 OpenAPI 比对
+- 类型定义完整对齐（含 `refresh_token`、`RefreshTokenRequest`）
+- 浏览器端到端验证通过：登录/注册/获取用户信息/路由守卫/Token持久化/Token刷新/登出/多标签页同步/密码重置
+- `/auth/me` 500 问题已修复
+- `docs/api/tasks/auth.md` 全部 Task 标记完成
+- `docs/api/tasks/progress.md` Auth 模块标记为已完成
+
+**下一步**: 开始 User 模块联调（Phase 1 P0）

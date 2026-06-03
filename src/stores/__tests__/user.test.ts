@@ -154,20 +154,18 @@ describe("useUserStore integration", () => {
       mockedGetInterviewHistory.mockResolvedValue({
         code: 200,
         message: "success",
-        data: {
-          items: [
-            {
-              id: 1,
-              company: "字节跳动",
-              position: "前端",
-              score: 88,
-              status: "passed",
-            },
-          ],
-          total: 1,
-          page: 1,
-          page_size: 10,
-        },
+        data: [
+          {
+            id: 1,
+            status: "completed",
+            score: 88,
+            current_round: 2,
+            job_position_title: "前端开发工程师",
+            start_time: "2026-03-15T10:00:00Z",
+            end_time: "2026-03-15T11:00:00Z",
+            created_at: "2026-03-15T10:00:00Z",
+          },
+        ],
       });
 
       const { useUserStore } = await import("@/stores/user");
@@ -176,6 +174,8 @@ describe("useUserStore integration", () => {
       await store.fetchInterviewHistory();
 
       expect(mockedGetInterviewHistory).toHaveBeenCalled();
+      expect(store.interviewHistory).toHaveLength(1);
+      expect(store.interviewHistory[0].status).toBe("completed");
     });
   });
 });

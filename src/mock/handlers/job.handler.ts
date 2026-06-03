@@ -1,7 +1,6 @@
 import type MockAdapter from "axios-mock-adapter";
 import {
   mockJobPositions,
-  mockSkillTree,
   mockJobMatchResults,
 } from "../data/job.mock";
 
@@ -27,18 +26,13 @@ export function registerJobHandlers(mock: MockAdapter): void {
     return success(mockJobPositions);
   });
 
-  mock.onGet(/\/jobs\/\d+\/skill-tree$/).reply((config) => {
-    return success(mockSkillTree);
+  mock.onGet(/\/jobs\/\d+\/skill-tree$/).reply(() => {
+    return success({});
   });
 
   mock.onGet(/\/jobs\/\d+\/match$/).reply((config) => {
     const jobId = parseInt(config.url?.split("/")[2] || "0");
-    const result = mockJobMatchResults[jobId] || {
-      job_id: jobId,
-      match_score: 0,
-      matched_skills: [],
-      missing_skills: [],
-    };
-    return success(result);
+    const result = mockJobMatchResults[jobId];
+    return success(result?.match_score ?? 0);
   });
 }

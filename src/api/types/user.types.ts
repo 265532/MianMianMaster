@@ -15,10 +15,10 @@ export interface UserResponse {
   username: string;
   email: string;
   phone?: string;
-  is_active: boolean;
+  is_active?: boolean;
   created_at: string;
   updated_at: string;
-  roles: RoleResponse[];
+  roles?: RoleResponse[];
   profile?: UserProfileResponse;
 }
 
@@ -51,6 +51,7 @@ export interface RoleResponse {
   parent_id?: number;
   created_at: string;
   updated_at: string;
+  permissions?: PermissionResponse[];
 }
 
 /** 权限 */
@@ -64,35 +65,20 @@ export interface PermissionResponse {
   updated_at: string;
 }
 
-// ─── 面试历史（蛇形命名） ─────────────────────────────
+// ─── 面试历史（对齐 GET /user/interview-history 契约） ─────
 
 export interface InterviewHistoryItem {
   id: number;
-  date: string;
-  company: string;
-  position: string;
-  round: string;
-  type: string;
-  score: number;
   status: string;
-  tags?: string[];
-  feedback?: string;
-  details?: {
-    technical: number;
-    communication: number;
-    logic: number;
-    problem_solving: number;
-  };
+  score?: number;
+  current_round?: number;
+  job_position_title?: string;
+  start_time?: string;
+  end_time?: string;
+  created_at: string;
 }
 
-export interface InterviewHistoryResponse {
-  items: InterviewHistoryItem[];
-  total: number;
-  page: number;
-  page_size: number;
-}
-
-// ─── 能力数据 ────────────────────────────────────────
+// ─── 能力数据（对齐 GET /user/ability-data 契约） ──────────
 
 export interface AbilityDataIndicator {
   name: string;
@@ -118,28 +104,24 @@ export interface AbilityDataItem {
   strengths: AbilityDataStrength[];
 }
 
-// ─── 游戏化面试数据 ───────────────────────────────────
-
-export interface GameStatItem {
-  label: string;
-  value: string | number;
+/** GET /user/ability-data 响应类型 */
+export interface AbilityDataResponse {
+  abilities?: AbilityDataItem[];
+  overall_level?: number;
 }
 
+// ─── 游戏化面试数据（对齐 GET /user/game-interview-data 契约） ──
+
+/** GET /user/game-interview-data 响应类型 */
 export interface GameInterviewDataResponse {
-  stats: GameStatItem[];
-  levels: import("@/api/types/interview.types").GameLevel[];
-  achievements: import("@/api/types/interview.types").GameAchievement[];
-  leaderboard: import("@/api/types/interview.types").LeaderboardEntry[];
+  total_sessions?: number;
+  completed_sessions?: number;
+  average_score?: number;
+  current_streak?: number;
+  best_streak?: number;
 }
 
-// ─── 简历数据 ────────────────────────────────────────
-
-export interface ResumeBasicInfo {
-  name: string;
-  major: string;
-  grade: string;
-  school: string;
-}
+// ─── 简历数据（对齐 GET /user/resume 契约） ──────────────
 
 export interface ResumeEducation {
   school: string;
@@ -155,25 +137,40 @@ export interface ResumeExperience {
   description: string;
 }
 
-export interface ResumeProject {
-  name: string;
-  role: string;
-  period: string;
-  description: string;
-}
-
+/** GET /user/resume 响应类型 */
 export interface ResumeData {
-  basic_info: ResumeBasicInfo;
-  education: ResumeEducation[];
-  experience: ResumeExperience[];
-  skills: string[];
-  projects: ResumeProject[];
+  id: number;
+  user_id: number;
+  name: string;
+  phone?: string;
+  email?: string;
+  summary?: string;
+  skills?: string[];
+  experience?: ResumeExperience[];
+  education?: ResumeEducation[];
+  created_at: string;
+  updated_at: string;
 }
 
-export interface ResumeDiagnosisResult {
+// ─── 简历诊断（对齐 POST /user/resume/diagnose 契约） ──────
+
+export interface ResumeDiagnoseScoreItem {
+  category: string;
+  score: number;
+  suggestion?: string;
+}
+
+/** POST /user/resume/diagnose 请求类型 */
+export interface ResumeDiagnoseRequest {
+  resume_id: number;
+  target_position?: string;
+}
+
+/** POST /user/resume/diagnose 响应类型 */
+export interface ResumeDiagnoseResult {
+  resume_id: number;
   overall_score: number;
-  strengths: string[];
-  weaknesses: string[];
-  match_rate: { position: string; rate: number }[];
-  suggestions: string[];
+  scores?: ResumeDiagnoseScoreItem[];
+  summary: string;
+  created_at: string;
 }

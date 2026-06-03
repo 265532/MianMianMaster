@@ -12,7 +12,7 @@ export default defineConfig(({ mode }) => {
       ...(env.VITE_USE_MOCK === 'true' ? [mockSsePlugin()] : []),
     ],
     server: {
-      port: 5173,
+      port: 9000,
       proxy: env.VITE_PROXY_TARGET
         ? {
             '/api': {

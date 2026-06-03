@@ -1,9 +1,9 @@
 import { createRouter, createWebHistory } from "vue-router";
-import LoginForm from "@/components/LoginForm.vue";
 import { useUserStore } from "@/stores/user";
 import { isLoggedIn as checkTokenExists } from "@/utils/auth";
 
 const Home = () => import("@/views/Home.vue");
+const Login = () => import("@/views/Login.vue");
 const Interview = () => import("@/views/Interview.vue");
 const Profile = () => import("@/views/Profile.vue");
 const Matching = () => import("@/views/Matching.vue");
@@ -31,7 +31,7 @@ const routes = [
   {
     path: "/login",
     name: "Login",
-    component: LoginForm,
+    component: Login,
     meta: { title: "登录", hideSidebar: true, requiresAuth: false },
   },
   {

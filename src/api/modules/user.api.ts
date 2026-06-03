@@ -1,18 +1,20 @@
 import { get, put, post } from "@/utils/request";
 import type {
   UserResponse,
+  UserProfileResponse,
   UserProfileUpdateRequest,
-  InterviewHistoryResponse,
-  AbilityDataItem,
+  InterviewHistoryItem,
+  AbilityDataResponse,
   GameInterviewDataResponse,
   ResumeData,
-  ResumeDiagnosisResult,
+  ResumeDiagnoseRequest,
+  ResumeDiagnoseResult,
 } from "../types/user.types";
 import type {
   ChangePasswordRequest,
   ChangePhoneRequest,
 } from "../types/auth.types";
-import type { ResponseModel } from "../types/response.types";
+import type { ResponseModel, PaginationParams } from "../types/response.types";
 
 const BASE_URL = "/user";
 
@@ -23,8 +25,8 @@ export const userApi = {
 
   updateProfile(
     data: UserProfileUpdateRequest,
-  ): Promise<ResponseModel<UserResponse>> {
-    return put<ResponseModel<UserResponse>>(`${BASE_URL}/profile`, data);
+  ): Promise<ResponseModel<UserProfileResponse>> {
+    return put<ResponseModel<UserProfileResponse>>(`${BASE_URL}/profile`, data);
   },
 
   changePassword(data: ChangePasswordRequest): Promise<ResponseModel<string>> {
@@ -41,14 +43,17 @@ export const userApi = {
     );
   },
 
-  getInterviewHistory(): Promise<ResponseModel<InterviewHistoryResponse>> {
-    return get<ResponseModel<InterviewHistoryResponse>>(
+  getInterviewHistory(
+    params?: PaginationParams,
+  ): Promise<ResponseModel<InterviewHistoryItem[]>> {
+    return get<ResponseModel<InterviewHistoryItem[]>>(
       `${BASE_URL}/interview-history`,
+      params as Record<string, unknown>,
     );
   },
 
-  getAbilityData(): Promise<ResponseModel<Record<string, AbilityDataItem>>> {
-    return get<ResponseModel<Record<string, AbilityDataItem>>>(
+  getAbilityData(): Promise<ResponseModel<AbilityDataResponse>> {
+    return get<ResponseModel<AbilityDataResponse>>(
       `${BASE_URL}/ability-data`,
     );
   },
@@ -63,10 +68,12 @@ export const userApi = {
     return get<ResponseModel<ResumeData>>(`${BASE_URL}/resume`);
   },
 
-  diagnoseResume(): Promise<ResponseModel<ResumeDiagnosisResult>> {
-    return post<ResponseModel<ResumeDiagnosisResult>>(
+  diagnoseResume(
+    data: ResumeDiagnoseRequest,
+  ): Promise<ResponseModel<ResumeDiagnoseResult>> {
+    return post<ResponseModel<ResumeDiagnoseResult>>(
       `${BASE_URL}/resume/diagnose`,
-      {},
+      data,
     );
   },
 };

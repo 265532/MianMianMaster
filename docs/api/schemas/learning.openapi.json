@@ -2,20 +2,19 @@
   "paths": {
     "/learning/courses": {
       "post": {
-        "tags": [
-          "learning"
-        ],
-        "summary": "Create Course",
-        "operationId": "create_course_courses_post",
+        "tags": ["learning"],
+        "summary": "创建课程",
+        "description": "前端: 管理后台创建课程",
+        "operationId": "create_course_learning_courses_post",
         "requestBody": {
-          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/CourseCreate"
               }
             }
-          }
+          },
+          "required": true
         },
         "responses": {
           "200": {
@@ -23,7 +22,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ResponseModel_CourseResponse_"
+                  "$ref": "#/components/schemas/ResponseModel_Course_"
                 }
               }
             }
@@ -38,14 +37,14 @@
               }
             }
           }
-        }
+        },
+        "security": [{ "OAuth2PasswordBearer": [] }]
       },
       "get": {
-        "tags": [
-          "learning"
-        ],
-        "summary": "Get Courses",
-        "operationId": "get_courses_courses_get",
+        "tags": ["learning"],
+        "summary": "获取课程列表",
+        "description": "前端: Learning.vue 课程列表; type=practice 时获取题库",
+        "operationId": "get_courses_learning_courses_get",
         "parameters": [
           {
             "name": "skip",
@@ -66,8 +65,18 @@
               "type": "integer",
               "maximum": 100,
               "minimum": 1,
-              "default": 10,
+              "default": 20,
               "title": "Limit"
+            }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "description": "课程类型筛选，如 practice 表示题库",
+            "schema": {
+              "type": "string",
+              "title": "Type"
             }
           }
         ],
@@ -77,7 +86,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ResponseModel_List_CourseResponse__"
+                  "$ref": "#/components/schemas/ResponseModel_List_Course_"
                 }
               }
             }
@@ -97,16 +106,15 @@
     },
     "/learning/materials": {
       "post": {
-        "tags": [
-          "learning"
-        ],
-        "summary": "Add Material",
-        "operationId": "add_material_materials_post",
+        "tags": ["learning"],
+        "summary": "添加学习资料",
+        "description": "前端: 管理后台为课程添加资料",
+        "operationId": "add_material_learning_materials_post",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CourseMaterialCreate"
+                "$ref": "#/components/schemas/MaterialCreate"
               }
             }
           },
@@ -118,7 +126,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ResponseModel_CourseMaterialResponse_"
+                  "$ref": "#/components/schemas/ResponseModel_Material_"
                 }
               }
             }
@@ -133,50 +141,25 @@
               }
             }
           }
-        }
+        },
+        "security": [{ "OAuth2PasswordBearer": [] }]
       }
     },
     "/learning/progress/update": {
       "post": {
-        "tags": [
-          "learning"
-        ],
-        "summary": "Update Progress",
-        "operationId": "update_progress_progress_update_post",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "course_id",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "title": "Course Id"
-            }
-          },
-          {
-            "name": "material_id",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "title": "Material Id"
-            }
-          }
-        ],
+        "tags": ["learning"],
+        "summary": "更新学习进度",
+        "description": "前端: Learning.vue 更新课程学习进度",
+        "operationId": "update_progress_learning_progress_update_post",
         "requestBody": {
-          "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UserLearningProgressUpdate"
+                "$ref": "#/components/schemas/ProgressUpdateRequest"
               }
             }
-          }
+          },
+          "required": true
         },
         "responses": {
           "200": {
@@ -184,7 +167,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ResponseModel_UserLearningProgressResponse_"
+                  "$ref": "#/components/schemas/ResponseModel_LearningProgress_"
                 }
               }
             }
@@ -199,21 +182,16 @@
               }
             }
           }
-        }
+        },
+        "security": [{ "OAuth2PasswordBearer": [] }]
       }
     },
     "/learning/progress/{course_id}": {
       "get": {
-        "tags": [
-          "learning"
-        ],
-        "summary": "Get Progress",
-        "operationId": "get_progress_progress_course_id_get",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
+        "tags": ["learning"],
+        "summary": "获取课程学习进度",
+        "description": "前端: Learning.vue 查看单个课程进度",
+        "operationId": "get_progress_learning_progress_course_id_get",
         "parameters": [
           {
             "name": "course_id",
@@ -231,7 +209,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ResponseModel_List_UserLearningProgressResponse__"
+                  "$ref": "#/components/schemas/ResponseModel_LearningProgress_"
                 }
               }
             }
@@ -246,30 +224,25 @@
               }
             }
           }
-        }
+        },
+        "security": [{ "OAuth2PasswordBearer": [] }]
       }
     },
     "/learning/collections": {
       "post": {
-        "tags": [
-          "learning"
-        ],
-        "summary": "Add To Collection",
-        "operationId": "add_to_collection_collections_post",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
+        "tags": ["learning"],
+        "summary": "添加到收藏夹",
+        "description": "前端: Learning.vue 收藏题目/资料",
+        "operationId": "add_to_collection_learning_collections_post",
         "requestBody": {
-          "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/QuestionCollectionCreate"
+                "$ref": "#/components/schemas/AddToCollectionRequest"
               }
             }
-          }
+          },
+          "required": true
         },
         "responses": {
           "200": {
@@ -277,7 +250,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ResponseModel_QuestionCollectionResponse_"
+                  "$ref": "#/components/schemas/ResponseModel_Collection_"
                 }
               }
             }
@@ -292,19 +265,14 @@
               }
             }
           }
-        }
+        },
+        "security": [{ "OAuth2PasswordBearer": [] }]
       },
       "get": {
-        "tags": [
-          "learning"
-        ],
-        "summary": "Get Collections",
-        "operationId": "get_collections_collections_get",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
+        "tags": ["learning"],
+        "summary": "获取收藏夹列表",
+        "description": "前端: Learning.vue 收藏夹页面",
+        "operationId": "get_collections_learning_collections_get",
         "parameters": [
           {
             "name": "skip",
@@ -325,7 +293,7 @@
               "type": "integer",
               "maximum": 100,
               "minimum": 1,
-              "default": 10,
+              "default": 20,
               "title": "Limit"
             }
           }
@@ -336,7 +304,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ResponseModel_List_QuestionCollectionResponse__"
+                  "$ref": "#/components/schemas/ResponseModel_List_Collection_"
                 }
               }
             }
@@ -351,30 +319,25 @@
               }
             }
           }
-        }
+        },
+        "security": [{ "OAuth2PasswordBearer": [] }]
       }
     },
     "/learning/wrong-questions": {
       "post": {
-        "tags": [
-          "learning"
-        ],
-        "summary": "Record Wrong Question",
-        "operationId": "record_wrong_question_wrong_questions_post",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
+        "tags": ["learning"],
+        "summary": "记录错题",
+        "description": "前端: Learning.vue 练习后记录错题",
+        "operationId": "record_wrong_question_learning_wrong_questions_post",
         "requestBody": {
-          "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/WrongQuestionCreate"
+                "$ref": "#/components/schemas/RecordWrongQuestionRequest"
               }
             }
-          }
+          },
+          "required": true
         },
         "responses": {
           "200": {
@@ -382,7 +345,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ResponseModel_WrongQuestionResponse_"
+                  "$ref": "#/components/schemas/ResponseModel_WrongQuestion_"
                 }
               }
             }
@@ -397,19 +360,14 @@
               }
             }
           }
-        }
+        },
+        "security": [{ "OAuth2PasswordBearer": [] }]
       },
       "get": {
-        "tags": [
-          "learning"
-        ],
-        "summary": "Get Wrong Questions",
-        "operationId": "get_wrong_questions_wrong_questions_get",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
+        "tags": ["learning"],
+        "summary": "获取错题列表",
+        "description": "前端: Learning.vue 错题本页面",
+        "operationId": "get_wrong_questions_learning_wrong_questions_get",
         "parameters": [
           {
             "name": "skip",
@@ -430,7 +388,7 @@
               "type": "integer",
               "maximum": 100,
               "minimum": 1,
-              "default": 10,
+              "default": 20,
               "title": "Limit"
             }
           }
@@ -441,7 +399,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ResponseModel_List_WrongQuestionResponse__"
+                  "$ref": "#/components/schemas/ResponseModel_List_WrongQuestion_"
                 }
               }
             }
@@ -456,21 +414,16 @@
               }
             }
           }
-        }
+        },
+        "security": [{ "OAuth2PasswordBearer": [] }]
       }
     },
     "/learning/wrong-questions/{question_id}/master": {
       "post": {
-        "tags": [
-          "learning"
-        ],
-        "summary": "Mark Wrong Question Mastered",
-        "operationId": "mark_wrong_question_mastered_wrong_questions_question_id_master_post",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
+        "tags": ["learning"],
+        "summary": "标记错题已掌握",
+        "description": "前端: Learning.vue 错题本标记已掌握",
+        "operationId": "mark_wrong_question_mastered_learning_wrong_questions_question_id_master_post",
         "parameters": [
           {
             "name": "question_id",
@@ -488,7 +441,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ResponseModel_WrongQuestionResponse_"
+                  "$ref": "#/components/schemas/ResponseModel_str_"
                 }
               }
             }
@@ -503,25 +456,25 @@
               }
             }
           }
-        }
+        },
+        "security": [{ "OAuth2PasswordBearer": [] }]
       }
     },
     "/learning/badges": {
       "post": {
-        "tags": [
-          "learning"
-        ],
-        "summary": "Create Badge",
-        "operationId": "create_badge_badges_post",
+        "tags": ["learning"],
+        "summary": "创建徽章",
+        "description": "前端: 管理后台创建徽章",
+        "operationId": "create_badge_learning_badges_post",
         "requestBody": {
-          "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/BadgeCreate"
+                "$ref": "#/components/schemas/CreateBadgeRequest"
               }
             }
-          }
+          },
+          "required": true
         },
         "responses": {
           "200": {
@@ -529,7 +482,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ResponseModel_BadgeResponse_"
+                  "$ref": "#/components/schemas/ResponseModel_Badge_"
                 }
               }
             }
@@ -544,56 +497,21 @@
               }
             }
           }
-        }
+        },
+        "security": [{ "OAuth2PasswordBearer": [] }]
       },
       "get": {
-        "tags": [
-          "learning"
-        ],
-        "summary": "Get Badges",
-        "operationId": "get_badges_badges_get",
-        "parameters": [
-          {
-            "name": "skip",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "minimum": 0,
-              "default": 0,
-              "title": "Skip"
-            }
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "maximum": 100,
-              "minimum": 1,
-              "default": 10,
-              "title": "Limit"
-            }
-          }
-        ],
+        "tags": ["learning"],
+        "summary": "获取所有徽章列表",
+        "description": "前端: Learning.vue 徽章墙",
+        "operationId": "get_badges_learning_badges_get",
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ResponseModel_List_BadgeResponse__"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ResponseModel_List_Badge_"
                 }
               }
             }
@@ -603,16 +521,10 @@
     },
     "/learning/badges/award/{badge_id}": {
       "post": {
-        "tags": [
-          "learning"
-        ],
-        "summary": "Award Badge",
-        "operationId": "award_badge_badges_award_badge_id_post",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
+        "tags": ["learning"],
+        "summary": "授予徽章给当前用户",
+        "description": "前端: Learning.vue 领取徽章",
+        "operationId": "award_badge_learning_badges_award_badge_id_post",
         "parameters": [
           {
             "name": "badge_id",
@@ -630,7 +542,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ResponseModel_UserBadgeResponse_"
+                  "$ref": "#/components/schemas/ResponseModel_UserBadge_"
                 }
               }
             }
@@ -645,33 +557,29 @@
               }
             }
           }
-        }
+        },
+        "security": [{ "OAuth2PasswordBearer": [] }]
       }
     },
     "/learning/my-badges": {
       "get": {
-        "tags": [
-          "learning"
-        ],
-        "summary": "Get My Badges",
-        "operationId": "get_my_badges_my_badges_get",
+        "tags": ["learning"],
+        "summary": "获取我的徽章",
+        "description": "前端: Profile.vue 我的徽章展示",
+        "operationId": "get_my_badges_learning_my_badges_get",
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ResponseModel_List_UserBadgeResponse__"
+                  "$ref": "#/components/schemas/ResponseModel_List_UserBadge_"
                 }
               }
             }
           }
         },
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ]
+        "security": [{ "OAuth2PasswordBearer": [] }]
       }
     }
   },
@@ -679,257 +587,323 @@
     "schemas": {
       "CourseCreate": {
         "properties": {
-          "title": {
-            "type": "string",
-            "title": "Title"
-          },
-          "description": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Description"
-          },
-          "level": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Level"
-          },
-          "cover_url": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Cover Url"
-          }
+          "title": { "type": "string", "title": "Title" },
+          "description": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Description" },
+          "category": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Category" },
+          "difficulty": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Difficulty" }
         },
         "type": "object",
-        "required": [
-          "title"
-        ],
+        "required": ["title"],
         "title": "CourseCreate"
       },
-      "CourseMaterialCreate": {
+      "Course": {
         "properties": {
-          "title": {
-            "type": "string",
-            "title": "Title"
-          },
-          "material_type": {
-            "$ref": "#/components/schemas/MaterialType",
-            "description": "video, pdf, article"
-          },
-          "url": {
-            "type": "string",
-            "title": "Url"
-          },
-          "duration": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Duration",
-            "default": 0
-          },
-          "order_num": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Order Num",
-            "default": 0
-          },
-          "knowledge_graph_id": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Knowledge Graph Id"
-          },
-          "course_id": {
-            "type": "integer",
-            "title": "Course Id"
-          }
+          "id": { "type": "integer", "title": "Id" },
+          "title": { "type": "string", "title": "Title" },
+          "description": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Description" },
+          "category": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Category" },
+          "difficulty": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Difficulty" },
+          "created_at": { "type": "string", "format": "date-time", "title": "Created At" },
+          "updated_at": { "type": "string", "format": "date-time", "title": "Updated At" }
         },
         "type": "object",
-        "required": [
-          "title",
-          "material_type",
-          "url",
-          "course_id"
-        ],
-        "title": "CourseMaterialCreate"
+        "required": ["id", "title", "created_at", "updated_at"],
+        "title": "Course"
       },
-      "UserLearningProgressUpdate": {
+      "MaterialCreate": {
         "properties": {
-          "progress_percent": {
-            "type": "number",
-            "maximum": 100,
-            "minimum": 0,
-            "title": "Progress Percent"
-          },
-          "is_completed": {
-            "type": "boolean",
-            "title": "Is Completed",
-            "default": false
-          }
+          "course_id": { "type": "integer", "title": "Course Id" },
+          "title": { "type": "string", "title": "Title" },
+          "type": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Type" },
+          "url": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Url" }
         },
         "type": "object",
-        "required": [
-          "progress_percent"
-        ],
-        "title": "UserLearningProgressUpdate"
+        "required": ["course_id", "title"],
+        "title": "MaterialCreate"
       },
-      "QuestionCollectionCreate": {
+      "Material": {
         "properties": {
-          "question_id": {
-            "type": "integer",
-            "title": "Question Id"
-          },
-          "notes": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Notes"
-          }
+          "id": { "type": "integer", "title": "Id" },
+          "course_id": { "type": "integer", "title": "Course Id" },
+          "title": { "type": "string", "title": "Title" },
+          "type": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Type" },
+          "url": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Url" },
+          "created_at": { "type": "string", "format": "date-time", "title": "Created At" }
         },
         "type": "object",
-        "required": [
-          "question_id"
-        ],
-        "title": "QuestionCollectionCreate"
+        "required": ["id", "course_id", "title", "created_at"],
+        "title": "Material"
       },
-      "WrongQuestionCreate": {
+      "ProgressUpdateRequest": {
         "properties": {
-          "question_id": {
-            "type": "integer",
-            "title": "Question Id"
-          },
-          "wrong_answer": {
-            "title": "Wrong Answer"
-          }
+          "course_id": { "type": "integer", "title": "Course Id" },
+          "progress": { "type": "number", "title": "Progress", "description": "进度百分比 0-100" }
         },
         "type": "object",
-        "required": [
-          "question_id",
-          "wrong_answer"
-        ],
-        "title": "WrongQuestionCreate"
+        "required": ["course_id", "progress"],
+        "title": "ProgressUpdateRequest"
       },
-      "BadgeCreate": {
+      "LearningProgress": {
         "properties": {
-          "name": {
-            "type": "string",
-            "title": "Name"
-          },
-          "description": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Description"
-          },
-          "icon_url": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Icon Url"
-          },
-          "condition_type": {
-            "type": "string",
-            "title": "Condition Type"
-          },
-          "condition_value": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Condition Value"
-          }
+          "id": { "type": "integer", "title": "Id" },
+          "user_id": { "type": "integer", "title": "User Id" },
+          "course_id": { "type": "integer", "title": "Course Id" },
+          "progress": { "type": "number", "title": "Progress" },
+          "updated_at": { "type": "string", "format": "date-time", "title": "Updated At" }
         },
         "type": "object",
-        "required": [
-          "name",
-          "condition_type"
-        ],
-        "title": "BadgeCreate"
+        "required": ["id", "user_id", "course_id", "progress", "updated_at"],
+        "title": "LearningProgress"
       },
-      "ResponseModel_CourseResponse_": {
+      "AddToCollectionRequest": {
         "properties": {
-          "code": {
-            "type": "integer",
-            "title": "Code",
-            "default": 200
+          "title": { "type": "string", "title": "Title" },
+          "description": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Description" },
+          "question_ids": {
+            "items": { "type": "integer" },
+            "type": "array",
+            "title": "Question Ids",
+            "default": []
           },
-          "message": {
-            "type": "string",
-            "title": "Message",
-            "default": "success"
+          "category": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Category" },
+          "difficulty": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Difficulty" }
+        },
+        "type": "object",
+        "required": ["title"],
+        "title": "AddToCollectionRequest"
+      },
+      "Collection": {
+        "properties": {
+          "id": { "type": "integer", "title": "Id" },
+          "title": { "type": "string", "title": "Title" },
+          "description": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Description" },
+          "question_count": { "anyOf": [{ "type": "integer" }, { "type": "null" }], "title": "Question Count" },
+          "category": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Category" },
+          "difficulty": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Difficulty" },
+          "saved_at": { "anyOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }], "title": "Saved At" },
+          "last_practiced": { "anyOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }], "title": "Last Practiced" }
+        },
+        "type": "object",
+        "required": ["id", "title"],
+        "title": "Collection"
+      },
+      "RecordWrongQuestionRequest": {
+        "properties": {
+          "question": { "type": "string", "title": "Question" },
+          "user_answer": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "User Answer" },
+          "correct_answer": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Correct Answer" },
+          "explanation": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Explanation" },
+          "category": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Category" },
+          "difficulty": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Difficulty" }
+        },
+        "type": "object",
+        "required": ["question"],
+        "title": "RecordWrongQuestionRequest"
+      },
+      "WrongQuestion": {
+        "properties": {
+          "id": { "type": "integer", "title": "Id" },
+          "question": { "type": "string", "title": "Question" },
+          "user_answer": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "User Answer" },
+          "correct_answer": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Correct Answer" },
+          "explanation": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Explanation" },
+          "category": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Category" },
+          "difficulty": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Difficulty" },
+          "mistake_count": { "anyOf": [{ "type": "integer" }, { "type": "null" }], "title": "Mistake Count" },
+          "last_mistake_at": { "anyOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }], "title": "Last Mistake At" },
+          "status": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Status" }
+        },
+        "type": "object",
+        "required": ["id", "question"],
+        "title": "WrongQuestion"
+      },
+      "CreateBadgeRequest": {
+        "properties": {
+          "name": { "type": "string", "title": "Name" },
+          "description": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Description" },
+          "icon_url": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Icon Url" }
+        },
+        "type": "object",
+        "required": ["name"],
+        "title": "CreateBadgeRequest"
+      },
+      "Badge": {
+        "properties": {
+          "id": { "type": "integer", "title": "Id" },
+          "name": { "type": "string", "title": "Name" },
+          "description": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Description" },
+          "icon_url": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Icon Url" },
+          "created_at": { "type": "string", "format": "date-time", "title": "Created At" }
+        },
+        "type": "object",
+        "required": ["id", "name", "created_at"],
+        "title": "Badge"
+      },
+      "UserBadge": {
+        "properties": {
+          "id": { "type": "integer", "title": "Id" },
+          "badge_id": { "type": "integer", "title": "Badge Id" },
+          "badge": {
+            "anyOf": [{ "$ref": "#/components/schemas/Badge" }, { "type": "null" }]
           },
+          "awarded_at": { "type": "string", "format": "date-time", "title": "Awarded At" }
+        },
+        "type": "object",
+        "required": ["id", "badge_id", "awarded_at"],
+        "title": "UserBadge"
+      },
+
+      "ResponseModel_Course_": {
+        "properties": {
+          "code": { "type": "integer", "title": "Code", "default": 200 },
+          "message": { "type": "string", "title": "Message", "default": "success" },
+          "data": { "anyOf": [{ "$ref": "#/components/schemas/Course" }, { "type": "null" }] }
+        },
+        "type": "object",
+        "title": "ResponseModel[Course]"
+      },
+      "ResponseModel_List_Course_": {
+        "properties": {
+          "code": { "type": "integer", "title": "Code", "default": 200 },
+          "message": { "type": "string", "title": "Message", "default": "success" },
           "data": {
             "anyOf": [
-              {
-                "$ref": "#/components/schemas/CourseResponse"
-              },
-              {
-                "type": "null"
-              }
-            ]
+              { "items": { "$ref": "#/components/schemas/Course" }, "type": "array" },
+              { "type": "null" }
+            ],
+            "title": "Data"
           }
         },
         "type": "object",
-        "title": "ResponseModel[CourseResponse]"
+        "title": "ResponseModel[List[Course]]"
+      },
+      "ResponseModel_Material_": {
+        "properties": {
+          "code": { "type": "integer", "title": "Code", "default": 200 },
+          "message": { "type": "string", "title": "Message", "default": "success" },
+          "data": { "anyOf": [{ "$ref": "#/components/schemas/Material" }, { "type": "null" }] }
+        },
+        "type": "object",
+        "title": "ResponseModel[Material]"
+      },
+      "ResponseModel_LearningProgress_": {
+        "properties": {
+          "code": { "type": "integer", "title": "Code", "default": 200 },
+          "message": { "type": "string", "title": "Message", "default": "success" },
+          "data": { "anyOf": [{ "$ref": "#/components/schemas/LearningProgress" }, { "type": "null" }] }
+        },
+        "type": "object",
+        "title": "ResponseModel[LearningProgress]"
+      },
+      "ResponseModel_Collection_": {
+        "properties": {
+          "code": { "type": "integer", "title": "Code", "default": 200 },
+          "message": { "type": "string", "title": "Message", "default": "success" },
+          "data": { "anyOf": [{ "$ref": "#/components/schemas/Collection" }, { "type": "null" }] }
+        },
+        "type": "object",
+        "title": "ResponseModel[Collection]"
+      },
+      "ResponseModel_List_Collection_": {
+        "properties": {
+          "code": { "type": "integer", "title": "Code", "default": 200 },
+          "message": { "type": "string", "title": "Message", "default": "success" },
+          "data": {
+            "anyOf": [
+              { "items": { "$ref": "#/components/schemas/Collection" }, "type": "array" },
+              { "type": "null" }
+            ],
+            "title": "Data"
+          }
+        },
+        "type": "object",
+        "title": "ResponseModel[List[Collection]]"
+      },
+      "ResponseModel_WrongQuestion_": {
+        "properties": {
+          "code": { "type": "integer", "title": "Code", "default": 200 },
+          "message": { "type": "string", "title": "Message", "default": "success" },
+          "data": { "anyOf": [{ "$ref": "#/components/schemas/WrongQuestion" }, { "type": "null" }] }
+        },
+        "type": "object",
+        "title": "ResponseModel[WrongQuestion]"
+      },
+      "ResponseModel_List_WrongQuestion_": {
+        "properties": {
+          "code": { "type": "integer", "title": "Code", "default": 200 },
+          "message": { "type": "string", "title": "Message", "default": "success" },
+          "data": {
+            "anyOf": [
+              { "items": { "$ref": "#/components/schemas/WrongQuestion" }, "type": "array" },
+              { "type": "null" }
+            ],
+            "title": "Data"
+          }
+        },
+        "type": "object",
+        "title": "ResponseModel[List[WrongQuestion]]"
+      },
+      "ResponseModel_Badge_": {
+        "properties": {
+          "code": { "type": "integer", "title": "Code", "default": 200 },
+          "message": { "type": "string", "title": "Message", "default": "success" },
+          "data": { "anyOf": [{ "$ref": "#/components/schemas/Badge" }, { "type": "null" }] }
+        },
+        "type": "object",
+        "title": "ResponseModel[Badge]"
+      },
+      "ResponseModel_List_Badge_": {
+        "properties": {
+          "code": { "type": "integer", "title": "Code", "default": 200 },
+          "message": { "type": "string", "title": "Message", "default": "success" },
+          "data": {
+            "anyOf": [
+              { "items": { "$ref": "#/components/schemas/Badge" }, "type": "array" },
+              { "type": "null" }
+            ],
+            "title": "Data"
+          }
+        },
+        "type": "object",
+        "title": "ResponseModel[List[Badge]]"
+      },
+      "ResponseModel_UserBadge_": {
+        "properties": {
+          "code": { "type": "integer", "title": "Code", "default": 200 },
+          "message": { "type": "string", "title": "Message", "default": "success" },
+          "data": { "anyOf": [{ "$ref": "#/components/schemas/UserBadge" }, { "type": "null" }] }
+        },
+        "type": "object",
+        "title": "ResponseModel[UserBadge]"
+      },
+      "ResponseModel_List_UserBadge_": {
+        "properties": {
+          "code": { "type": "integer", "title": "Code", "default": 200 },
+          "message": { "type": "string", "title": "Message", "default": "success" },
+          "data": {
+            "anyOf": [
+              { "items": { "$ref": "#/components/schemas/UserBadge" }, "type": "array" },
+              { "type": "null" }
+            ],
+            "title": "Data"
+          }
+        },
+        "type": "object",
+        "title": "ResponseModel[List[UserBadge]]"
+      },
+      "ResponseModel_str_": {
+        "properties": {
+          "code": { "type": "integer", "title": "Code", "default": 200 },
+          "message": { "type": "string", "title": "Message", "default": "success" },
+          "data": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Data" }
+        },
+        "type": "object",
+        "title": "ResponseModel[str]"
       },
       "HTTPValidationError": {
         "properties": {
           "detail": {
-            "items": {
-              "$ref": "#/components/schemas/ValidationError"
-            },
+            "items": { "$ref": "#/components/schemas/ValidationError" },
             "type": "array",
             "title": "Detail"
           }
@@ -937,767 +911,21 @@
         "type": "object",
         "title": "HTTPValidationError"
       },
-      "ResponseModel_List_CourseResponse__": {
-        "properties": {
-          "code": {
-            "type": "integer",
-            "title": "Code",
-            "default": 200
-          },
-          "message": {
-            "type": "string",
-            "title": "Message",
-            "default": "success"
-          },
-          "data": {
-            "anyOf": [
-              {
-                "items": {
-                  "$ref": "#/components/schemas/CourseResponse"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Data"
-          }
-        },
-        "type": "object",
-        "title": "ResponseModel[List[CourseResponse]]"
-      },
-      "ResponseModel_CourseMaterialResponse_": {
-        "properties": {
-          "code": {
-            "type": "integer",
-            "title": "Code",
-            "default": 200
-          },
-          "message": {
-            "type": "string",
-            "title": "Message",
-            "default": "success"
-          },
-          "data": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/CourseMaterialResponse"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          }
-        },
-        "type": "object",
-        "title": "ResponseModel[CourseMaterialResponse]"
-      },
-      "ResponseModel_UserLearningProgressResponse_": {
-        "properties": {
-          "code": {
-            "type": "integer",
-            "title": "Code",
-            "default": 200
-          },
-          "message": {
-            "type": "string",
-            "title": "Message",
-            "default": "success"
-          },
-          "data": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/UserLearningProgressResponse"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          }
-        },
-        "type": "object",
-        "title": "ResponseModel[UserLearningProgressResponse]"
-      },
-      "ResponseModel_List_UserLearningProgressResponse__": {
-        "properties": {
-          "code": {
-            "type": "integer",
-            "title": "Code",
-            "default": 200
-          },
-          "message": {
-            "type": "string",
-            "title": "Message",
-            "default": "success"
-          },
-          "data": {
-            "anyOf": [
-              {
-                "items": {
-                  "$ref": "#/components/schemas/UserLearningProgressResponse"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Data"
-          }
-        },
-        "type": "object",
-        "title": "ResponseModel[List[UserLearningProgressResponse]]"
-      },
-      "ResponseModel_QuestionCollectionResponse_": {
-        "properties": {
-          "code": {
-            "type": "integer",
-            "title": "Code",
-            "default": 200
-          },
-          "message": {
-            "type": "string",
-            "title": "Message",
-            "default": "success"
-          },
-          "data": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/QuestionCollectionResponse"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          }
-        },
-        "type": "object",
-        "title": "ResponseModel[QuestionCollectionResponse]"
-      },
-      "ResponseModel_List_QuestionCollectionResponse__": {
-        "properties": {
-          "code": {
-            "type": "integer",
-            "title": "Code",
-            "default": 200
-          },
-          "message": {
-            "type": "string",
-            "title": "Message",
-            "default": "success"
-          },
-          "data": {
-            "anyOf": [
-              {
-                "items": {
-                  "$ref": "#/components/schemas/QuestionCollectionResponse"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Data"
-          }
-        },
-        "type": "object",
-        "title": "ResponseModel[List[QuestionCollectionResponse]]"
-      },
-      "ResponseModel_WrongQuestionResponse_": {
-        "properties": {
-          "code": {
-            "type": "integer",
-            "title": "Code",
-            "default": 200
-          },
-          "message": {
-            "type": "string",
-            "title": "Message",
-            "default": "success"
-          },
-          "data": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/WrongQuestionResponse"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          }
-        },
-        "type": "object",
-        "title": "ResponseModel[WrongQuestionResponse]"
-      },
-      "ResponseModel_List_WrongQuestionResponse__": {
-        "properties": {
-          "code": {
-            "type": "integer",
-            "title": "Code",
-            "default": 200
-          },
-          "message": {
-            "type": "string",
-            "title": "Message",
-            "default": "success"
-          },
-          "data": {
-            "anyOf": [
-              {
-                "items": {
-                  "$ref": "#/components/schemas/WrongQuestionResponse"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Data"
-          }
-        },
-        "type": "object",
-        "title": "ResponseModel[List[WrongQuestionResponse]]"
-      },
-      "ResponseModel_BadgeResponse_": {
-        "properties": {
-          "code": {
-            "type": "integer",
-            "title": "Code",
-            "default": 200
-          },
-          "message": {
-            "type": "string",
-            "title": "Message",
-            "default": "success"
-          },
-          "data": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/BadgeResponse"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          }
-        },
-        "type": "object",
-        "title": "ResponseModel[BadgeResponse]"
-      },
-      "ResponseModel_List_BadgeResponse__": {
-        "properties": {
-          "code": {
-            "type": "integer",
-            "title": "Code",
-            "default": 200
-          },
-          "message": {
-            "type": "string",
-            "title": "Message",
-            "default": "success"
-          },
-          "data": {
-            "anyOf": [
-              {
-                "items": {
-                  "$ref": "#/components/schemas/BadgeResponse"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Data"
-          }
-        },
-        "type": "object",
-        "title": "ResponseModel[List[BadgeResponse]]"
-      },
-      "ResponseModel_UserBadgeResponse_": {
-        "properties": {
-          "code": {
-            "type": "integer",
-            "title": "Code",
-            "default": 200
-          },
-          "message": {
-            "type": "string",
-            "title": "Message",
-            "default": "success"
-          },
-          "data": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/UserBadgeResponse"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          }
-        },
-        "type": "object",
-        "title": "ResponseModel[UserBadgeResponse]"
-      },
-      "ResponseModel_List_UserBadgeResponse__": {
-        "properties": {
-          "code": {
-            "type": "integer",
-            "title": "Code",
-            "default": 200
-          },
-          "message": {
-            "type": "string",
-            "title": "Message",
-            "default": "success"
-          },
-          "data": {
-            "anyOf": [
-              {
-                "items": {
-                  "$ref": "#/components/schemas/UserBadgeResponse"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Data"
-          }
-        },
-        "type": "object",
-        "title": "ResponseModel[List[UserBadgeResponse]]"
-      },
-      "MaterialType": {
-        "type": "string",
-        "enum": [
-          "video",
-          "pdf",
-          "article"
-        ],
-        "title": "MaterialType"
-      },
       "ValidationError": {
         "properties": {
           "loc": {
-            "items": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "integer"
-                }
-              ]
-            },
+            "items": { "anyOf": [{ "type": "string" }, { "type": "integer" }] },
             "type": "array",
             "title": "Location"
           },
-          "msg": {
-            "type": "string",
-            "title": "Message"
-          },
-          "type": {
-            "type": "string",
-            "title": "Error Type"
-          },
-          "input": {
-            "title": "Input"
-          },
-          "ctx": {
-            "type": "object",
-            "title": "Context"
-          }
+          "msg": { "type": "string", "title": "Message" },
+          "type": { "type": "string", "title": "Error Type" },
+          "input": { "title": "Input" },
+          "ctx": { "type": "object", "title": "Context" }
         },
         "type": "object",
-        "required": [
-          "loc",
-          "msg",
-          "type"
-        ],
+        "required": ["loc", "msg", "type"],
         "title": "ValidationError"
-      },
-      "CourseResponse": {
-        "properties": {
-          "title": {
-            "type": "string",
-            "title": "Title"
-          },
-          "description": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Description"
-          },
-          "level": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Level"
-          },
-          "cover_url": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Cover Url"
-          },
-          "id": {
-            "type": "integer",
-            "title": "Id"
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Created At"
-          },
-          "updated_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Updated At"
-          },
-          "materials": {
-            "items": {
-              "$ref": "#/components/schemas/CourseMaterialResponse"
-            },
-            "type": "array",
-            "title": "Materials",
-            "default": []
-          }
-        },
-        "type": "object",
-        "required": [
-          "title",
-          "id",
-          "created_at",
-          "updated_at"
-        ],
-        "title": "CourseResponse"
-      },
-      "CourseMaterialResponse": {
-        "properties": {
-          "title": {
-            "type": "string",
-            "title": "Title"
-          },
-          "material_type": {
-            "$ref": "#/components/schemas/MaterialType",
-            "description": "video, pdf, article"
-          },
-          "url": {
-            "type": "string",
-            "title": "Url"
-          },
-          "duration": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Duration",
-            "default": 0
-          },
-          "order_num": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Order Num",
-            "default": 0
-          },
-          "knowledge_graph_id": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Knowledge Graph Id"
-          },
-          "id": {
-            "type": "integer",
-            "title": "Id"
-          },
-          "course_id": {
-            "type": "integer",
-            "title": "Course Id"
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Created At"
-          }
-        },
-        "type": "object",
-        "required": [
-          "title",
-          "material_type",
-          "url",
-          "id",
-          "course_id",
-          "created_at"
-        ],
-        "title": "CourseMaterialResponse"
-      },
-      "UserLearningProgressResponse": {
-        "properties": {
-          "progress_percent": {
-            "type": "number",
-            "maximum": 100,
-            "minimum": 0,
-            "title": "Progress Percent"
-          },
-          "is_completed": {
-            "type": "boolean",
-            "title": "Is Completed",
-            "default": false
-          },
-          "id": {
-            "type": "integer",
-            "title": "Id"
-          },
-          "user_id": {
-            "type": "integer",
-            "title": "User Id"
-          },
-          "course_id": {
-            "type": "integer",
-            "title": "Course Id"
-          },
-          "material_id": {
-            "type": "integer",
-            "title": "Material Id"
-          },
-          "last_accessed_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Last Accessed At"
-          }
-        },
-        "type": "object",
-        "required": [
-          "progress_percent",
-          "id",
-          "user_id",
-          "course_id",
-          "material_id",
-          "last_accessed_at"
-        ],
-        "title": "UserLearningProgressResponse"
-      },
-      "QuestionCollectionResponse": {
-        "properties": {
-          "id": {
-            "type": "integer",
-            "title": "Id"
-          },
-          "user_id": {
-            "type": "integer",
-            "title": "User Id"
-          },
-          "question_id": {
-            "type": "integer",
-            "title": "Question Id"
-          },
-          "notes": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Notes"
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Created At"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "user_id",
-          "question_id",
-          "notes",
-          "created_at"
-        ],
-        "title": "QuestionCollectionResponse"
-      },
-      "WrongQuestionResponse": {
-        "properties": {
-          "id": {
-            "type": "integer",
-            "title": "Id"
-          },
-          "user_id": {
-            "type": "integer",
-            "title": "User Id"
-          },
-          "question_id": {
-            "type": "integer",
-            "title": "Question Id"
-          },
-          "wrong_answer": {
-            "title": "Wrong Answer"
-          },
-          "answer_count": {
-            "type": "integer",
-            "title": "Answer Count"
-          },
-          "is_mastered": {
-            "type": "boolean",
-            "title": "Is Mastered"
-          },
-          "last_answered_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Last Answered At"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "user_id",
-          "question_id",
-          "wrong_answer",
-          "answer_count",
-          "is_mastered",
-          "last_answered_at"
-        ],
-        "title": "WrongQuestionResponse"
-      },
-      "BadgeResponse": {
-        "properties": {
-          "name": {
-            "type": "string",
-            "title": "Name"
-          },
-          "description": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Description"
-          },
-          "icon_url": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Icon Url"
-          },
-          "condition_type": {
-            "type": "string",
-            "title": "Condition Type"
-          },
-          "condition_value": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Condition Value"
-          },
-          "id": {
-            "type": "integer",
-            "title": "Id"
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Created At"
-          }
-        },
-        "type": "object",
-        "required": [
-          "name",
-          "condition_type",
-          "id",
-          "created_at"
-        ],
-        "title": "BadgeResponse"
-      },
-      "UserBadgeResponse": {
-        "properties": {
-          "id": {
-            "type": "integer",
-            "title": "Id"
-          },
-          "user_id": {
-            "type": "integer",
-            "title": "User Id"
-          },
-          "badge_id": {
-            "type": "integer",
-            "title": "Badge Id"
-          },
-          "awarded_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Awarded At"
-          },
-          "tx_hash": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Tx Hash"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "user_id",
-          "badge_id",
-          "awarded_at"
-        ],
-        "title": "UserBadgeResponse"
       }
     }
   }

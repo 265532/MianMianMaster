@@ -2,25 +2,19 @@
   "paths": {
     "/interview/sessions": {
       "post": {
-        "tags": [
-          "interview"
-        ],
-        "summary": "Create Session",
-        "operationId": "create_session_sessions_post",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
+        "tags": ["interview"],
+        "summary": "创建面试会话",
+        "description": "前端: 面试页面创建新会话",
+        "operationId": "create_session_interview_sessions_post",
         "requestBody": {
-          "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateSessionRequest"
+                "$ref": "#/components/schemas/InterviewSessionCreate"
               }
             }
-          }
+          },
+          "required": true
         },
         "responses": {
           "200": {
@@ -28,7 +22,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ResponseModel_SessionResponse_"
+                  "$ref": "#/components/schemas/ResponseModel_InterviewSession_"
                 }
               }
             }
@@ -43,45 +37,24 @@
               }
             }
           }
-        }
+        },
+        "security": [{ "OAuth2PasswordBearer": [] }]
       },
       "get": {
-        "tags": [
-          "interview"
-        ],
-        "summary": "List Sessions",
-        "operationId": "list_sessions_sessions_get",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
+        "tags": ["interview"],
+        "summary": "获取面试会话列表",
+        "description": "前端: 面试历史列表",
+        "operationId": "get_sessions_interview_sessions_get",
         "parameters": [
           {
-            "name": "status",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Status"
-            }
-          },
-          {
-            "name": "offset",
+            "name": "skip",
             "in": "query",
             "required": false,
             "schema": {
               "type": "integer",
               "minimum": 0,
               "default": 0,
-              "title": "Offset"
+              "title": "Skip"
             }
           },
           {
@@ -95,6 +68,16 @@
               "default": 20,
               "title": "Limit"
             }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "description": "按状态筛选: scheduled/in_progress/completed/cancelled",
+            "schema": {
+              "type": "string",
+              "title": "Status"
+            }
           }
         ],
         "responses": {
@@ -103,7 +86,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ResponseModel_list_SessionListResponse__"
+                  "$ref": "#/components/schemas/ResponseModel_List_InterviewSession_"
                 }
               }
             }
@@ -118,28 +101,23 @@
               }
             }
           }
-        }
+        },
+        "security": [{ "OAuth2PasswordBearer": [] }]
       }
     },
     "/interview/sessions/{session_id}": {
       "get": {
-        "tags": [
-          "interview"
-        ],
-        "summary": "Get Session",
-        "operationId": "get_session_sessions_session_id_get",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
+        "tags": ["interview"],
+        "summary": "获取面试会话详情",
+        "description": "前端: 面试页面恢复会话",
+        "operationId": "get_session_interview_sessions_session_id_get",
         "parameters": [
           {
             "name": "session_id",
             "in": "path",
             "required": true,
             "schema": {
-              "type": "integer",
+              "type": "string",
               "title": "Session Id"
             }
           }
@@ -150,7 +128,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ResponseModel_SessionResponse_"
+                  "$ref": "#/components/schemas/ResponseModel_InterviewSession_"
                 }
               }
             }
@@ -165,28 +143,23 @@
               }
             }
           }
-        }
+        },
+        "security": [{ "OAuth2PasswordBearer": [] }]
       }
     },
     "/interview/sessions/{session_id}/start": {
       "post": {
-        "tags": [
-          "interview"
-        ],
-        "summary": "Start Interview",
-        "operationId": "start_interview_sessions_session_id_start_post",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
+        "tags": ["interview"],
+        "summary": "开始面试会话",
+        "description": "前端: 面试页面开始面试按钮",
+        "operationId": "start_session_interview_sessions_session_id_start_post",
         "parameters": [
           {
             "name": "session_id",
             "in": "path",
             "required": true,
             "schema": {
-              "type": "integer",
+              "type": "string",
               "title": "Session Id"
             }
           }
@@ -197,7 +170,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ResponseModel_StartInterviewResponse_"
+                  "$ref": "#/components/schemas/ResponseModel_InterviewSession_"
                 }
               }
             }
@@ -212,83 +185,76 @@
               }
             }
           }
-        }
+        },
+        "security": [{ "OAuth2PasswordBearer": [] }]
       }
     },
     "/interview/sessions/{session_id}/chat": {
       "post": {
-        "tags": [
-          "interview"
-        ],
-        "summary": "Interview Chat",
-        "operationId": "interview_chat_sessions_session_id_chat_post",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
+        "tags": ["interview"],
+        "summary": "面试对话（SSE 流式）",
+        "description": "前端: 面试页面 AI 对话，返回 SSE 事件流（event: token/done/error/round_limit）",
+        "operationId": "chat_sse_interview_sessions_session_id_chat_post",
         "parameters": [
           {
             "name": "session_id",
             "in": "path",
             "required": true,
             "schema": {
-              "type": "integer",
+              "type": "string",
               "title": "Session Id"
             }
           }
         ],
         "requestBody": {
-          "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/InterviewChatRequest"
+                "$ref": "#/components/schemas/ChatRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "SSE 事件流",
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "type": "string",
+                  "description": "SSE events: token, done, error, round_limit"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
         },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
+        "security": [{ "OAuth2PasswordBearer": [] }]
       }
     },
     "/interview/sessions/{session_id}/end": {
       "post": {
-        "tags": [
-          "interview"
-        ],
-        "summary": "End Interview",
-        "operationId": "end_interview_sessions_session_id_end_post",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
+        "tags": ["interview"],
+        "summary": "结束面试会话",
+        "description": "前端: 面试页面结束面试",
+        "operationId": "end_session_interview_sessions_session_id_end_post",
         "parameters": [
           {
             "name": "session_id",
             "in": "path",
             "required": true,
             "schema": {
-              "type": "integer",
+              "type": "string",
               "title": "Session Id"
             }
           }
@@ -299,7 +265,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ResponseModel_SessionResponse_"
+                  "$ref": "#/components/schemas/ResponseModel_InterviewSession_"
                 }
               }
             }
@@ -314,28 +280,23 @@
               }
             }
           }
-        }
+        },
+        "security": [{ "OAuth2PasswordBearer": [] }]
       }
     },
     "/interview/sessions/{session_id}/cancel": {
       "post": {
-        "tags": [
-          "interview"
-        ],
-        "summary": "Cancel Interview",
-        "operationId": "cancel_interview_sessions_session_id_cancel_post",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
+        "tags": ["interview"],
+        "summary": "取消面试会话",
+        "description": "前端: 面试页面取消面试",
+        "operationId": "cancel_session_interview_sessions_session_id_cancel_post",
         "parameters": [
           {
             "name": "session_id",
             "in": "path",
             "required": true,
             "schema": {
-              "type": "integer",
+              "type": "string",
               "title": "Session Id"
             }
           }
@@ -346,7 +307,111 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ResponseModel_SessionResponse_"
+                  "$ref": "#/components/schemas/ResponseModel_InterviewSession_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "OAuth2PasswordBearer": [] }]
+      }
+    },
+    "/interview/sessions/{session_id}/report": {
+      "get": {
+        "tags": ["interview"],
+        "summary": "获取面试报告",
+        "description": "前端: 面试结束后的评估报告",
+        "operationId": "get_report_interview_sessions_session_id_report_get",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Session Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel_InterviewReport_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "OAuth2PasswordBearer": [] }]
+      }
+    },
+    "/interview/questions": {
+      "get": {
+        "tags": ["interview"],
+        "summary": "获取面试题库",
+        "description": "前端: 面试准备页面题库",
+        "operationId": "get_questions_interview_questions_get",
+        "parameters": [
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "title": "Category"
+            }
+          },
+          {
+            "name": "difficulty",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["easy", "medium", "hard"],
+              "title": "Difficulty"
+            }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["technical", "behavioral", "case"],
+              "title": "Type"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel_List_InterviewQuestion_"
                 }
               }
             }
@@ -364,138 +429,432 @@
         }
       }
     },
-    "/interview/sessions/{session_id}/report": {
+    "/interview/game/levels": {
       "get": {
-        "tags": [
-          "interview"
-        ],
-        "summary": "Get Interview Report",
-        "operationId": "get_interview_report_sessions_session_id_report_get",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "session_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "title": "Session Id"
-            }
-          }
-        ],
+        "tags": ["interview"],
+        "summary": "获取游戏化面试关卡列表",
+        "description": "前端: GameInterview.vue 关卡选择",
+        "operationId": "get_game_levels_interview_game_levels_get",
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ResponseModel_InterviewReportResponse_"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ResponseModel_List_GameLevel_"
                 }
               }
             }
           }
-        }
+        },
+        "security": [{ "OAuth2PasswordBearer": [] }]
+      }
+    },
+    "/interview/game/stats": {
+      "get": {
+        "tags": ["interview"],
+        "summary": "获取游戏化面试统计数据",
+        "description": "前端: GameInterview.vue 首页统计面板",
+        "operationId": "get_game_stats_interview_game_stats_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel_GameStats_"
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "OAuth2PasswordBearer": [] }]
+      }
+    },
+    "/interview/game/achievements": {
+      "get": {
+        "tags": ["interview"],
+        "summary": "获取游戏化面试成就列表",
+        "description": "前端: GameInterview.vue 成就系统",
+        "operationId": "get_game_achievements_interview_game_achievements_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel_List_GameAchievement_"
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "OAuth2PasswordBearer": [] }]
+      }
+    },
+    "/interview/game/leaderboard": {
+      "get": {
+        "tags": ["interview"],
+        "summary": "获取游戏化面试排行榜",
+        "description": "前端: GameInterview.vue 排行榜",
+        "operationId": "get_leaderboard_interview_game_leaderboard_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel_List_LeaderboardEntry_"
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "OAuth2PasswordBearer": [] }]
       }
     }
   },
   "components": {
     "schemas": {
-      "CreateSessionRequest": {
+      "InterviewSessionCreate": {
         "properties": {
-          "job_position_id": {
+          "job_title": { "type": "string", "title": "Job Title" },
+          "company": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Company" },
+          "type": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Type" },
+          "max_rounds": { "anyOf": [{ "type": "integer" }, { "type": "null" }], "title": "Max Rounds" }
+        },
+        "type": "object",
+        "required": ["job_title"],
+        "title": "InterviewSessionCreate"
+      },
+      "InterviewSession": {
+        "properties": {
+          "id": { "type": "string", "title": "Id" },
+          "job_title": { "type": "string", "title": "Job Title" },
+          "company": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Company" },
+          "status": {
+            "type": "string",
+            "enum": ["scheduled", "in_progress", "completed", "cancelled"],
+            "title": "Status"
+          },
+          "type": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Type" },
+          "max_rounds": { "anyOf": [{ "type": "integer" }, { "type": "null" }], "title": "Max Rounds" },
+          "current_round": { "anyOf": [{ "type": "integer" }, { "type": "null" }], "title": "Current Round" },
+          "created_at": { "type": "string", "format": "date-time", "title": "Created At" },
+          "started_at": { "anyOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }], "title": "Started At" },
+          "ended_at": { "anyOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }], "title": "Ended At" },
+          "total_score": { "anyOf": [{ "type": "number" }, { "type": "null" }], "title": "Total Score" },
+          "feedback": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Feedback" },
+          "details": {
             "anyOf": [
               {
-                "type": "integer"
+                "properties": {
+                  "technical": { "type": "number", "title": "Technical" },
+                  "communication": { "type": "number", "title": "Communication" },
+                  "logic": { "type": "number", "title": "Logic" },
+                  "problem_solving": { "type": "number", "title": "Problem Solving" }
+                },
+                "type": "object"
               },
-              {
-                "type": "null"
-              }
+              { "type": "null" }
             ],
-            "title": "Job Position Id"
-          },
-          "strategy_id": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Strategy Id"
-          },
-          "max_rounds": {
-            "type": "integer",
-            "maximum": 50,
-            "minimum": 1,
-            "title": "Max Rounds",
-            "default": 10
+            "title": "Details"
           }
         },
         "type": "object",
-        "title": "CreateSessionRequest"
+        "required": ["id", "job_title", "status", "created_at"],
+        "title": "InterviewSession"
       },
-      "InterviewChatRequest": {
+      "ChatRequest": {
         "properties": {
-          "message": {
+          "message": { "type": "string", "title": "Message", "description": "用户发送的面试回答" }
+        },
+        "type": "object",
+        "required": ["message"],
+        "title": "ChatRequest"
+      },
+      "InterviewReport": {
+        "properties": {
+          "session_id": { "type": "string", "title": "Session Id" },
+          "status": {
             "type": "string",
-            "maxLength": 5000,
-            "minLength": 1,
-            "title": "Message"
+            "enum": ["pending", "generating", "completed", "failed"],
+            "title": "Status"
+          },
+          "overall_score": { "anyOf": [{ "type": "number" }, { "type": "null" }], "title": "Overall Score" },
+          "dimensions": {
+            "anyOf": [
+              {
+                "properties": {
+                  "technical": { "type": "number", "title": "Technical" },
+                  "communication": { "type": "number", "title": "Communication" },
+                  "logic": { "type": "number", "title": "Logic" },
+                  "problem_solving": { "type": "number", "title": "Problem Solving" }
+                },
+                "type": "object"
+              },
+              { "type": "null" }
+            ],
+            "title": "Dimensions"
+          },
+          "strengths": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Strengths",
+            "default": []
+          },
+          "weaknesses": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Weaknesses",
+            "default": []
+          },
+          "suggestions": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Suggestions",
+            "default": []
+          },
+          "generated_at": { "anyOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }], "title": "Generated At" }
+        },
+        "type": "object",
+        "required": ["session_id", "status"],
+        "title": "InterviewReport"
+      },
+      "InterviewQuestion": {
+        "properties": {
+          "id": { "type": "string", "title": "Id" },
+          "content": { "type": "string", "title": "Content" },
+          "type": {
+            "type": "string",
+            "enum": ["technical", "behavioral", "case"],
+            "title": "Type"
+          },
+          "difficulty": {
+            "type": "string",
+            "enum": ["easy", "medium", "hard"],
+            "title": "Difficulty"
+          },
+          "category": { "type": "string", "title": "Category" },
+          "answered": { "type": "boolean", "title": "Answered" },
+          "answer": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Answer" },
+          "score": { "anyOf": [{ "type": "number" }, { "type": "null" }], "title": "Score" },
+          "starAnswer": {
+            "anyOf": [
+              {
+                "properties": {
+                  "situation": { "type": "string", "title": "Situation" },
+                  "task": { "type": "string", "title": "Task" },
+                  "action": { "type": "string", "title": "Action" },
+                  "result": { "type": "string", "title": "Result" }
+                },
+                "type": "object"
+              },
+              { "type": "null" }
+            ],
+            "title": "Star Answer"
+          },
+          "alternativeAnswers": {
+            "items": {
+              "properties": {
+                "situation": { "type": "string", "title": "Situation" },
+                "task": { "type": "string", "title": "Task" },
+                "action": { "type": "string", "title": "Action" },
+                "result": { "type": "string", "title": "Result" }
+              },
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Alternative Answers",
+            "default": []
+          },
+          "commonMistakes": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Common Mistakes",
+            "default": []
           }
         },
         "type": "object",
-        "required": [
-          "message"
-        ],
-        "title": "InterviewChatRequest"
+        "required": ["id", "content", "type", "difficulty", "category", "answered"],
+        "title": "InterviewQuestion"
       },
-      "ResponseModel_SessionResponse_": {
+      "GameLevel": {
         "properties": {
-          "code": {
-            "type": "integer",
-            "title": "Code",
-            "default": 200
+          "id": { "type": "integer", "title": "Id" },
+          "name": { "type": "string", "title": "Name" },
+          "title": { "type": "string", "title": "Title" },
+          "status": { "type": "string", "title": "Status" },
+          "progress": { "type": "number", "title": "Progress" },
+          "description": { "type": "string", "title": "Description" },
+          "interviews": { "type": "integer", "title": "Interviews" },
+          "completed": { "type": "integer", "title": "Completed" },
+          "timeSpent": { "type": "string", "title": "Time Spent" },
+          "successRate": { "type": "string", "title": "Success Rate" },
+          "skills": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Skills",
+            "default": []
           },
-          "message": {
-            "type": "string",
-            "title": "Message",
-            "default": "success"
-          },
+          "unlockRequirements": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Unlock Requirements" },
+          "icon": { "type": "string", "title": "Icon" },
+          "background": { "type": "string", "title": "Background" },
+          "difficulty": { "type": "string", "title": "Difficulty" },
+          "reward": { "type": "string", "title": "Reward" },
+          "questionCount": { "type": "integer", "title": "Question Count" },
+          "timeLimit": { "type": "integer", "title": "Time Limit" }
+        },
+        "type": "object",
+        "required": ["id", "name", "title", "status", "progress", "description", "interviews", "completed", "timeSpent", "successRate", "icon", "background", "difficulty", "reward", "questionCount", "timeLimit"],
+        "title": "GameLevel"
+      },
+      "GameStats": {
+        "properties": {
+          "completedLevels": { "type": "integer", "title": "Completed Levels" },
+          "totalQuestions": { "type": "integer", "title": "Total Questions" },
+          "correctRate": { "type": "string", "title": "Correct Rate" },
+          "certifications": { "type": "integer", "title": "Certifications" },
+          "streak": { "type": "string", "title": "Streak" },
+          "totalScore": { "type": "string", "title": "Total Score" }
+        },
+        "type": "object",
+        "required": ["completedLevels", "totalQuestions", "correctRate", "certifications", "streak", "totalScore"],
+        "title": "GameStats"
+      },
+      "GameAchievement": {
+        "properties": {
+          "id": { "type": "integer", "title": "Id" },
+          "name": { "type": "string", "title": "Name" },
+          "description": { "type": "string", "title": "Description" },
+          "unlocked": { "type": "boolean", "title": "Unlocked" },
+          "unlockedAt": { "anyOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }], "title": "Unlocked At" },
+          "progress": { "anyOf": [{ "type": "number" }, { "type": "null" }], "title": "Progress" },
+          "icon": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Icon" }
+        },
+        "type": "object",
+        "required": ["id", "name", "description", "unlocked"],
+        "title": "GameAchievement"
+      },
+      "LeaderboardEntry": {
+        "properties": {
+          "rank": { "type": "integer", "title": "Rank" },
+          "name": { "type": "string", "title": "Name" },
+          "score": { "type": "number", "title": "Score" },
+          "avatar": { "type": "string", "title": "Avatar" },
+          "isCurrentUser": { "type": "boolean", "title": "Is Current User", "default": false }
+        },
+        "type": "object",
+        "required": ["rank", "name", "score", "avatar"],
+        "title": "LeaderboardEntry"
+      },
+
+      "ResponseModel_InterviewSession_": {
+        "properties": {
+          "code": { "type": "integer", "title": "Code", "default": 200 },
+          "message": { "type": "string", "title": "Message", "default": "success" },
+          "data": { "anyOf": [{ "$ref": "#/components/schemas/InterviewSession" }, { "type": "null" }] }
+        },
+        "type": "object",
+        "title": "ResponseModel[InterviewSession]"
+      },
+      "ResponseModel_List_InterviewSession_": {
+        "properties": {
+          "code": { "type": "integer", "title": "Code", "default": 200 },
+          "message": { "type": "string", "title": "Message", "default": "success" },
           "data": {
             "anyOf": [
-              {
-                "$ref": "#/components/schemas/SessionResponse"
-              },
-              {
-                "type": "null"
-              }
-            ]
+              { "items": { "$ref": "#/components/schemas/InterviewSession" }, "type": "array" },
+              { "type": "null" }
+            ],
+            "title": "Data"
           }
         },
         "type": "object",
-        "title": "ResponseModel[SessionResponse]"
+        "title": "ResponseModel[List[InterviewSession]]"
+      },
+      "ResponseModel_InterviewReport_": {
+        "properties": {
+          "code": { "type": "integer", "title": "Code", "default": 200 },
+          "message": { "type": "string", "title": "Message", "default": "success" },
+          "data": { "anyOf": [{ "$ref": "#/components/schemas/InterviewReport" }, { "type": "null" }] }
+        },
+        "type": "object",
+        "title": "ResponseModel[InterviewReport]"
+      },
+      "ResponseModel_List_InterviewQuestion_": {
+        "properties": {
+          "code": { "type": "integer", "title": "Code", "default": 200 },
+          "message": { "type": "string", "title": "Message", "default": "success" },
+          "data": {
+            "anyOf": [
+              { "items": { "$ref": "#/components/schemas/InterviewQuestion" }, "type": "array" },
+              { "type": "null" }
+            ],
+            "title": "Data"
+          }
+        },
+        "type": "object",
+        "title": "ResponseModel[List[InterviewQuestion]]"
+      },
+      "ResponseModel_List_GameLevel_": {
+        "properties": {
+          "code": { "type": "integer", "title": "Code", "default": 200 },
+          "message": { "type": "string", "title": "Message", "default": "success" },
+          "data": {
+            "anyOf": [
+              { "items": { "$ref": "#/components/schemas/GameLevel" }, "type": "array" },
+              { "type": "null" }
+            ],
+            "title": "Data"
+          }
+        },
+        "type": "object",
+        "title": "ResponseModel[List[GameLevel]]"
+      },
+      "ResponseModel_GameStats_": {
+        "properties": {
+          "code": { "type": "integer", "title": "Code", "default": 200 },
+          "message": { "type": "string", "title": "Message", "default": "success" },
+          "data": { "anyOf": [{ "$ref": "#/components/schemas/GameStats" }, { "type": "null" }] }
+        },
+        "type": "object",
+        "title": "ResponseModel[GameStats]"
+      },
+      "ResponseModel_List_GameAchievement_": {
+        "properties": {
+          "code": { "type": "integer", "title": "Code", "default": 200 },
+          "message": { "type": "string", "title": "Message", "default": "success" },
+          "data": {
+            "anyOf": [
+              { "items": { "$ref": "#/components/schemas/GameAchievement" }, "type": "array" },
+              { "type": "null" }
+            ],
+            "title": "Data"
+          }
+        },
+        "type": "object",
+        "title": "ResponseModel[List[GameAchievement]]"
+      },
+      "ResponseModel_List_LeaderboardEntry_": {
+        "properties": {
+          "code": { "type": "integer", "title": "Code", "default": 200 },
+          "message": { "type": "string", "title": "Message", "default": "success" },
+          "data": {
+            "anyOf": [
+              { "items": { "$ref": "#/components/schemas/LeaderboardEntry" }, "type": "array" },
+              { "type": "null" }
+            ],
+            "title": "Data"
+          }
+        },
+        "type": "object",
+        "title": "ResponseModel[List[LeaderboardEntry]]"
       },
       "HTTPValidationError": {
         "properties": {
           "detail": {
-            "items": {
-              "$ref": "#/components/schemas/ValidationError"
-            },
+            "items": { "$ref": "#/components/schemas/ValidationError" },
             "type": "array",
             "title": "Detail"
           }
@@ -503,531 +862,21 @@
         "type": "object",
         "title": "HTTPValidationError"
       },
-      "ResponseModel_list_SessionListResponse__": {
-        "properties": {
-          "code": {
-            "type": "integer",
-            "title": "Code",
-            "default": 200
-          },
-          "message": {
-            "type": "string",
-            "title": "Message",
-            "default": "success"
-          },
-          "data": {
-            "anyOf": [
-              {
-                "items": {
-                  "$ref": "#/components/schemas/SessionListResponse"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Data"
-          }
-        },
-        "type": "object",
-        "title": "ResponseModel[list[SessionListResponse]]"
-      },
-      "ResponseModel_StartInterviewResponse_": {
-        "properties": {
-          "code": {
-            "type": "integer",
-            "title": "Code",
-            "default": 200
-          },
-          "message": {
-            "type": "string",
-            "title": "Message",
-            "default": "success"
-          },
-          "data": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/StartInterviewResponse"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          }
-        },
-        "type": "object",
-        "title": "ResponseModel[StartInterviewResponse]"
-      },
-      "ResponseModel_InterviewReportResponse_": {
-        "properties": {
-          "code": {
-            "type": "integer",
-            "title": "Code",
-            "default": 200
-          },
-          "message": {
-            "type": "string",
-            "title": "Message",
-            "default": "success"
-          },
-          "data": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/InterviewReportResponse"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          }
-        },
-        "type": "object",
-        "title": "ResponseModel[InterviewReportResponse]"
-      },
       "ValidationError": {
         "properties": {
           "loc": {
-            "items": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "integer"
-                }
-              ]
-            },
+            "items": { "anyOf": [{ "type": "string" }, { "type": "integer" }] },
             "type": "array",
             "title": "Location"
           },
-          "msg": {
-            "type": "string",
-            "title": "Message"
-          },
-          "type": {
-            "type": "string",
-            "title": "Error Type"
-          },
-          "input": {
-            "title": "Input"
-          },
-          "ctx": {
-            "type": "object",
-            "title": "Context"
-          }
+          "msg": { "type": "string", "title": "Message" },
+          "type": { "type": "string", "title": "Error Type" },
+          "input": { "title": "Input" },
+          "ctx": { "type": "object", "title": "Context" }
         },
         "type": "object",
-        "required": [
-          "loc",
-          "msg",
-          "type"
-        ],
+        "required": ["loc", "msg", "type"],
         "title": "ValidationError"
-      },
-      "SessionResponse": {
-        "properties": {
-          "id": {
-            "type": "integer",
-            "title": "Id"
-          },
-          "candidate_id": {
-            "type": "integer",
-            "title": "Candidate Id"
-          },
-          "config_id": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Config Id"
-          },
-          "strategy_id": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Strategy Id"
-          },
-          "status": {
-            "type": "string",
-            "title": "Status"
-          },
-          "current_round": {
-            "type": "integer",
-            "title": "Current Round",
-            "default": 0
-          },
-          "score": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Score"
-          },
-          "summary": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Summary"
-          },
-          "start_time": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Start Time"
-          },
-          "end_time": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "End Time"
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Created At"
-          },
-          "conversation_turns": {
-            "items": {
-              "$ref": "#/components/schemas/ConversationTurnResponse"
-            },
-            "type": "array",
-            "title": "Conversation Turns",
-            "default": []
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "candidate_id",
-          "status",
-          "created_at"
-        ],
-        "title": "SessionResponse"
-      },
-      "StartInterviewResponse": {
-        "properties": {
-          "session_id": {
-            "type": "integer",
-            "title": "Session Id"
-          },
-          "opening_message": {
-            "type": "string",
-            "title": "Opening Message"
-          },
-          "status": {
-            "type": "string",
-            "title": "Status"
-          }
-        },
-        "type": "object",
-        "required": [
-          "session_id",
-          "opening_message",
-          "status"
-        ],
-        "title": "StartInterviewResponse"
-      },
-      "InterviewReportResponse": {
-        "properties": {
-          "id": {
-            "type": "integer",
-            "title": "Id"
-          },
-          "session_id": {
-            "type": "integer",
-            "title": "Session Id"
-          },
-          "content_score": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Content Score"
-          },
-          "depth_score": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Depth Score"
-          },
-          "logic_score": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Logic Score"
-          },
-          "match_score": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Match Score"
-          },
-          "overall_score": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Overall Score"
-          },
-          "clarity_score": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Clarity Score"
-          },
-          "confidence_score": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Confidence Score"
-          },
-          "strength_areas": {
-            "items": {},
-            "type": "array",
-            "title": "Strength Areas",
-            "default": []
-          },
-          "weakness_areas": {
-            "items": {},
-            "type": "array",
-            "title": "Weakness Areas",
-            "default": []
-          },
-          "improvement_plan": {
-            "items": {},
-            "type": "array",
-            "title": "Improvement Plan",
-            "default": []
-          },
-          "offer_recommendation": {
-            "type": "boolean",
-            "title": "Offer Recommendation",
-            "default": false
-          },
-          "full_report_text": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Full Report Text"
-          },
-          "status": {
-            "type": "string",
-            "title": "Status",
-            "default": "pending"
-          },
-          "created_at": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Created At"
-          },
-          "updated_at": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Updated At"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "session_id"
-        ],
-        "title": "InterviewReportResponse"
-      },
-      "SessionListResponse": {
-        "properties": {
-          "id": {
-            "type": "integer",
-            "title": "Id"
-          },
-          "candidate_id": {
-            "type": "integer",
-            "title": "Candidate Id"
-          },
-          "status": {
-            "type": "string",
-            "title": "Status"
-          },
-          "current_round": {
-            "type": "integer",
-            "title": "Current Round",
-            "default": 0
-          },
-          "score": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Score"
-          },
-          "start_time": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Start Time"
-          },
-          "end_time": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "End Time"
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Created At"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "candidate_id",
-          "status",
-          "created_at"
-        ],
-        "title": "SessionListResponse"
-      },
-      "ConversationTurnResponse": {
-        "properties": {
-          "id": {
-            "type": "integer",
-            "title": "Id"
-          },
-          "round_num": {
-            "type": "integer",
-            "title": "Round Num"
-          },
-          "role": {
-            "type": "string",
-            "title": "Role"
-          },
-          "content": {
-            "type": "string",
-            "title": "Content"
-          },
-          "tokens_used": {
-            "type": "integer",
-            "title": "Tokens Used",
-            "default": 0
-          },
-          "latency_ms": {
-            "type": "integer",
-            "title": "Latency Ms",
-            "default": 0
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Created At"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "round_num",
-          "role",
-          "content",
-          "created_at"
-        ],
-        "title": "ConversationTurnResponse"
       }
     }
   }

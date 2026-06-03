@@ -1,0 +1,330 @@
+{
+  "paths": {
+    "/roles": {
+      "get": {
+        "tags": ["role"],
+        "summary": "获取角色列表",
+        "description": "前端: 管理后台角色管理页面",
+        "operationId": "get_roles_roles_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel_List_RoleResponse_"
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "OAuth2PasswordBearer": [] }]
+      },
+      "post": {
+        "tags": ["role"],
+        "summary": "创建角色",
+        "description": "前端: 管理后台创建角色",
+        "operationId": "create_role_roles_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RoleCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel_RoleResponse_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "OAuth2PasswordBearer": [] }]
+      }
+    },
+    "/roles/{role_id}/permissions": {
+      "post": {
+        "tags": ["role"],
+        "summary": "为角色分配权限",
+        "description": "前端: 管理后台角色权限分配",
+        "operationId": "assign_role_permissions_roles_role_id_permissions_post",
+        "parameters": [
+          {
+            "name": "role_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Role Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignRolePermissions"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel_str_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "OAuth2PasswordBearer": [] }]
+      }
+    },
+    "/users/{user_id}/roles": {
+      "post": {
+        "tags": ["role"],
+        "summary": "为用户分配角色",
+        "description": "前端: 管理后台用户角色分配",
+        "operationId": "assign_user_roles_users_user_id_roles_post",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "User Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignUserRoles"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel_str_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "OAuth2PasswordBearer": [] }]
+      }
+    },
+    "/permissions": {
+      "get": {
+        "tags": ["role"],
+        "summary": "获取权限列表",
+        "description": "前端: 管理后台权限列表",
+        "operationId": "get_permissions_permissions_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel_List_PermissionResponse_"
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "OAuth2PasswordBearer": [] }]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "RoleCreate": {
+        "properties": {
+          "name": { "type": "string", "title": "Name" },
+          "description": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Description" },
+          "parent_id": { "anyOf": [{ "type": "integer" }, { "type": "null" }], "title": "Parent Id" }
+        },
+        "type": "object",
+        "required": ["name"],
+        "title": "RoleCreate"
+      },
+      "RoleResponse": {
+        "properties": {
+          "id": { "type": "integer", "title": "Id" },
+          "name": { "type": "string", "title": "Name" },
+          "description": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Description" },
+          "parent_id": { "anyOf": [{ "type": "integer" }, { "type": "null" }], "title": "Parent Id" },
+          "created_at": { "type": "string", "format": "date-time", "title": "Created At" },
+          "updated_at": { "type": "string", "format": "date-time", "title": "Updated At" }
+        },
+        "type": "object",
+        "required": ["id", "name", "created_at", "updated_at"],
+        "title": "RoleResponse"
+      },
+      "PermissionResponse": {
+        "properties": {
+          "id": { "type": "integer", "title": "Id" },
+          "name": { "type": "string", "title": "Name" },
+          "description": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Description" },
+          "resource": { "type": "string", "title": "Resource" },
+          "action": { "type": "string", "title": "Action" },
+          "created_at": { "type": "string", "format": "date-time", "title": "Created At" },
+          "updated_at": { "type": "string", "format": "date-time", "title": "Updated At" }
+        },
+        "type": "object",
+        "required": ["id", "name", "resource", "action", "created_at", "updated_at"],
+        "title": "PermissionResponse"
+      },
+      "AssignRolePermissions": {
+        "properties": {
+          "permission_ids": {
+            "items": { "type": "integer" },
+            "type": "array",
+            "title": "Permission Ids"
+          }
+        },
+        "type": "object",
+        "required": ["permission_ids"],
+        "title": "AssignRolePermissions"
+      },
+      "AssignUserRoles": {
+        "properties": {
+          "role_ids": {
+            "items": { "type": "integer" },
+            "type": "array",
+            "title": "Role Ids"
+          }
+        },
+        "type": "object",
+        "required": ["role_ids"],
+        "title": "AssignUserRoles"
+      },
+
+      "ResponseModel_RoleResponse_": {
+        "properties": {
+          "code": { "type": "integer", "title": "Code", "default": 200 },
+          "message": { "type": "string", "title": "Message", "default": "success" },
+          "data": { "anyOf": [{ "$ref": "#/components/schemas/RoleResponse" }, { "type": "null" }] }
+        },
+        "type": "object",
+        "title": "ResponseModel[RoleResponse]"
+      },
+      "ResponseModel_List_RoleResponse_": {
+        "properties": {
+          "code": { "type": "integer", "title": "Code", "default": 200 },
+          "message": { "type": "string", "title": "Message", "default": "success" },
+          "data": {
+            "anyOf": [
+              { "items": { "$ref": "#/components/schemas/RoleResponse" }, "type": "array" },
+              { "type": "null" }
+            ],
+            "title": "Data"
+          }
+        },
+        "type": "object",
+        "title": "ResponseModel[List[RoleResponse]]"
+      },
+      "ResponseModel_List_PermissionResponse_": {
+        "properties": {
+          "code": { "type": "integer", "title": "Code", "default": 200 },
+          "message": { "type": "string", "title": "Message", "default": "success" },
+          "data": {
+            "anyOf": [
+              { "items": { "$ref": "#/components/schemas/PermissionResponse" }, "type": "array" },
+              { "type": "null" }
+            ],
+            "title": "Data"
+          }
+        },
+        "type": "object",
+        "title": "ResponseModel[List[PermissionResponse]]"
+      },
+      "ResponseModel_str_": {
+        "properties": {
+          "code": { "type": "integer", "title": "Code", "default": 200 },
+          "message": { "type": "string", "title": "Message", "default": "success" },
+          "data": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Data" }
+        },
+        "type": "object",
+        "title": "ResponseModel[str]"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": { "$ref": "#/components/schemas/ValidationError" },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": { "anyOf": [{ "type": "string" }, { "type": "integer" }] },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": { "type": "string", "title": "Message" },
+          "type": { "type": "string", "title": "Error Type" },
+          "input": { "title": "Input" },
+          "ctx": { "type": "object", "title": "Context" }
+        },
+        "type": "object",
+        "required": ["loc", "msg", "type"],
+        "title": "ValidationError"
+      }
+    }
+  }
+}
