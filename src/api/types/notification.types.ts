@@ -1,17 +1,32 @@
+export type NotificationType = 'system' | 'interview_result' | 'community' | 'learning';
+
 export interface Notification {
   id: number;
+  user_id: number;
   title: string;
   content: string;
-  type: "system" | "interview_result" | "community" | "learning";
+  type: NotificationType;
   is_read: boolean;
+  link?: string;
   created_at: string;
+}
+
+export interface NotificationCreate {
+  title: string;
+  content: string;
+  type: NotificationType;
+  user_id: number;
   link?: string;
 }
 
 export interface NotificationPreferences {
-  email_notifications: boolean;
-  push_notifications: boolean;
-  interview_reminders: boolean;
-  community_updates: boolean;
-  learning_reminders: boolean;
+  interview_reminder?: boolean;
+  community_interaction?: boolean;
+  learning_reminder?: boolean;
+  system_announcement?: boolean;
+}
+
+export interface DeviceTokenRequest {
+  device_token: string;
+  platform: string;
 }

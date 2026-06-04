@@ -2,16 +2,17 @@ import { get, post } from "@/utils/request";
 import type {
   Course,
   CourseCreate,
-  Material,
+  CourseMaterial,
   MaterialCreate,
   LearningProgress,
+  ProgressUpdateBody,
   Collection,
+  CollectionCreate,
   WrongQuestion,
+  WrongQuestionCreate,
   Badge,
+  BadgeCreate,
   UserBadge,
-  AddToCollectionRequest,
-  RecordWrongQuestionRequest,
-  CreateBadgeRequest,
 } from "../types/learning.types";
 import type { ResponseModel, PaginationParams } from "../types/response.types";
 
@@ -25,98 +26,80 @@ export const learningApi = {
   getCourses(params?: PaginationParams): Promise<ResponseModel<Course[]>> {
     return get<ResponseModel<Course[]>>(
       `${BASE_URL}/courses`,
-      params as Record<string, any>,
+      params as Record<string, unknown>,
     );
   },
 
-  addMaterial(data: MaterialCreate): Promise<ResponseModel<Material>> {
-    return post<ResponseModel<Material>>(`${BASE_URL}/materials`, data);
+  addMaterial(data: MaterialCreate): Promise<ResponseModel<CourseMaterial>> {
+    return post<ResponseModel<CourseMaterial>>(`${BASE_URL}/materials`, data);
   },
 
   updateProgress(
     courseId: number,
-    progress: number,
+    materialId: number,
+    body: ProgressUpdateBody,
   ): Promise<ResponseModel<LearningProgress>> {
     return post<ResponseModel<LearningProgress>>(
       `${BASE_URL}/progress/update`,
-      {
-        course_id: courseId,
-        progress,
-      },
+      body,
+      { params: { course_id: courseId, material_id: materialId } },
     );
   },
 
-  getProgress(courseId: number): Promise<ResponseModel<LearningProgress>> {
-    return get<ResponseModel<LearningProgress>>(
+  getProgress(courseId: number): Promise<ResponseModel<LearningProgress[]>> {
+    return get<ResponseModel<LearningProgress[]>>(
       `${BASE_URL}/progress/${courseId}`,
     );
   },
 
-  addToCollection(
-    data: AddToCollectionRequest,
-  ): Promise<ResponseModel<Collection>> {
+  createCollection(data: CollectionCreate): Promise<ResponseModel<Collection>> {
     return post<ResponseModel<Collection>>(`${BASE_URL}/collections`, data);
   },
 
-  getCollections(
-    params?: PaginationParams,
-  ): Promise<ResponseModel<Collection[]>> {
+  getCollections(params?: PaginationParams): Promise<ResponseModel<Collection[]>> {
     return get<ResponseModel<Collection[]>>(
       `${BASE_URL}/collections`,
-      params as Record<string, any>,
+      params as Record<string, unknown>,
     );
   },
 
-  recordWrongQuestion(
-    data: RecordWrongQuestionRequest,
-  ): Promise<ResponseModel<WrongQuestion>> {
-    return post<ResponseModel<WrongQuestion>>(
-      `${BASE_URL}/wrong-questions`,
-      data,
-    );
+  recordWrongQuestion(data: WrongQuestionCreate): Promise<ResponseModel<WrongQuestion>> {
+    return post<ResponseModel<WrongQuestion>>(`${BASE_URL}/wrong-questions`, data);
   },
 
-  getWrongQuestions(
-    params?: PaginationParams,
-  ): Promise<ResponseModel<WrongQuestion[]>> {
+  getWrongQuestions(params?: PaginationParams): Promise<ResponseModel<WrongQuestion[]>> {
     return get<ResponseModel<WrongQuestion[]>>(
       `${BASE_URL}/wrong-questions`,
-      params as Record<string, any>,
+      params as Record<string, unknown>,
     );
   },
 
-  markWrongQuestionMastered(
-    questionId: number,
-  ): Promise<ResponseModel<string>> {
-    return post<ResponseModel<string>>(
+  markWrongQuestionMastered(questionId: number): Promise<ResponseModel<WrongQuestion>> {
+    return post<ResponseModel<WrongQuestion>>(
       `${BASE_URL}/wrong-questions/${questionId}/master`,
     );
   },
 
-  createBadge(data: CreateBadgeRequest): Promise<ResponseModel<Badge>> {
+  createBadge(data: BadgeCreate): Promise<ResponseModel<Badge>> {
     return post<ResponseModel<Badge>>(`${BASE_URL}/badges`, data);
   },
 
-  getBadges(): Promise<ResponseModel<Badge[]>> {
-    return get<ResponseModel<Badge[]>>(`${BASE_URL}/badges`);
+  getBadges(params?: PaginationParams): Promise<ResponseModel<Badge[]>> {
+    return get<ResponseModel<Badge[]>>(`${BASE_URL}/badges`, params as Record<string, unknown>);
   },
 
   awardBadge(badgeId: number): Promise<ResponseModel<UserBadge>> {
-    return post<ResponseModel<UserBadge>>(
-      `${BASE_URL}/badges/award/${badgeId}`,
-    );
+    return post<ResponseModel<UserBadge>>(`${BASE_URL}/badges/award/${badgeId}`);
   },
 
   getMyBadges(): Promise<ResponseModel<UserBadge[]>> {
     return get<ResponseModel<UserBadge[]>>(`${BASE_URL}/my-badges`);
   },
 
-  getPracticeBanks(
-    params?: PaginationParams,
-  ): Promise<ResponseModel<Course[]>> {
+  getPracticeBanks(params?: PaginationParams): Promise<ResponseModel<Course[]>> {
     return get<ResponseModel<Course[]>>(
       `${BASE_URL}/courses`,
-      { ...params, type: "practice" } as Record<string, any>,
+      { ...params, type: "practice" } as Record<string, unknown>,
     );
   },
 };

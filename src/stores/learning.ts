@@ -4,10 +4,13 @@ import { learningApi } from "@/api/modules/learning.api";
 import type {
   Course,
   Collection,
+  CollectionCreate,
   WrongQuestion,
+  WrongQuestionCreate,
   Badge,
   UserBadge,
   LearningProgress,
+  ProgressUpdateBody,
 } from "@/api/types/learning.types";
 
 export const useLearningStore = defineStore("learning", () => {
@@ -16,28 +19,26 @@ export const useLearningStore = defineStore("learning", () => {
   const wrongQuestions = ref<WrongQuestion[]>([]);
   const badges = ref<Badge[]>([]);
   const myBadges = ref<UserBadge[]>([]);
-  const progressMap = ref<Record<number, LearningProgress>>({});
+  const progressMap = ref<Record<number, LearningProgress[]>>({});
   const loading = ref(false);
   const error = ref<string | null>(null);
 
   const unreviewedWrongQuestions = computed(() =>
-    wrongQuestions.value.filter((q) => q.status === "unreviewed"),
+    wrongQuestions.value.filter((q) => !q.is_mastered),
   );
 
   const reviewedWrongQuestions = computed(() =>
-    wrongQuestions.value.filter((q) => q.status === "reviewed"),
+    wrongQuestions.value.filter((q) => q.is_mastered),
   );
 
   async function fetchCourses(): Promise<void> {
     loading.value = true;
     error.value = null;
-
     try {
       const response = await learningApi.getCourses();
       courses.value = response.data;
     } catch (err: any) {
-      error.value =
-        err?.response?.data?.message || err?.message || "获取课程失败";
+      error.value = err?.response?.data?.message || err?.message || "获取课程失败";
       console.error("[Learning] fetchCourses error:", err);
     } finally {
       loading.value = false;
@@ -47,22 +48,20 @@ export const useLearningStore = defineStore("learning", () => {
   async function fetchCollections(): Promise<void> {
     loading.value = true;
     error.value = null;
-
     try {
       const response = await learningApi.getCollections();
       collections.value = response.data;
     } catch (err: any) {
-      console.warn("[Learning] fetchCollections failed, using mock data:", err?.message);
-      const { mockCollections } = await import("@/mock/data/learning.mock");
-      collections.value = mockCollections;
+      error.value = err?.response?.data?.message || err?.message || "获取收藏集失败";
+      console.error("[Learning] fetchCollections error:", err);
     } finally {
       loading.value = false;
     }
   }
 
-  async function addToCollection(data: Record<string, any>): Promise<boolean> {
+  async function addToCollection(data: CollectionCreate): Promise<boolean> {
     try {
-      const response = await learningApi.addToCollection(data);
+      const response = await learningApi.createCollection(data);
       collections.value.unshift(response.data);
       return true;
     } catch (err: any) {
@@ -74,41 +73,34 @@ export const useLearningStore = defineStore("learning", () => {
   async function fetchWrongQuestions(): Promise<void> {
     loading.value = true;
     error.value = null;
-
     try {
       const response = await learningApi.getWrongQuestions();
       wrongQuestions.value = response.data;
     } catch (err: any) {
-      console.warn("[Learning] fetchWrongQuestions failed, using mock data:", err?.message);
-      const { mockWrongQuestions } = await import("@/mock/data/learning.mock");
-      wrongQuestions.value = mockWrongQuestions;
+      error.value = err?.response?.data?.message || err?.message || "获取错题失败";
+      console.error("[Learning] fetchWrongQuestions error:", err);
     } finally {
       loading.value = false;
     }
   }
 
-  async function recordWrongQuestion(
-    data: Record<string, any>,
-  ): Promise<boolean> {
+  async function recordWrongQuestion(data: WrongQuestionCreate): Promise<boolean> {
     try {
       const response = await learningApi.recordWrongQuestion(data);
       wrongQuestions.value.unshift(response.data);
       return true;
     } catch (err: any) {
-      error.value =
-        err?.response?.data?.message || err?.message || "记录错题失败";
+      error.value = err?.response?.data?.message || err?.message || "记录错题失败";
       throw err;
     }
   }
 
-  async function markWrongQuestionMastered(
-    questionId: number,
-  ): Promise<boolean> {
+  async function markWrongQuestionMastered(questionId: number): Promise<boolean> {
     try {
-      await learningApi.markWrongQuestionMastered(questionId);
-      const question = wrongQuestions.value.find((q) => q.id === questionId);
-      if (question) {
-        question.status = "mastered";
+      const response = await learningApi.markWrongQuestionMastered(questionId);
+      const idx = wrongQuestions.value.findIndex((q) => q.question_id === questionId);
+      if (idx !== -1) {
+        wrongQuestions.value[idx] = response.data;
       }
       return true;
     } catch (err: any) {
@@ -146,11 +138,21 @@ export const useLearningStore = defineStore("learning", () => {
 
   async function updateProgress(
     courseId: number,
-    progress: number,
+    materialId: number,
+    body: ProgressUpdateBody,
   ): Promise<void> {
     try {
-      const response = await learningApi.updateProgress(courseId, progress);
-      progressMap.value[courseId] = response.data;
+      const response = await learningApi.updateProgress(courseId, materialId, body);
+      // Update progress map
+      if (!progressMap.value[courseId]) {
+        progressMap.value[courseId] = [];
+      }
+      const idx = progressMap.value[courseId].findIndex((p) => p.material_id === materialId);
+      if (idx !== -1) {
+        progressMap.value[courseId][idx] = response.data;
+      } else {
+        progressMap.value[courseId].push(response.data);
+      }
     } catch (err: any) {
       console.error("[Learning] updateProgress error:", err);
     }

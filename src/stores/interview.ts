@@ -4,8 +4,10 @@ import { interviewApi } from "@/api/modules/interview.api";
 import type {
   InterviewSession,
   InterviewSessionCreate,
+  InterviewStartResponse,
   InterviewReport,
   SseEvent,
+  InterviewQuestion,
   GameLevel,
   GameStats,
   GameAchievement,
@@ -28,6 +30,7 @@ export const useInterviewStore = defineStore("interview", () => {
   const error = ref<string | null>(null);
   const chatAbortController = ref<AbortController | null>(null);
 
+  const questions = ref<InterviewQuestion[]>([]);
   const gameLevels = ref<GameLevel[]>([]);
   const gameStats = ref<GameStats | null>(null);
   const gameAchievements = ref<GameAchievement[]>([]);
@@ -44,9 +47,9 @@ export const useInterviewStore = defineStore("interview", () => {
   );
 
   async function fetchSessions(params?: {
-    skip?: number;
-    limit?: number;
     status?: string;
+    offset?: number;
+    limit?: number;
   }): Promise<void> {
     log("fetchSessions →", params);
     loading.value = true;
@@ -56,17 +59,25 @@ export const useInterviewStore = defineStore("interview", () => {
       sessions.value = response.data;
       log("fetchSessions ✓ received", response.data.length, "sessions");
     } catch (err: any) {
-      error.value =
-        err?.response?.data?.message || err?.message || "获取面试记录失败";
+      error.value = err?.response?.data?.message || err?.message || "获取面试记录失败";
       log("fetchSessions ✗ error:", error.value);
     } finally {
       loading.value = false;
     }
   }
 
-  async function createSession(
-    data: InterviewSessionCreate,
-  ): Promise<InterviewSession | null> {
+  async function fetchQuestions(): Promise<void> {
+    log("fetchQuestions →");
+    try {
+      const response = await interviewApi.getQuestions();
+      questions.value = response.data;
+      log("fetchQuestions ✓ received", response.data.length, "questions");
+    } catch (err: any) {
+      log("fetchQuestions ✗ error:", err?.message);
+    }
+  }
+
+  async function createSession(data: InterviewSessionCreate): Promise<InterviewSession | null> {
     log("createSession →", data);
     loading.value = true;
     error.value = null;
@@ -78,8 +89,7 @@ export const useInterviewStore = defineStore("interview", () => {
       log("createSession ✓ session created:", session.id, "status:", session.status);
       return session;
     } catch (err: any) {
-      error.value =
-        err?.response?.data?.message || err?.message || "创建面试失败";
+      error.value = err?.response?.data?.message || err?.message || "创建面试失败";
       log("createSession ✗ error:", error.value);
       throw err;
     } finally {
@@ -87,32 +97,29 @@ export const useInterviewStore = defineStore("interview", () => {
     }
   }
 
-  async function startInterview(
-    sessionId: string,
-  ): Promise<InterviewSession | null> {
+  async function startInterview(sessionId: number): Promise<InterviewStartResponse | null> {
     log("startInterview →", sessionId);
     try {
       const response = await interviewApi.startSession(sessionId);
-      const session = response.data;
-      if (currentSession.value?.id === sessionId) {
-        currentSession.value = session;
-      }
+      // Update session status in local list
       const idx = sessions.value.findIndex((s) => s.id === sessionId);
       if (idx !== -1) {
-        sessions.value[idx] = session;
+        sessions.value[idx] = { ...sessions.value[idx], status: "in_progress", start_time: new Date().toISOString() };
       }
-      log("startInterview ✓ session:", sessionId, "status:", session.status, "current_round:", session.current_round);
-      return session;
+      if (currentSession.value?.id === sessionId) {
+        currentSession.value = { ...currentSession.value, status: "in_progress", start_time: new Date().toISOString() };
+      }
+      log("startInterview ✓ session:", sessionId, "opening_message:", response.data.opening_message);
+      return response.data;
     } catch (err: any) {
-      error.value =
-        err?.response?.data?.message || err?.message || "开始面试失败";
+      error.value = err?.response?.data?.message || err?.message || "开始面试失败";
       log("startInterview ✗ error:", error.value);
       throw err;
     }
   }
 
   function sendChatMessage(
-    sessionId: string,
+    sessionId: number,
     message: string,
     onEvent: (event: SseEvent) => void,
     onError?: (error: Error) => void,
@@ -164,7 +171,7 @@ export const useInterviewStore = defineStore("interview", () => {
     }
   }
 
-  async function endInterview(sessionId: string): Promise<void> {
+  async function endInterview(sessionId: number): Promise<void> {
     log("endInterview →", sessionId);
     try {
       stopChat();
@@ -177,13 +184,13 @@ export const useInterviewStore = defineStore("interview", () => {
       if (idx !== -1) {
         sessions.value[idx] = session;
       }
-      log("endInterview ✓ session:", sessionId, "status:", session.status, "total_score:", session.total_score);
+      log("endInterview ✓ session:", sessionId, "status:", session.status, "score:", session.score);
     } catch (err: any) {
       log("endInterview ✗ error:", err?.message);
     }
   }
 
-  async function cancelInterview(sessionId: string): Promise<void> {
+  async function cancelInterview(sessionId: number): Promise<void> {
     log("cancelInterview →", sessionId);
     try {
       stopChat();
@@ -202,7 +209,7 @@ export const useInterviewStore = defineStore("interview", () => {
     }
   }
 
-  async function fetchReport(sessionId: string): Promise<InterviewReport | null> {
+  async function fetchReport(sessionId: number): Promise<InterviewReport | null> {
     log("fetchReport →", sessionId);
     try {
       const response = await interviewApi.getReport(sessionId);
@@ -215,7 +222,7 @@ export const useInterviewStore = defineStore("interview", () => {
     }
   }
 
-  function getSessionById(id: string) {
+  function getSessionById(id: number) {
     return sessions.value.find((s) => s.id === id);
   }
 
@@ -285,6 +292,7 @@ export const useInterviewStore = defineStore("interview", () => {
     currentReport,
     loading,
     error,
+    questions,
     gameLevels,
     gameStats,
     gameAchievements,
@@ -292,6 +300,7 @@ export const useInterviewStore = defineStore("interview", () => {
     activeSessions,
     completedSessions,
     fetchSessions,
+    fetchQuestions,
     createSession,
     startInterview,
     sendChatMessage,

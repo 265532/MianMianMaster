@@ -29,10 +29,10 @@ const practiceData = computed(
       id: 0,
       title: "",
       description: "",
-      category: "",
-      questionCount: 0,
-      estimatedTime: "",
-      passRate: 0,
+      level: "",
+      question_count: 0,
+      estimated_time: "",
+      pass_rate: 0,
       questions: [],
     },
 );
@@ -133,11 +133,11 @@ onMounted(async () => {
         <div class="flex items-center gap-4">
           <div class="flex items-center gap-2 text-sm text-neutral-helper">
             <Clock :size="16" />
-            <span>{{ practiceData.estimatedTime }}</span>
+            <span>{{ practiceData.estimated_time }}</span>
           </div>
           <div class="flex items-center gap-2 text-sm text-neutral-helper">
             <Target :size="16" />
-            <span>{{ practiceData.passRate }}% 通过率</span>
+            <span>{{ practiceData.pass_rate }}% 通过率</span>
           </div>
         </div>
       </div>
@@ -224,7 +224,7 @@ onMounted(async () => {
 
             <!-- 选择题 -->
             <div
-              v-if="currentQuestion.type === 'multiple-choice'"
+              v-if="currentQuestion.question_type === 'multiple-choice'"
               class="space-y-3 mt-6"
             >
               <div
@@ -261,7 +261,7 @@ onMounted(async () => {
             </div>
 
             <!-- 简答题 -->
-            <div v-else-if="currentQuestion.type === 'essay'" class="mt-6">
+            <div v-else-if="currentQuestion.question_type === 'essay'" class="mt-6">
               <textarea
                 v-model="selectedAnswers[currentQuestion.id]"
                 class="w-full p-4 bg-neutral-bg rounded-xl border border-neutral-border focus:border-primary focus:outline-none transition-all"

@@ -24,10 +24,11 @@ export function registerLearningHandlers(mock: MockAdapter): void {
       id: Date.now(),
       title: data.title || "",
       description: data.description,
-      category: data.category,
-      difficulty: data.difficulty,
+      level: data.level,
+      cover_url: data.cover_url ?? null,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
+      materials: [],
     });
   });
 
@@ -37,8 +38,11 @@ export function registerLearningHandlers(mock: MockAdapter): void {
       id: Date.now(),
       course_id: data.course_id,
       title: data.title,
-      type: data.type,
+      material_type: data.material_type,
       url: data.url,
+      duration: data.duration,
+      order_num: data.order_num,
+      knowledge_graph_id: data.knowledge_graph_id,
       created_at: new Date().toISOString(),
     });
   });
@@ -48,21 +52,16 @@ export function registerLearningHandlers(mock: MockAdapter): void {
     return success({
       id: Date.now(),
       user_id: 1,
-      course_id: data.course_id,
-      progress: data.progress,
-      updated_at: new Date().toISOString(),
+      course_id: 1,
+      material_id: 1,
+      progress_percent: data.progress_percent ?? 0,
+      is_completed: data.is_completed ?? false,
+      last_accessed_at: new Date().toISOString(),
     });
   });
 
-  mock.onGet(/\/learning\/progress\/\d+$/).reply((config) => {
-    const courseId = parseInt(config.url!.split("/").pop()!);
-    return success({
-      id: Date.now(),
-      user_id: 1,
-      course_id: courseId,
-      progress: 50,
-      updated_at: new Date().toISOString(),
-    });
+  mock.onGet(/\/learning\/progress\/\d+$/).reply(() => {
+    return success([]);
   });
 
   mock.onGet("/learning/collections").reply(() => {
@@ -71,16 +70,17 @@ export function registerLearningHandlers(mock: MockAdapter): void {
 
   mock.onPost("/learning/collections").reply((config) => {
     const data = JSON.parse(config.data);
-    return success({
+    const newCollection = {
       id: Date.now(),
+      user_id: 1,
       title: data.title || "",
       description: data.description,
-      question_count: 0,
       category: data.category,
       difficulty: data.difficulty,
-      saved_at: new Date().toISOString().split("T")[0],
-      last_practiced: null,
-    });
+      created_at: new Date().toISOString(),
+    };
+    mockCollections.unshift(newCollection);
+    return success(newCollection);
   });
 
   mock.onGet("/learning/wrong-questions").reply(() => {
@@ -89,22 +89,35 @@ export function registerLearningHandlers(mock: MockAdapter): void {
 
   mock.onPost("/learning/wrong-questions").reply((config) => {
     const data = JSON.parse(config.data);
-    return success({
+    const newWrongQuestion = {
       id: Date.now(),
-      question: data.question || "",
-      user_answer: data.user_answer,
-      correct_answer: data.correct_answer,
-      explanation: data.explanation,
-      category: data.category,
-      difficulty: data.difficulty,
-      mistake_count: 1,
-      last_mistake_at: new Date().toISOString().split("T")[0],
-      status: "unreviewed",
-    });
+      user_id: 1,
+      question_id: data.question_id,
+      wrong_answer: data.wrong_answer,
+      answer_count: 1,
+      is_mastered: false,
+      last_answered_at: new Date().toISOString(),
+    };
+    mockWrongQuestions.unshift(newWrongQuestion);
+    return success(newWrongQuestion);
   });
 
-  mock.onPost(/\/learning\/wrong-questions\/\d+\/master$/).reply(() => {
-    return success("MARKED_AS_MASTERED");
+  mock.onPost(/\/learning\/wrong-questions\/\d+\/master$/).reply((config) => {
+    const questionId = parseInt(config.url?.split("/")[3] ?? "0");
+    const question = mockWrongQuestions.find((q) => q.question_id === questionId);
+    if (question) {
+      question.is_mastered = true;
+      return success(question);
+    }
+    return success({
+      id: Date.now(),
+      user_id: 1,
+      question_id: questionId,
+      wrong_answer: null,
+      answer_count: 0,
+      is_mastered: true,
+      last_answered_at: new Date().toISOString(),
+    });
   });
 
   mock.onGet("/learning/badges").reply(() => {
@@ -118,16 +131,22 @@ export function registerLearningHandlers(mock: MockAdapter): void {
       name: data.name || "",
       description: data.description,
       icon_url: data.icon_url,
+      condition_type: data.condition_type || "",
+      condition_value: data.condition_value,
       created_at: new Date().toISOString(),
     });
   });
 
-  mock.onPost(/\/learning\/badges\/award\/\d+$/).reply(() => {
-    return success({
+  mock.onPost(/\/learning\/badges\/award\/\d+$/).reply((config) => {
+    const badgeId = parseInt(config.url?.split("/").pop() ?? "0");
+    const newBadge = {
       id: Date.now(),
-      badge_id: 1,
+      user_id: 1,
+      badge_id: badgeId,
       awarded_at: new Date().toISOString(),
-    });
+    };
+    mockUserBadges.unshift(newBadge);
+    return success(newBadge);
   });
 
   mock.onGet("/learning/my-badges").reply(() => {

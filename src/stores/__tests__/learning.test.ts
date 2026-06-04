@@ -5,7 +5,7 @@ vi.mock("@/api/modules/learning.api", () => ({
   learningApi: {
     getCourses: vi.fn(),
     getCollections: vi.fn(),
-    addToCollection: vi.fn(),
+    createCollection: vi.fn(),
     getWrongQuestions: vi.fn(),
     recordWrongQuestion: vi.fn(),
     markWrongQuestionMastered: vi.fn(),
@@ -33,17 +33,19 @@ describe("useLearningStore integration", () => {
         data: [
           {
             id: 1,
+            user_id: 1,
             title: "高频算法50题",
-            question_count: 50,
             category: "算法",
             difficulty: "medium",
+            created_at: "2026-03-20T00:00:00Z",
           },
           {
             id: 2,
+            user_id: 1,
             title: "Vue3核心知识",
-            question_count: 30,
             category: "前端",
             difficulty: "easy",
+            created_at: "2026-03-15T00:00:00Z",
           },
         ],
       });
@@ -71,19 +73,21 @@ describe("useLearningStore integration", () => {
         data: [
           {
             id: 1,
-            question: "Vue3组件通信方式？",
-            user_answer: "props",
-            correct_answer: "props/events/provide/pinia",
-            category: "前端",
-            status: "unreviewed",
+            user_id: 1,
+            question_id: 101,
+            wrong_answer: "props",
+            answer_count: 1,
+            is_mastered: false,
+            last_answered_at: "2026-03-24T00:00:00Z",
           },
           {
             id: 2,
-            question: "React Hooks规则？",
-            user_answer: "不确定",
-            correct_answer: "只在顶层调用",
-            category: "前端",
-            status: "unreviewed",
+            user_id: 1,
+            question_id: 102,
+            wrong_answer: "不确定",
+            answer_count: 1,
+            is_mastered: false,
+            last_answered_at: "2026-03-20T00:00:00Z",
           },
         ],
       });
@@ -101,23 +105,26 @@ describe("useLearningStore integration", () => {
   describe("addToCollection", () => {
     it("should add to collection successfully", async () => {
       const { learningApi } = await import("@/api/modules/learning.api");
-      const mockedAddToCollection = vi.mocked(learningApi.addToCollection);
+      const mockedCreateCollection = vi.mocked(learningApi.createCollection);
 
-      mockedAddToCollection.mockResolvedValue({
+      mockedCreateCollection.mockResolvedValue({
         code: 200,
         message: "success",
-        data: { id: 100, status: "success" },
+        data: {
+          id: 100,
+          user_id: 1,
+          title: "新收藏",
+          created_at: "2026-06-04T00:00:00Z",
+        },
       });
 
       const { useLearningStore } = await import("@/stores/learning");
       const store = useLearningStore();
 
-      const result = await store.addToCollection({ question_bank_id: 1 });
+      const result = await store.addToCollection({ title: "新收藏" });
 
       expect(result).toBe(true);
-      expect(mockedAddToCollection).toHaveBeenCalledWith({
-        question_bank_id: 1,
-      });
+      expect(mockedCreateCollection).toHaveBeenCalledWith({ title: "新收藏" });
     });
   });
 
@@ -131,7 +138,15 @@ describe("useLearningStore integration", () => {
       mockedMarkMastered.mockResolvedValue({
         code: 200,
         message: "success",
-        data: "mastered",
+        data: {
+          id: 1,
+          user_id: 1,
+          question_id: 1,
+          wrong_answer: "test",
+          answer_count: 1,
+          is_mastered: true,
+          last_answered_at: "2026-06-04T00:00:00Z",
+        },
       });
 
       const { useLearningStore } = await import("@/stores/learning");
@@ -153,8 +168,8 @@ describe("useLearningStore integration", () => {
         code: 200,
         message: "success",
         data: [
-          { id: 1, name: "初学者", description: "完成首次练习", icon: "🏅" },
-          { id: 2, name: "坚持者", description: "连续7天学习", icon: "🔥" },
+          { id: 1, name: "初学者", description: "完成首次练习", icon_url: "sparkles", condition_type: "first_practice", created_at: "2026-01-01T00:00:00Z" },
+          { id: 2, name: "坚持者", description: "连续7天学习", icon_url: "calendar", condition_type: "streak_days", condition_value: "7", created_at: "2026-01-01T00:00:00Z" },
         ],
       });
 

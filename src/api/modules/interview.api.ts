@@ -2,6 +2,7 @@ import { get, post } from "@/utils/request";
 import type {
   InterviewSession,
   InterviewSessionCreate,
+  InterviewStartResponse,
   InterviewReport,
   SseEvent,
   InterviewQuestion,
@@ -10,7 +11,7 @@ import type {
   GameAchievement,
   LeaderboardEntry,
 } from "../types/interview.types";
-import type { ResponseModel } from "../types/response.types";
+import type { ResponseModel, PaginationParams } from "../types/response.types";
 import { getToken } from "@/utils/auth";
 
 const BASE_URL = "/interview";
@@ -23,24 +24,20 @@ function log(...args: unknown[]): void {
 }
 
 export const interviewApi = {
-  createSession(
-    data: InterviewSessionCreate,
-  ): Promise<ResponseModel<InterviewSession>> {
+  createSession(data: InterviewSessionCreate): Promise<ResponseModel<InterviewSession>> {
     log("createSession →", data);
     return post<ResponseModel<InterviewSession>>(`${BASE_URL}/sessions`, data);
   },
 
-  getSession(sessionId: string): Promise<ResponseModel<InterviewSession>> {
+  getSession(sessionId: number): Promise<ResponseModel<InterviewSession>> {
     log("getSession →", sessionId);
-    return get<ResponseModel<InterviewSession>>(
-      `${BASE_URL}/sessions/${sessionId}`,
-    );
+    return get<ResponseModel<InterviewSession>>(`${BASE_URL}/sessions/${sessionId}`);
   },
 
   getSessions(params?: {
-    skip?: number;
-    limit?: number;
     status?: string;
+    offset?: number;
+    limit?: number;
   }): Promise<ResponseModel<InterviewSession[]>> {
     log("getSessions →", params);
     return get<ResponseModel<InterviewSession[]>>(
@@ -49,16 +46,16 @@ export const interviewApi = {
     );
   },
 
-  startSession(sessionId: string): Promise<ResponseModel<InterviewSession>> {
+  startSession(sessionId: number): Promise<ResponseModel<InterviewStartResponse>> {
     log("startSession →", sessionId);
-    return post<ResponseModel<InterviewSession>>(
+    return post<ResponseModel<InterviewStartResponse>>(
       `${BASE_URL}/sessions/${sessionId}/start`,
       {},
     );
   },
 
   chatSSE(
-    sessionId: string,
+    sessionId: number,
     message: string,
     onEvent: (event: SseEvent) => void,
     onError?: (error: Error) => void,
@@ -81,7 +78,6 @@ export const interviewApi = {
     })
       .then(async (response) => {
         log("chatSSE response status:", response.status, response.statusText);
-        log("chatSSE response headers content-type:", response.headers.get("content-type"));
 
         if (!response.ok) {
           log("chatSSE error: HTTP", response.status);
@@ -104,15 +100,10 @@ export const interviewApi = {
           const { done, value } = await reader.read();
           if (done) {
             log("chatSSE: stream ended, total events:", eventCount);
-            if (buffer) {
-              log("chatSSE: remaining buffer on stream end:", JSON.stringify(buffer));
-            }
             break;
           }
 
           const chunk = decoder.decode(value, { stream: true });
-          log("chatSSE: raw chunk received:", JSON.stringify(chunk));
-
           buffer += chunk;
           const lines = buffer.split("\n");
           buffer = lines.pop() || "";
@@ -121,21 +112,13 @@ export const interviewApi = {
           for (const line of lines) {
             if (line.startsWith("event: ")) {
               currentEventType = line.slice(7).trim();
-              log("chatSSE: parsed event type:", currentEventType);
             } else if (line.startsWith("data: ")) {
               const data = line.slice(6);
               if (currentEventType) {
                 eventCount++;
-                log(`chatSSE: dispatching event #${eventCount}`, { type: currentEventType, data });
                 onEvent({ type: currentEventType as SseEvent["type"], data });
                 currentEventType = "";
-              } else {
-                log("chatSSE: data line without event type, skipping:", data);
               }
-            } else if (line.trim() === "") {
-              // empty line = event separator, no action needed
-            } else {
-              log("chatSSE: unrecognized line format:", JSON.stringify(line));
             }
           }
         }
@@ -152,7 +135,7 @@ export const interviewApi = {
     return controller;
   },
 
-  endSession(sessionId: string): Promise<ResponseModel<InterviewSession>> {
+  endSession(sessionId: number): Promise<ResponseModel<InterviewSession>> {
     log("endSession →", sessionId);
     return post<ResponseModel<InterviewSession>>(
       `${BASE_URL}/sessions/${sessionId}/end`,
@@ -160,7 +143,7 @@ export const interviewApi = {
     );
   },
 
-  cancelSession(sessionId: string): Promise<ResponseModel<InterviewSession>> {
+  cancelSession(sessionId: number): Promise<ResponseModel<InterviewSession>> {
     log("cancelSession →", sessionId);
     return post<ResponseModel<InterviewSession>>(
       `${BASE_URL}/sessions/${sessionId}/cancel`,
@@ -168,18 +151,14 @@ export const interviewApi = {
     );
   },
 
-  getReport(sessionId: string): Promise<ResponseModel<InterviewReport>> {
+  getReport(sessionId: number): Promise<ResponseModel<InterviewReport>> {
     log("getReport →", sessionId);
     return get<ResponseModel<InterviewReport>>(
       `${BASE_URL}/sessions/${sessionId}/report`,
     );
   },
 
-  getQuestions(params?: {
-    category?: string;
-    difficulty?: string;
-    type?: string;
-  }): Promise<ResponseModel<InterviewQuestion[]>> {
+  getQuestions(params?: PaginationParams): Promise<ResponseModel<InterviewQuestion[]>> {
     log("getQuestions →", params);
     return get<ResponseModel<InterviewQuestion[]>>(
       `${BASE_URL}/questions`,
@@ -199,15 +178,14 @@ export const interviewApi = {
 
   getGameAchievements(): Promise<ResponseModel<GameAchievement[]>> {
     log("getGameAchievements →");
-    return get<ResponseModel<GameAchievement[]>>(
-      `${BASE_URL}/game/achievements`,
-    );
+    return get<ResponseModel<GameAchievement[]>>(`${BASE_URL}/game/achievements`);
   },
 
-  getLeaderboard(): Promise<ResponseModel<LeaderboardEntry[]>> {
+  getLeaderboard(params?: PaginationParams): Promise<ResponseModel<LeaderboardEntry[]>> {
     log("getLeaderboard →");
     return get<ResponseModel<LeaderboardEntry[]>>(
       `${BASE_URL}/game/leaderboard`,
+      params as Record<string, unknown>,
     );
   },
 };

@@ -3,6 +3,7 @@ import type { Notification, NotificationPreferences } from "@/api/types/notifica
 export const mockNotifications: Notification[] = [
   {
     id: 1,
+    user_id: 1,
     title: "面试邀请",
     content: "您收到了一份来自字节跳动的前端开发面试邀请，请及时确认。",
     type: "interview_result",
@@ -12,6 +13,7 @@ export const mockNotifications: Notification[] = [
   },
   {
     id: 2,
+    user_id: 1,
     title: "社区互动",
     content: "您的帖子《Vue3 组合式 API 最佳实践》获得了 15 个点赞。",
     type: "community",
@@ -21,6 +23,7 @@ export const mockNotifications: Notification[] = [
   },
   {
     id: 3,
+    user_id: 1,
     title: "学习提醒",
     content: "您收藏的题库《React 面试高频题》已有 3 天未练习，快来复习吧！",
     type: "learning",
@@ -30,6 +33,7 @@ export const mockNotifications: Notification[] = [
   },
   {
     id: 4,
+    user_id: 1,
     title: "系统维护通知",
     content: "系统将于本周六 02:00-04:00 进行例行维护，届时服务将暂停。",
     type: "system",
@@ -38,6 +42,7 @@ export const mockNotifications: Notification[] = [
   },
   {
     id: 5,
+    user_id: 1,
     title: "面试报告已生成",
     content: "您的游戏式面试关卡 3 报告已生成，点击查看详细评分。",
     type: "interview_result",
@@ -48,9 +53,8 @@ export const mockNotifications: Notification[] = [
 ];
 
 export const mockNotificationPreferences: NotificationPreferences = {
-  email_notifications: true,
-  push_notifications: true,
-  interview_reminders: true,
-  community_updates: false,
-  learning_reminders: true,
+  interview_reminder: true,
+  community_interaction: false,
+  learning_reminder: true,
+  system_announcement: true,
 };

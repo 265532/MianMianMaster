@@ -18,16 +18,15 @@ export function registerInterviewHandlers(mock: MockAdapter): void {
   mock.onPost("/interview/sessions").reply((config) => {
     const data = JSON.parse(config.data);
     const newSession = {
-      id: `session-${Date.now()}`,
-      job_title: data.job_title || "前端开发",
-      company: data.company || "",
+      id: Date.now(),
+      candidate_id: 1,
+      strategy_id: data.strategy_id ?? null,
       status: "scheduled" as const,
-      type: data.type || "technical",
-      max_rounds: data.max_rounds || 10,
+      max_rounds: data.max_rounds,
       current_round: 0,
       created_at: new Date().toISOString(),
     };
-    mockInterviewSessions.unshift(newSession);
+    mockInterviewSessions.unshift(newSession as any);
     return success(newSession);
   });
 
@@ -35,78 +34,72 @@ export function registerInterviewHandlers(mock: MockAdapter): void {
     return success(mockInterviewSessions);
   });
 
-  mock.onGet(/\/interview\/sessions\/[\w-]+$/).reply((config) => {
-    const id = config.url?.split("/").pop();
+  mock.onGet(/\/interview\/sessions\/\d+$/).reply((config) => {
+    const id = parseInt(config.url?.split("/").pop() ?? "0");
     const session = mockInterviewSessions.find((s) => s.id === id);
     if (session) {
       return success(session);
     }
     return success({
       id,
-      job_title: "前端开发",
-      company: "字节跳动",
+      candidate_id: 1,
       status: "in_progress" as const,
-      max_rounds: 10,
       current_round: 3,
       created_at: new Date().toISOString(),
-      started_at: new Date().toISOString(),
+      start_time: new Date().toISOString(),
     });
   });
 
-  mock.onPost(/\/interview\/sessions\/[\w-]+\/start$/).reply((config) => {
-    const id = config.url?.split("/")[3];
+  mock.onPost(/\/interview\/sessions\/\d+\/start$/).reply((config) => {
+    const id = parseInt(config.url?.split("/")[3]);
     const session = mockInterviewSessions.find((s) => s.id === id);
     if (session) {
       session.status = "in_progress";
-      session.started_at = new Date().toISOString();
-      return success(session);
+      session.start_time = new Date().toISOString();
     }
     return success({
-      id: id || `session-${Date.now()}`,
-      job_title: "前端开发",
-      company: "字节跳动",
-      status: "in_progress" as const,
-      max_rounds: 10,
-      current_round: 1,
-      created_at: new Date().toISOString(),
-      started_at: new Date().toISOString(),
+      session_id: id,
+      opening_message: "你好！我是你的AI面试官，今天我们将进行一次技术面试。请先做个自我介绍吧。",
+      status: "in_progress",
     });
   });
 
-  mock.onPost(/\/interview\/sessions\/[\w-]+\/end$/).reply((config) => {
-    const id = config.url?.split("/")[3];
+  mock.onPost(/\/interview\/sessions\/\d+\/end$/).reply((config) => {
+    const id = parseInt(config.url?.split("/")[3]);
     const session = mockInterviewSessions.find((s) => s.id === id);
     if (session) {
       session.status = "completed";
-      session.ended_at = new Date().toISOString();
-      session.total_score = 85;
+      session.end_time = new Date().toISOString();
+      session.score = 85;
       return success(session);
     }
     return success({
-      id: id || "session-1",
-      job_title: "前端开发",
+      id,
+      candidate_id: 1,
       status: "completed" as const,
-      total_score: 85,
-      ended_at: new Date().toISOString(),
+      score: 85,
+      end_time: new Date().toISOString(),
+      created_at: new Date().toISOString(),
     });
   });
 
-  mock.onPost(/\/interview\/sessions\/[\w-]+\/cancel$/).reply((config) => {
-    const id = config.url?.split("/")[3];
+  mock.onPost(/\/interview\/sessions\/\d+\/cancel$/).reply((config) => {
+    const id = parseInt(config.url?.split("/")[3]);
     const session = mockInterviewSessions.find((s) => s.id === id);
     if (session) {
       session.status = "cancelled";
       return success(session);
     }
     return success({
-      id: id || "session-1",
-      job_title: "前端开发",
+      id,
+      candidate_id: 1,
       status: "cancelled" as const,
+      created_at: new Date().toISOString(),
     });
   });
 
-  mock.onGet(/\/interview\/sessions\/[\w-]+\/report$/).reply((config) => {
-    const id = config.url?.split("/")[3];
+  mock.onGet(/\/interview\/sessions\/\d+\/report$/).reply((config) => {
+    const id = parseInt(config.url?.split("/")[3]);
     return success({
       ...mockInterviewReport,
       session_id: id,
@@ -133,5 +126,5 @@ export function registerInterviewHandlers(mock: MockAdapter): void {
     return success(mockLeaderboard);
   });
 
-  console.log("[Mock] Interview handlers registered (aligned with backend API)");
+  console.log("[Mock] Interview handlers registered");
 }

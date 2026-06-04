@@ -11,19 +11,26 @@ function success<T>(
 }
 
 export function registerAssessmentHandlers(mock: MockAdapter): void {
+  mock.onGet("/assessments").reply(() => {
+    return success(mockAssessments);
+  });
+
   mock.onPost("/assessments").reply((config) => {
     const data = JSON.parse(config.data);
     return success({
       id: Date.now(),
       title: data.title || "新测评",
-      type: data.type || "general",
+      description: data.description,
+      job_position_id: data.job_position_id ?? null,
       created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      questions_count: data.questions?.length ?? 0,
     });
   });
 
   mock.onPost("/assessments/submit").reply((config) => {
     const data = JSON.parse(config.data);
-    const assessmentId = data.id || 1;
+    const assessmentId = data.assessment_id || 1;
     const existingResult = mockAssessmentResults.find(
       (r) => r.assessment_id === assessmentId,
     );
@@ -32,8 +39,9 @@ export function registerAssessmentHandlers(mock: MockAdapter): void {
     }
     return success({
       id: Date.now(),
+      user_id: 1,
       assessment_id: assessmentId,
-      score: Math.floor(Math.random() * 30) + 70,
+      total_score: Math.floor(Math.random() * 30) + 70,
       details: {
         overall: Math.floor(Math.random() * 30) + 70,
         technical: Math.floor(Math.random() * 30) + 70,
@@ -42,10 +50,6 @@ export function registerAssessmentHandlers(mock: MockAdapter): void {
       },
       created_at: new Date().toISOString(),
     });
-  });
-
-  mock.onGet("/assessments").reply(() => {
-    return success(mockAssessments);
   });
 
   mock.onGet(/\/assessments\/\d+\/result$/).reply((config) => {

@@ -17,7 +17,7 @@ import {
   Zap,
   Calendar,
 } from "lucide-vue-next";
-import { ref } from "vue";
+import { ref, computed, onMounted } from "vue";
 import {
   comprehensiveAssessmentQuestions,
   calculateAssessmentResult,
@@ -26,6 +26,9 @@ import {
   getQuestionsByType,
 } from "../utils/assessment";
 import type { JobMatch, AssessmentResult } from "../utils/assessment";
+import { useKnowledgeStore } from "@/stores/knowledge";
+import { storeToRefs } from "pinia";
+import { jobApi } from "@/api/modules/job.api";
 
 interface LearningPlanResultData {
   score: number;
@@ -37,227 +40,51 @@ interface LearningPlanResultData {
   studyPlan: string[];
 }
 
-// 岗位匹配结果数据
-const jobMatches = [
-  {
-    id: 1,
-    title: "高级前端开发工程师",
-    company: "字节跳动",
-    matchRate: 92,
-    salary: "25K-35K",
-    location: "北京",
-    tags: ["Vue3", "React", "TypeScript", "Node.js", "微前端", "性能优化"],
-    description:
-      "负责公司核心产品的前端开发，参与产品需求分析和技术方案设计，与后端团队协作完成功能开发，优化用户体验和页面性能。",
-    responsibilities: [
-      "负责公司核心产品的前端开发和维护",
-      "参与产品需求分析和技术方案设计",
-      "与后端团队协作完成功能开发",
-      "优化用户体验和页面性能",
-      "制定前端技术规范和最佳实践",
-      "指导初级前端开发工程师",
-    ],
-    requirements: [
-      "本科及以上学历，计算机相关专业",
-      "3-5年前端开发经验",
-      "精通Vue3、React、TypeScript等前端技术",
-      "熟悉Node.js和后端技术",
-      "有微前端开发经验优先",
-      "良好的沟通能力和团队协作精神",
-    ],
-    experience: "3-5年",
-    education: "本科及以上",
-    benefits: [
-      "五险一金",
-      "年终奖",
-      "带薪年假",
-      "期权激励",
-      "免费三餐",
-      "健身房",
-      "定期团建",
-    ],
-    logo: "https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=ByteDance%20logo%20minimalist%20design&image_size=square",
+// Store 初始化
+const knowledgeStore = useKnowledgeStore();
+const { jobPositions } = storeToRefs(knowledgeStore);
+
+// 匹配分数（异步加载）
+const matchScores = ref<Record<number, number>>({});
+
+const loadMatchScores = async () => {
+  for (const job of jobPositions.value) {
+    try {
+      const res = await jobApi.getJobMatch(job.id);
+      matchScores.value[job.id] = res.data;
+    } catch {
+      matchScores.value[job.id] = 0;
+    }
+  }
+};
+
+// 岗位匹配结果数据（从 Store 映射）
+const jobMatches = computed<JobMatch[]>(() =>
+  jobPositions.value.map((job) => ({
+    id: job.id,
+    title: job.title,
+    company: job.company ?? "未知公司",
+    matchRate: matchScores.value[job.id] ?? 0,
+    salary: job.salary_range ?? "面议",
+    location: job.location ?? "未知",
+    tags:
+      job.required_skills?.map((s) => s.concept_name).length
+        ? job.required_skills!.map((s) => s.concept_name)
+        : ["暂无标签"],
+    description: job.description ?? "暂无描述",
+    responsibilities: ["暂无数据"],
+    requirements: job.requirements ? [job.requirements] : ["暂无数据"],
+    benefits: ["暂无数据"],
+    experience: job.level ?? "不限",
+    education: "不限",
+    logo: `https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=${encodeURIComponent(job.company ?? "Unknown")}%20logo%20minimalist%20design&image_size=square`,
     isFavorite: false,
-    companyInfo:
-      "字节跳动是全球领先的内容平台公司，旗下拥有抖音、今日头条等知名产品，致力于通过技术创新为用户创造价值。",
+    companyInfo: "暂无公司信息",
     jobType: "全职",
-    publishDate: "2024-01-15",
-    deadline: "2024-02-15",
-  },
-  {
-    id: 2,
-    title: "全栈开发工程师",
-    company: "阿里巴巴",
-    matchRate: 85,
-    salary: "30K-40K",
-    location: "杭州",
-    tags: ["JavaScript", "Node.js", "React", "Java", "Docker", "Kubernetes"],
-    description:
-      "负责公司项目的全栈开发，包括前端界面和后端服务，参与技术架构设计和优化，解决复杂的技术问题。",
-    responsibilities: [
-      "负责公司项目的全栈开发，包括前端界面和后端服务",
-      "参与技术架构设计和优化",
-      "解决复杂的技术问题",
-      "与团队成员协作完成项目目标",
-      "编写技术文档和代码注释",
-    ],
-    requirements: [
-      "本科及以上学历，计算机相关专业",
-      "5年以上全栈开发经验",
-      "精通JavaScript、Node.js、React等前端技术",
-      "熟悉Java等后端技术",
-      "了解Docker和Kubernetes",
-      "良好的问题解决能力和学习能力",
-    ],
-    experience: "5年以上",
-    education: "本科及以上",
-    benefits: [
-      "五险一金",
-      "年终奖",
-      "带薪年假",
-      "股票期权",
-      "免费三餐",
-      "员工宿舍",
-      "班车接送",
-    ],
-    logo: "https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Alibaba%20logo%20minimalist%20design&image_size=square",
-    isFavorite: false,
-    companyInfo:
-      "阿里巴巴集团是全球领先的数字商业公司，旗下拥有淘宝、天猫、支付宝等知名产品，致力于通过数字技术推动商业进步。",
-    jobType: "全职",
-    publishDate: "2024-01-10",
-    deadline: "2024-02-10",
-  },
-  {
-    id: 3,
-    title: "Web前端工程师",
-    company: "腾讯",
-    matchRate: 78,
-    salary: "20K-30K",
-    location: "深圳",
-    tags: ["HTML5", "CSS3", "JavaScript", "Vue", "Webpack", "TypeScript"],
-    description:
-      "负责腾讯旗下产品的前端开发，优化用户体验，提升页面性能，与设计和后端团队紧密合作。",
-    responsibilities: [
-      "负责腾讯旗下产品的前端开发",
-      "优化用户体验，提升页面性能",
-      "与设计和后端团队紧密合作",
-      "参与产品需求讨论和技术方案设计",
-      "维护和更新现有项目",
-    ],
-    requirements: [
-      "本科及以上学历，计算机相关专业",
-      "2-4年前端开发经验",
-      "精通HTML5、CSS3、JavaScript等前端技术",
-      "熟悉Vue框架",
-      "了解Webpack等构建工具",
-      "良好的团队协作能力",
-    ],
-    experience: "2-4年",
-    education: "本科及以上",
-    benefits: [
-      "五险一金",
-      "年终奖",
-      "带薪年假",
-      "班车接送",
-      "免费午餐",
-      "健身房",
-    ],
-    logo: "https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Tencent%20logo%20minimalist%20design&image_size=square",
-    isFavorite: false,
-    companyInfo:
-      "腾讯是中国领先的互联网公司，旗下拥有微信、QQ、腾讯视频等知名产品，致力于通过互联网服务提升人类生活品质。",
-    jobType: "全职",
-    publishDate: "2024-01-08",
-    deadline: "2024-02-08",
-  },
-  {
-    id: 4,
-    title: "前端架构师",
-    company: "美团",
-    matchRate: 88,
-    salary: "35K-45K",
-    location: "北京",
-    tags: ["Vue3", "React", "TypeScript", "微前端", "性能优化", "工程化"],
-    description:
-      "负责美团前端技术架构设计和演进，制定前端技术规范和最佳实践，指导团队成员提升技术能力。",
-    responsibilities: [
-      "负责美团前端技术架构设计和演进",
-      "制定前端技术规范和最佳实践",
-      "指导团队成员提升技术能力",
-      "解决复杂的前端技术问题",
-      "参与技术选型和评估",
-    ],
-    requirements: [
-      "本科及以上学历，计算机相关专业",
-      "5年以上前端开发经验",
-      "精通Vue3、React、TypeScript等前端技术",
-      "有微前端和性能优化经验",
-      "良好的技术领导力和沟通能力",
-      "有大型项目架构经验",
-    ],
-    experience: "5年以上",
-    education: "本科及以上",
-    benefits: [
-      "五险一金",
-      "年终奖",
-      "带薪年假",
-      "免费午餐",
-      "健身房",
-      "定期团建",
-    ],
-    logo: "https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Meituan%20logo%20minimalist%20design&image_size=square",
-    isFavorite: false,
-    companyInfo:
-      "美团是中国领先的生活服务平台，旗下拥有美团外卖、美团打车等服务，致力于通过科技创新提升人们的生活品质。",
-    jobType: "全职",
-    publishDate: "2024-01-12",
-    deadline: "2024-02-12",
-  },
-  {
-    id: 5,
-    title: "React开发工程师",
-    company: "京东",
-    matchRate: 82,
-    salary: "22K-32K",
-    location: "北京",
-    tags: ["React", "TypeScript", "Redux", "Next.js", "GraphQL", "Jest"],
-    description:
-      "负责京东商城的前端开发，使用React技术栈构建高性能的用户界面，优化用户体验。",
-    responsibilities: [
-      "负责京东商城的前端开发",
-      "使用React技术栈构建高性能的用户界面",
-      "优化用户体验和页面性能",
-      "与后端团队协作完成功能开发",
-      "编写单元测试和集成测试",
-    ],
-    requirements: [
-      "本科及以上学历，计算机相关专业",
-      "3-5年前端开发经验",
-      "精通React、TypeScript、Redux等前端技术",
-      "熟悉Next.js和GraphQL",
-      "了解Jest等测试框架",
-      "良好的代码质量意识",
-    ],
-    experience: "3-5年",
-    education: "本科及以上",
-    benefits: [
-      "五险一金",
-      "年终奖",
-      "带薪年假",
-      "员工折扣",
-      "免费午餐",
-      "健身房",
-    ],
-    logo: "https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=JD.com%20logo%20minimalist%20design&image_size=square",
-    isFavorite: false,
-    companyInfo:
-      "京东是中国领先的自营式电商企业，致力于为消费者提供高品质的商品和服务，推动零售行业的数字化转型。",
-    jobType: "全职",
-    publishDate: "2024-01-05",
-    deadline: "2024-02-05",
-  },
-];
+    publishDate: job.created_at?.split("T")[0] ?? "",
+    deadline: "",
+  })),
+);
 
 // 职业测评结果数据
 const careerAssessment = {
@@ -875,6 +702,12 @@ const closeModal = () => {
     resumeFile.value.value = "";
   }
 };
+
+// 初始化：加载 Store 数据和匹配分数
+onMounted(async () => {
+  await knowledgeStore.fetchAllData();
+  await loadMatchScores();
+});
 </script>
 
 <template>

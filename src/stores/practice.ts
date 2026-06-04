@@ -1,27 +1,7 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
 import { learningApi } from "@/api/modules/learning.api";
-
-export interface PracticeQuestion {
-  id: number;
-  title: string;
-  description: string;
-  type: string;
-  difficulty: string;
-  options: { id: string; text: string }[];
-  correctAnswer: string;
-}
-
-export interface PracticeBank {
-  id: number;
-  title: string;
-  description: string;
-  category: string;
-  questionCount: number;
-  estimatedTime: string;
-  passRate: number;
-  questions: PracticeQuestion[];
-}
+import type { PracticeBank, PracticeQuestion } from "@/api/types/practice.types";
 
 export const usePracticeStore = defineStore("practice", () => {
   const banks = ref<PracticeBank[]>([]);
@@ -40,11 +20,11 @@ export const usePracticeStore = defineStore("practice", () => {
         id: course.id,
         title: course.title,
         description: course.description || "",
-        category: course.category || "通用",
-        questionCount: 0,
-        estimatedTime: "30分钟",
-        passRate: 70,
-        questions: [],
+        level: course.level || "通用",
+        question_count: 0,
+        estimated_time: "30分钟",
+        pass_rate: 70,
+        questions: [] as PracticeQuestion[],
       }));
     } catch (err: any) {
       console.error("[Practice] fetchBanks error:", err);

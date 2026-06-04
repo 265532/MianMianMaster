@@ -1,6 +1,9 @@
 <script setup lang="ts">
-import { ref, computed, watch } from "vue";
+import { ref, computed, watch, onMounted } from "vue";
 import { useRouter } from "vue-router";
+import { storeToRefs } from "pinia";
+import { useKnowledgeStore } from "@/stores/knowledge";
+import { useInterviewStore } from "@/stores/interview";
 import {
   Search,
   Filter,
@@ -35,6 +38,13 @@ interface Question {
 
 const router = useRouter();
 
+// Store 初始化
+const knowledgeStore = useKnowledgeStore();
+const { jobPositions } = storeToRefs(knowledgeStore);
+
+const interviewStore = useInterviewStore();
+const { questions } = storeToRefs(interviewStore);
+
 // 状态管理
 const searchQuery = ref("");
 const selectedJobCategory = ref("all");
@@ -44,209 +54,35 @@ const showFilters = ref(false);
 const currentPage = ref(1);
 const questionsPerPage = ref(10);
 
-// 岗位分类数据
-const jobCategories: JobCategory[] = [
-  {
-    id: "frontend",
-    name: "前端开发",
-    icon: "Languages",
-    description: "专注于Web前端技术，包括HTML、CSS、JavaScript等",
-    questionCount: 120,
-  },
-  {
-    id: "backend",
-    name: "后端开发",
-    icon: "Server",
-    description: "专注于服务器端技术，包括数据库、API设计等",
-    questionCount: 150,
-  },
-  {
-    id: "product",
-    name: "产品经理",
+// 岗位分类数据（从 Store 映射）
+const jobCategories = computed(() =>
+  jobPositions.value.map((job) => ({
+    id: String(job.id),
+    name: job.title,
     icon: "Briefcase",
-    description: "专注于产品规划、用户研究和需求分析",
-    questionCount: 80,
-  },
-  {
-    id: "ai",
-    name: "人工智能",
-    icon: "Brain",
-    description: "专注于机器学习、深度学习等AI技术",
-    questionCount: 100,
-  },
-  {
-    id: "uiux",
-    name: "UI/UX设计",
-    icon: "Palette",
-    description: "专注于用户界面和用户体验设计",
-    questionCount: 70,
-  },
-  {
-    id: "marketing",
-    name: "市场营销",
-    icon: "TrendingUp",
-    description: "专注于市场策略、品牌推广等",
-    questionCount: 60,
-  },
-];
+    description: job.description ?? "暂无描述",
+    questionCount: 0, // 后端暂无此数据
+  }))
+);
 
-// 模拟题库数据
-const mockQuestions: Question[] = [
-  // 前端开发问题
-  {
-    id: "1",
-    question: "请解释一下Vue3的响应式原理，以及它与Vue2的区别",
-    jobCategory: "frontend",
-    difficulty: "hard",
-    type: "technical",
-    tags: ["Vue", "响应式", "前端"],
-    answer:
-      "Vue3使用Proxy实现响应式，相比Vue2的Object.defineProperty，它可以监听对象的添加和删除操作，并且可以监听数组的变化。此外，Vue3的响应式系统更加高效，因为它使用了WeakMap来存储依赖关系，避免了内存泄漏。",
-    likes: 120,
-    views: 500,
-  },
-  {
-    id: "2",
-    question: "如何优化前端页面的加载性能？",
-    jobCategory: "frontend",
-    difficulty: "medium",
-    type: "technical",
-    tags: ["性能优化", "前端"],
-    answer:
-      "优化前端页面加载性能的方法包括：1. 减少HTTP请求，2. 压缩资源，3. 使用CDN，4. 启用浏览器缓存，5. 优化图片，6. 减少DOM元素数量，7. 使用异步加载，8. 优化CSS和JavaScript，9. 使用预加载，10. 监控性能。",
-    likes: 95,
-    views: 420,
-  },
-  // 后端开发问题
-  {
-    id: "3",
-    question: "请解释一下RESTful API的设计原则",
-    jobCategory: "backend",
-    difficulty: "medium",
-    type: "technical",
-    tags: ["API", "REST", "后端"],
-    answer:
-      "RESTful API的设计原则包括：1. 资源导向，2. HTTP方法，3. 无状态，4. 统一接口，5. 缓存，6. 分层系统，7. 代码按需。",
-    likes: 105,
-    views: 380,
-  },
-  {
-    id: "4",
-    question: "如何处理高并发请求？",
-    jobCategory: "backend",
-    difficulty: "hard",
-    type: "technical",
-    tags: ["高并发", "后端", "性能"],
-    answer:
-      "处理高并发请求的方法包括：1. 垂直扩展，2. 水平扩展，3. 缓存，4. 数据库优化，5. 异步处理，6. 代码优化，7. 负载均衡，8. 限流，9. 降级，10. 熔断。",
-    likes: 110,
-    views: 450,
-  },
-  // 产品经理问题
-  {
-    id: "5",
-    question: "如何进行用户调研？",
-    jobCategory: "product",
-    difficulty: "easy",
-    type: "behavioral",
-    tags: ["用户调研", "产品"],
-    answer:
-      "用户调研的方法包括：1. 问卷调查，2. 访谈，3. 焦点小组，4. 可用性测试，5. 数据分析，6. 竞品分析。",
-    likes: 85,
-    views: 320,
-  },
-  {
-    id: "6",
-    question: "如何制定产品 roadmap？",
-    jobCategory: "product",
-    difficulty: "medium",
-    type: "behavioral",
-    tags: ["产品规划", "roadmap"],
-    answer:
-      "制定产品 roadmap的步骤包括：1. 确定产品愿景和目标，2. 收集和分析需求，3. 优先级排序，4. 制定时间线，5. 与 stakeholders 沟通，6. 定期更新和调整。",
-    likes: 90,
-    views: 350,
-  },
-  // 人工智能问题
-  {
-    id: "7",
-    question: "请解释一下机器学习中的过拟合问题",
-    jobCategory: "ai",
-    difficulty: "medium",
-    type: "technical",
-    tags: ["机器学习", "过拟合", "AI"],
-    answer:
-      "过拟合是指模型在训练数据上表现很好，但在新数据上表现很差的现象。解决过拟合的方法包括：1. 增加训练数据，2. 正则化，3. 特征选择，4. 交叉验证，5. 早停法。",
-    likes: 98,
-    views: 390,
-  },
-  {
-    id: "8",
-    question: "什么是深度学习？它与传统机器学习有什么区别？",
-    jobCategory: "ai",
-    difficulty: "hard",
-    type: "technical",
-    tags: ["深度学习", "机器学习", "AI"],
-    answer:
-      "深度学习是机器学习的一个分支，它使用多层神经网络来学习数据的表示。与传统机器学习相比，深度学习可以自动学习特征，不需要手动特征工程，并且在处理大规模数据时表现更好。",
-    likes: 115,
-    views: 480,
-  },
-  // UI/UX设计问题
-  {
-    id: "9",
-    question: "什么是用户体验设计？",
-    jobCategory: "uiux",
-    difficulty: "easy",
-    type: "behavioral",
-    tags: ["UX设计", "用户体验"],
-    answer:
-      "用户体验设计是指设计产品时，以用户为中心，关注用户的需求、感受和行为，确保产品易于使用、高效和愉悦。",
-    likes: 80,
-    views: 300,
-  },
-  {
-    id: "10",
-    question: "如何进行用户旅程映射？",
-    jobCategory: "uiux",
-    difficulty: "medium",
-    type: "behavioral",
-    tags: ["用户旅程", "UX设计"],
-    answer:
-      "用户旅程映射的步骤包括：1. 确定用户角色，2. 确定用户目标，3. 识别用户接触点，4. 分析用户情感，5. 识别痛点和机会，6. 提出改进方案。",
-    likes: 88,
-    views: 330,
-  },
-  // 市场营销问题
-  {
-    id: "11",
-    question: "什么是内容营销？",
-    jobCategory: "marketing",
-    difficulty: "easy",
-    type: "behavioral",
-    tags: ["内容营销", "市场营销"],
-    answer:
-      "内容营销是指通过创建和分发有价值、相关和一致的内容，来吸引和留住目标受众，并最终推动有利可图的客户行动。",
-    likes: 75,
-    views: 280,
-  },
-  {
-    id: "12",
-    question: "如何制定社交媒体营销策略？",
-    jobCategory: "marketing",
-    difficulty: "medium",
-    type: "behavioral",
-    tags: ["社交媒体", "营销策略"],
-    answer:
-      "制定社交媒体营销策略的步骤包括：1. 确定目标，2. 了解目标受众，3. 选择合适的平台，4. 制定内容策略，5. 设定KPI，6. 执行和监控，7. 分析和优化。",
-    likes: 82,
-    views: 310,
-  },
-];
+// 题库数据（从 Store 映射）
+const mockQuestions = computed(() =>
+  questions.value.map((q) => ({
+    id: String(q.id),
+    question: q.content,
+    jobCategory: "all", // 后端暂无岗位分类字段
+    difficulty: (q.difficulty as "easy" | "medium" | "hard") ?? "medium",
+    type: (q.question_type as "technical" | "behavioral" | "pressure") ?? "technical",
+    tags: [], // 后端暂无标签字段
+    answer: "暂无参考答案", // 后端暂无答案字段
+    likes: 0, // 后端暂无点赞字段
+    views: 0, // 后端暂无浏览字段
+  }))
+);
 
 // 计算属性：过滤后的问题
 const filteredQuestions = computed(() => {
-  let result = [...mockQuestions];
+  let result = [...mockQuestions.value];
 
   // 按搜索词过滤
   if (searchQuery.value) {
@@ -339,6 +175,14 @@ watch(
     currentPage.value = 1;
   },
 );
+
+// 加载 Store 数据
+onMounted(async () => {
+  await Promise.all([
+    knowledgeStore.fetchAllData(),
+    interviewStore.fetchQuestions(),
+  ]);
+});
 </script>
 
 <template>

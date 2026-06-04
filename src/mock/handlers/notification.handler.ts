@@ -15,6 +15,22 @@ export function registerNotificationHandlers(mock: MockAdapter): void {
     return success(mockNotifications);
   });
 
+  mock.onPost("/notifications").reply((config) => {
+    const data = JSON.parse(config.data);
+    const newNotification = {
+      id: Date.now(),
+      user_id: data.user_id || 1,
+      title: data.title,
+      content: data.content,
+      type: data.type,
+      is_read: false,
+      link: data.link,
+      created_at: new Date().toISOString(),
+    };
+    mockNotifications.unshift(newNotification);
+    return success(newNotification);
+  });
+
   mock.onGet("/notifications/unread-count").reply(() => {
     const count = mockNotifications.filter((n) => !n.is_read).length;
     return success(count);
@@ -25,8 +41,9 @@ export function registerNotificationHandlers(mock: MockAdapter): void {
     const notification = mockNotifications.find((n) => n.id === id);
     if (notification) {
       notification.is_read = true;
+      return success(notification);
     }
-    return success("MARKED_AS_READ");
+    return [404, { code: 404, message: "NOTIFICATION_NOT_FOUND", data: null }];
   });
 
   mock.onPut("/notifications/read-all").reply(() => {
@@ -37,7 +54,7 @@ export function registerNotificationHandlers(mock: MockAdapter): void {
   });
 
   mock.onGet("/notifications/preferences").reply(() => {
-    return success(mockNotificationPreferences);
+    return success({ ...mockNotificationPreferences });
   });
 
   mock.onPut("/notifications/preferences").reply((config) => {

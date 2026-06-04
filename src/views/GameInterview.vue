@@ -5,12 +5,9 @@ import { storeToRefs } from "pinia";
 import {
   Gamepad2,
   Trophy,
-  Zap,
-  Brain,
   Target,
   CheckCircle,
   Star,
-  BarChart3,
   Users,
   Clock,
   Award as AwardIcon,
@@ -19,31 +16,14 @@ import {
   Volume2,
   VolumeX,
   X,
-  Briefcase,
-  Building,
-  User,
 } from "lucide-vue-next";
 import { useInterviewStore } from "@/stores/interview";
+import type { GameAchievement as GameAchievementType } from "@/api/types/interview.types";
 
 const router = useRouter();
 const interviewStore = useInterviewStore();
 const { gameLevels, gameStats, gameAchievements, leaderboard, loading } =
   storeToRefs(interviewStore);
-
-interface Certification {
-  id: number;
-  name: string;
-  status: string;
-  level: number;
-  description: string;
-  icon: any;
-  skills: string[];
-  date: string | null;
-  progress: number;
-  condition: string;
-}
-
-const certifications = ref<Certification[]>([]);
 
 const activeTab = ref("levels");
 
@@ -57,10 +37,10 @@ interface StatItem {
 const statItems = computed<StatItem[]>(() =>
   gameStats.value
     ? [
-        { label: '已完成关卡', value: gameStats.value.completedLevels, icon: Trophy, color: 'text-auxiliary-orange' },
-        { label: '总面试次数', value: gameStats.value.totalQuestions, icon: Users, color: 'text-primary' },
-        { label: '成功率', value: gameStats.value.correctRate, icon: CheckCircle, color: 'text-auxiliary-green' },
-        { label: '总游戏时间', value: gameStats.value.streak, icon: Clock, color: 'text-auxiliary-blue' },
+        { label: '已完成挑战', value: gameStats.value.completed_challenges, icon: Trophy, color: 'text-auxiliary-orange' },
+        { label: '总经验值', value: gameStats.value.total_xp, icon: Users, color: 'text-primary' },
+        { label: '正确率', value: gameStats.value.accuracy_rate != null ? `${gameStats.value.accuracy_rate}%` : undefined, icon: CheckCircle, color: 'text-auxiliary-green' },
+        { label: '当前等级', value: gameStats.value.current_level, icon: Clock, color: 'text-auxiliary-blue' },
       ]
     : [],
 )
@@ -68,22 +48,8 @@ const isLeaderboardOpen = ref(false);
 const isSettingsOpen = ref(false);
 const isHelpOpen = ref(false);
 const isAchievementDetailOpen = ref(false);
-const isCertificationDetailOpen = ref(false);
 
-interface Achievement {
-  id: number;
-  name: string;
-  description: string;
-  unlocked: boolean;
-  icon: any;
-  points: number;
-  date: string | null;
-  rarity: string;
-  condition: string;
-}
-
-const selectedAchievement = ref<Achievement | null>(null);
-const selectedCertification = ref<Certification | null>(null);
+const selectedAchievement = ref<GameAchievementType | null>(null);
 const currentVolume = ref(70);
 const soundEnabled = ref(true);
 
@@ -93,7 +59,7 @@ const startLevel = (levelId: number) => {
 
 const startGame = () => {
   const firstUnlockedLevel = gameLevels.value.find(
-    (level) => level.status === "已解锁" || level.status === "unlocked",
+    (level) => level.is_unlocked,
   );
   if (firstUnlockedLevel) {
     router.push(`/game-interview/level/${firstUnlockedLevel.id}/detail`);
@@ -120,24 +86,14 @@ const adjustVolume = (value: number) => {
   currentVolume.value = value;
 };
 
-const viewAchievementDetail = (achievement: Achievement) => {
+const viewAchievementDetail = (achievement: GameAchievementType) => {
   selectedAchievement.value = achievement;
   isAchievementDetailOpen.value = true;
-};
-
-const viewCertificationDetail = (cert: Certification) => {
-  selectedCertification.value = cert;
-  isCertificationDetailOpen.value = true;
 };
 
 const closeAchievementDetail = () => {
   isAchievementDetailOpen.value = false;
   selectedAchievement.value = null;
-};
-
-const closeCertificationDetail = () => {
-  isCertificationDetailOpen.value = false;
-  selectedCertification.value = null;
 };
 
 onMounted(async () => {
@@ -262,17 +218,16 @@ onMounted(async () => {
           <div
             v-for="level in gameLevels"
             :key="level.id"
-            class="p-6 rounded-[24px] relative overflow-hidden group hover:shadow-md transition-all border border-transparent hover:border-neutral-border"
-            :class="level.background"
+            class="p-6 rounded-[24px] relative overflow-hidden group hover:shadow-md transition-all border border-transparent hover:border-neutral-border bg-neutral-bg"
           >
             <div class="flex justify-between items-start mb-4">
               <div class="flex-1">
                 <div class="flex items-center gap-2 mb-1">
                   <p class="text-[10px] font-bold text-primary uppercase">
-                    {{ level.name }}
+                    {{ level.difficulty }}
                   </p>
                   <span
-                    v-if="level.status === '已解锁'"
+                    v-if="level.is_unlocked"
                     class="px-2 py-1 bg-auxiliary-green/10 text-auxiliary-green text-[10px] font-bold rounded-full"
                     >已解锁</span
                   >
@@ -283,130 +238,33 @@ onMounted(async () => {
                   >
                 </div>
                 <h4 class="font-bold text-neutral-title mb-2">
-                  {{ level.title }}
+                  {{ level.name }}
                 </h4>
                 <p class="text-sm text-neutral-helper mb-4">
-                  {{ level.description }}
+                  {{ level.description || '暂无描述' }}
                 </p>
-              </div>
-              <div
-                class="w-12 h-12 rounded-2xl bg-white flex items-center justify-center text-primary shadow-sm group-hover:gradient-primary group-hover:text-white transition-all"
-              >
-                <span class="text-2xl">{{ level.icon }}</span>
               </div>
             </div>
 
-            <!-- 面试场景信息 -->
-            <div
-              class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4"
-            >
-              <div class="flex items-center gap-2">
-                <Building :size="16" class="text-neutral-helper" />
-                <div>
-                  <div class="text-xs text-neutral-helper">公司</div>
-                  <div class="text-sm font-bold text-neutral-title">
-                    {{ level.公司 }}
-                  </div>
-                </div>
-              </div>
-              <div class="flex items-center gap-2">
-                <Briefcase :size="16" class="text-neutral-helper" />
-                <div>
-                  <div class="text-xs text-neutral-helper">面试类型</div>
-                  <div class="text-sm font-bold text-neutral-title">
-                    {{ level.面试类型 }}
-                  </div>
-                </div>
-              </div>
-              <div class="flex items-center gap-2">
-                <User :size="16" class="text-neutral-helper" />
-                <div>
-                  <div class="text-xs text-neutral-helper">面试官</div>
-                  <div class="text-sm font-bold text-neutral-title">
-                    {{ level.面试官 }}
-                  </div>
-                </div>
-              </div>
+            <!-- 关卡信息 -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div class="flex items-center gap-2">
                 <Trophy :size="16" class="text-neutral-helper" />
                 <div>
                   <div class="text-xs text-neutral-helper">难度</div>
                   <div class="text-sm font-bold text-neutral-title">
-                    {{ level.难度 }}
+                    {{ level.difficulty }}
                   </div>
                 </div>
               </div>
-            </div>
-
-            <!-- 进度信息 -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-              <div>
-                <div
-                  class="flex justify-between text-xs text-neutral-helper mb-1"
-                >
-                  <span>进度</span>
-                  <span>{{ level.progress }}%</span>
+              <div class="flex items-center gap-2">
+                <Target :size="16" class="text-neutral-helper" />
+                <div>
+                  <div class="text-xs text-neutral-helper">题目数量</div>
+                  <div class="text-sm font-bold text-neutral-title">
+                    {{ level.questions_count ?? '-' }} 题
+                  </div>
                 </div>
-                <div class="h-2 bg-white rounded-full overflow-hidden">
-                  <div
-                    class="h-full bg-primary transition-all duration-1000"
-                    :style="{ width: level.progress + '%' }"
-                  ></div>
-                </div>
-              </div>
-              <div>
-                <div class="text-xs text-neutral-helper mb-1">面试进度</div>
-                <div class="text-sm font-bold text-neutral-title">
-                  {{ level.completed }}/{{ level.interviews }} 次
-                </div>
-              </div>
-              <div>
-                <div class="text-xs text-neutral-helper mb-1">成功率</div>
-                <div class="text-sm font-bold text-neutral-title">
-                  {{ level.successRate }}
-                </div>
-              </div>
-            </div>
-
-            <!-- 其他信息 -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-              <div>
-                <div class="text-xs text-neutral-helper mb-1">问题数量</div>
-                <div class="text-sm font-bold text-neutral-title">
-                  {{ level.问题数量 }} 题
-                </div>
-              </div>
-              <div>
-                <div class="text-xs text-neutral-helper mb-1">时间限制</div>
-                <div class="text-sm font-bold text-neutral-title">
-                  {{ level.时间限制 }} 分钟
-                </div>
-              </div>
-              <div>
-                <div class="text-xs text-neutral-helper mb-1">奖励</div>
-                <div class="text-sm font-bold text-neutral-title">
-                  {{ level.奖励 }}
-                </div>
-              </div>
-            </div>
-
-            <!-- 技能标签 -->
-            <div class="mb-4">
-              <div class="text-xs text-neutral-helper mb-2">关键技能</div>
-              <div class="flex flex-wrap gap-2">
-                <span
-                  v-for="(skill, index) in level.skills"
-                  :key="index"
-                  class="px-3 py-1 bg-primary/10 text-primary text-xs font-bold rounded-full"
-                >
-                  {{ skill }}
-                </span>
-              </div>
-            </div>
-
-            <div class="flex items-center justify-between mb-4">
-              <div class="text-xs text-neutral-helper">
-                用时: {{ level.timeSpent }}
               </div>
             </div>
 
@@ -414,13 +272,13 @@ onMounted(async () => {
               <button
                 class="px-6 py-2 rounded-xl font-bold text-sm transition-all"
                 :class="
-                  level.status === '已解锁'
+                  level.is_unlocked
                     ? 'bg-primary text-white hover:bg-primary-dark'
                     : 'bg-neutral-border text-neutral-helper cursor-not-allowed'
                 "
                 @click="startLevel(level.id)"
               >
-                {{ level.status === "已解锁" ? "开始面试" : "未解锁" }}
+                {{ level.is_unlocked ? "开始面试" : "未解锁" }}
               </button>
             </div>
           </div>
@@ -433,72 +291,38 @@ onMounted(async () => {
               v-for="achievement in gameAchievements"
               :key="achievement.id"
               class="p-6 rounded-[24px] relative overflow-hidden group hover:shadow-md transition-all border border-transparent hover:border-neutral-border cursor-pointer"
-              :class="
-                achievement.unlocked ? achievement.color : 'bg-neutral-bg'
-              "
+              :class="achievement.is_unlocked ? 'bg-primary/5' : 'bg-neutral-bg'"
               @click="viewAchievementDetail(achievement)"
             >
               <div
                 class="w-12 h-12 rounded-2xl flex items-center justify-center mb-4 shadow-sm group-hover:scale-110 transition-transform"
                 :class="
-                  achievement.unlocked
-                    ? 'bg-white text-primary group-hover:gradient-primary group-hover:text-white animate-' +
-                      achievement.animation
+                  achievement.is_unlocked
+                    ? 'bg-white text-primary group-hover:gradient-primary group-hover:text-white'
                     : 'bg-neutral-border text-neutral-helper'
                 "
               >
-                <component :is="achievement.icon" :size="24" />
+                <component :is="Star" :size="24" />
               </div>
               <h3 class="font-bold text-neutral-title mb-1">
                 {{ achievement.name }}
               </h3>
               <p class="text-sm text-neutral-helper mb-4">
-                {{ achievement.description }}
+                {{ achievement.description || '暂无描述' }}
               </p>
               <div class="flex items-center justify-between mt-auto">
-                <div class="flex items-center gap-2">
-                  <span
-                    class="text-xs font-bold"
-                    :class="
-                      achievement.unlocked
-                        ? 'text-auxiliary-green'
-                        : 'text-neutral-helper'
-                    "
-                    >{{ achievement.unlocked ? "已获得" : "未获得" }}</span
-                  >
-                  <span
-                    class="text-xs font-bold px-2 py-1 rounded-full"
-                    :class="
-                      achievement.rarity === 'common'
-                        ? 'bg-gray-200 text-gray-700'
-                        : achievement.rarity === 'uncommon'
-                          ? 'bg-blue-200 text-blue-700'
-                          : achievement.rarity === 'rare'
-                            ? 'bg-purple-200 text-purple-700'
-                            : achievement.rarity === 'epic'
-                              ? 'bg-pink-200 text-pink-700'
-                              : 'bg-orange-200 text-orange-700'
-                    "
-                  >
-                    {{
-                      achievement.rarity === "common"
-                        ? "普通"
-                        : achievement.rarity === "uncommon"
-                          ? "优秀"
-                          : achievement.rarity === "rare"
-                            ? "稀有"
-                            : achievement.rarity === "epic"
-                              ? "史诗"
-                              : "传说"
-                    }}
-                  </span>
-                </div>
-                <div class="flex items-center gap-1">
-                  <Star :size="14" class="text-yellow-400" />
-                  <span class="text-xs font-bold text-neutral-title">{{
-                    achievement.points
-                  }}</span>
-                </div>
+                <span
+                  class="text-xs font-bold"
+                  :class="
+                    achievement.is_unlocked
+                      ? 'text-auxiliary-green'
+                      : 'text-neutral-helper'
+                  "
+                  >{{ achievement.is_unlocked ? "已获得" : "未获得" }}</span
+                >
+                <span v-if="achievement.unlocked_at" class="text-xs text-neutral-helper">
+                  {{ achievement.unlocked_at.split('T')[0] }}
+                </span>
               </div>
             </div>
           </div>
@@ -506,62 +330,10 @@ onMounted(async () => {
 
         <!-- Certifications Tab -->
         <div v-if="activeTab === 'certifications'" class="space-y-6">
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div
-              v-for="cert in certifications"
-              :key="cert.id"
-              class="p-6 rounded-[24px] relative overflow-hidden group hover:shadow-md transition-all border border-transparent hover:border-neutral-border cursor-pointer"
-              :class="cert.status === '已认证' ? cert.color : 'bg-neutral-bg'"
-              @click="viewCertificationDetail(cert)"
-            >
-              <div
-                class="w-12 h-12 rounded-2xl flex items-center justify-center mb-4 shadow-sm group-hover:scale-110 transition-transform"
-                :class="
-                  cert.status === '已认证'
-                    ? 'bg-white text-primary group-hover:gradient-primary group-hover:text-white'
-                    : 'bg-neutral-border text-neutral-helper'
-                "
-              >
-                <span class="text-2xl">{{ cert.badge }}</span>
-              </div>
-              <h3 class="font-bold text-neutral-title mb-1">{{ cert.name }}</h3>
-              <p class="text-sm text-neutral-helper mb-4">
-                {{ cert.description }}
-              </p>
-              <div class="mb-3">
-                <div
-                  class="w-full h-2 bg-neutral-border rounded-full overflow-hidden"
-                >
-                  <div
-                    class="h-full bg-primary transition-all duration-1000"
-                    :style="{ width: cert.progress + '%' }"
-                  ></div>
-                </div>
-                <div class="flex justify-between mt-1">
-                  <span class="text-xs text-neutral-helper">0%</span>
-                  <span class="text-xs font-bold text-neutral-title"
-                    >{{ cert.progress }}%</span
-                  >
-                  <span class="text-xs text-neutral-helper">100%</span>
-                </div>
-              </div>
-              <div class="flex items-center justify-between mt-auto">
-                <span
-                  class="text-xs font-bold"
-                  :class="
-                    cert.status === '已认证'
-                      ? 'text-auxiliary-green'
-                      : cert.status === '进行中'
-                        ? 'text-primary'
-                        : 'text-neutral-helper'
-                  "
-                  >{{ cert.status }}</span
-                >
-                <span class="text-xs font-bold text-neutral-title"
-                  >等级 {{ cert.level }}</span
-                >
-              </div>
-            </div>
+          <div class="text-center py-12 text-neutral-helper">
+            <AwardIcon :size="48" class="mx-auto mb-4 opacity-30" />
+            <p class="text-lg font-bold mb-2">技能认证</p>
+            <p class="text-sm">完成面试关卡后，系统将自动解锁对应的技能认证</p>
           </div>
         </div>
       </div>
@@ -596,12 +368,7 @@ onMounted(async () => {
             <div
               v-for="item in leaderboard"
               :key="item.rank"
-              class="flex items-center justify-between p-4 rounded-[20px]"
-              :class="
-                item.name === '王同学'
-                  ? 'bg-primary/10 border border-primary/20'
-                  : 'bg-neutral-bg'
-              "
+              class="flex items-center justify-between p-4 rounded-[20px] bg-neutral-bg"
             >
               <div class="flex items-center gap-4">
                 <div
@@ -614,16 +381,9 @@ onMounted(async () => {
                 >
                   {{ item.rank }}
                 </div>
-                <div class="text-2xl">{{ item.avatar }}</div>
                 <div>
-                  <h4 class="font-bold text-neutral-title">{{ item.name }}</h4>
-                  <div class="flex flex-wrap gap-2 text-xs text-neutral-helper">
-                    <span>关卡 {{ item.level }}</span>
-                    <span>•</span>
-                    <span>已完成 {{ item.completedLevels }} 关</span>
-                    <span>•</span>
-                    <span>成功率 {{ item.successRate }}</span>
-                  </div>
+                  <h4 class="font-bold text-neutral-title">{{ item.username }}</h4>
+                  <p class="text-xs text-neutral-helper">ID: {{ item.user_id }}</p>
                 </div>
               </div>
               <div class="text-right">
@@ -1010,205 +770,43 @@ onMounted(async () => {
             <div
               class="w-24 h-24 rounded-full flex items-center justify-center mb-6 shadow-lg"
               :class="
-                selectedAchievement?.unlocked
+                selectedAchievement?.is_unlocked
                   ? 'bg-white text-primary'
                   : 'bg-neutral-border text-neutral-helper'
               "
             >
-              <component :is="selectedAchievement?.icon" :size="48" />
+              <Star :size="48" />
             </div>
             <h4 class="text-xl font-bold text-neutral-title mb-2">
               {{ selectedAchievement?.name }}
             </h4>
             <p class="text-sm text-neutral-helper mb-4 text-center">
-              {{ selectedAchievement?.description }}
+              {{ selectedAchievement?.description || '暂无描述' }}
             </p>
-            <div class="flex items-center gap-2">
-              <span
-                class="px-4 py-2 rounded-full text-sm font-bold"
-                :class="
-                  selectedAchievement?.unlocked
-                    ? 'bg-auxiliary-green/10 text-auxiliary-green'
-                    : 'bg-neutral-border/50 text-neutral-helper'
-                "
-              >
-                {{ selectedAchievement?.unlocked ? "已获得" : "未获得" }}
-              </span>
-              <span
-                class="px-4 py-2 rounded-full text-sm font-bold"
-                :class="
-                  selectedAchievement?.rarity === 'common'
-                    ? 'bg-neutral-border/50 text-neutral-helper'
-                    : selectedAchievement?.rarity === 'uncommon'
-                      ? 'bg-primary/10 text-primary'
-                      : selectedAchievement?.rarity === 'rare'
-                        ? 'bg-auxiliary-orange/10 text-auxiliary-orange'
-                        : selectedAchievement?.rarity === 'epic'
-                          ? 'bg-auxiliary-purple/10 text-auxiliary-purple'
-                          : 'bg-auxiliary-red/10 text-auxiliary-red'
-                "
-              >
-                {{
-                  selectedAchievement?.rarity === "common"
-                    ? "普通"
-                    : selectedAchievement?.rarity === "uncommon"
-                      ? "优秀"
-                      : selectedAchievement?.rarity === "rare"
-                        ? "稀有"
-                        : selectedAchievement?.rarity === "epic"
-                          ? "史诗"
-                          : "传说"
-                }}
-              </span>
-            </div>
+            <span
+              class="px-4 py-2 rounded-full text-sm font-bold"
+              :class="
+                selectedAchievement?.is_unlocked
+                  ? 'bg-auxiliary-green/10 text-auxiliary-green'
+                  : 'bg-neutral-border/50 text-neutral-helper'
+              "
+            >
+              {{ selectedAchievement?.is_unlocked ? "已获得" : "未获得" }}
+            </span>
           </div>
           <div
-            v-if="selectedAchievement?.unlocked"
+            v-if="selectedAchievement?.unlocked_at"
             class="p-4 bg-neutral-bg rounded-[20px]"
           >
             <h5 class="font-bold text-neutral-title mb-2">获得时间</h5>
             <p class="text-sm text-neutral-body">
-              {{ selectedAchievement?.date }} 14:30
+              {{ selectedAchievement.unlocked_at }}
             </p>
-          </div>
-          <div class="p-4 bg-neutral-bg rounded-[20px]">
-            <h5 class="font-bold text-neutral-title mb-2">成就价值</h5>
-            <p class="text-sm text-neutral-body">
-              +{{ selectedAchievement?.points }} 积分
-            </p>
-          </div>
-          <div class="p-4 bg-neutral-bg rounded-[20px]">
-            <h5 class="font-bold text-neutral-title mb-2">获取条件</h5>
-            <p class="text-sm text-neutral-body">
-              {{ selectedAchievement?.condition }}
-            </p>
-          </div>
-          <div class="p-4 bg-neutral-bg rounded-[20px]">
-            <h5 class="font-bold text-neutral-title mb-2">进度</h5>
-            <div
-              class="w-full h-2 bg-neutral-border rounded-full overflow-hidden"
-            >
-              <div
-                class="h-full bg-primary transition-all duration-1000"
-                :style="{
-                  width: selectedAchievement?.unlocked ? '100%' : '0%',
-                }"
-              ></div>
-            </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Certification Detail Modal -->
-    <div
-      v-if="isCertificationDetailOpen"
-      class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-    >
-      <div
-        class="bg-white rounded-[32px] w-full max-w-md animate-in zoom-in-95 duration-300"
-      >
-        <div
-          class="p-8 border-b border-neutral-border flex justify-between items-center"
-        >
-          <h3
-            class="text-2xl font-black text-neutral-title flex items-center gap-3"
-          >
-            <AwardIcon :size="28" class="text-primary" />
-            技能认证详情
-          </h3>
-          <button
-            class="w-10 h-10 rounded-full bg-neutral-bg flex items-center justify-center text-neutral-helper hover:bg-primary/10 hover:text-primary transition-all"
-            @click="closeCertificationDetail"
-          >
-            <X :size="20" />
-          </button>
-        </div>
-        <div class="p-8 space-y-6">
-          <div class="flex flex-col items-center">
-            <div
-              class="w-24 h-24 rounded-full flex items-center justify-center mb-6 shadow-lg"
-              :class="
-                selectedCertification?.status === '已认证'
-                  ? 'bg-white text-primary'
-                  : 'bg-neutral-border text-neutral-helper'
-              "
-            >
-              <component :is="selectedCertification?.icon" :size="48" />
-            </div>
-            <h4 class="text-xl font-bold text-neutral-title mb-2">
-              {{ selectedCertification?.name }}
-            </h4>
-            <p class="text-sm text-neutral-helper mb-4 text-center">
-              {{ selectedCertification?.description }}
-            </p>
-            <span
-              class="px-4 py-2 rounded-full text-sm font-bold"
-              :class="
-                selectedCertification?.status === '已认证'
-                  ? 'bg-auxiliary-green/10 text-auxiliary-green'
-                  : selectedCertification?.status === '进行中'
-                    ? 'bg-primary/10 text-primary'
-                    : 'bg-neutral-border/50 text-neutral-helper'
-              "
-            >
-              {{ selectedCertification?.status }}
-            </span>
-          </div>
-          <div
-            v-if="selectedCertification?.status === '已认证'"
-            class="p-4 bg-neutral-bg rounded-[20px]"
-          >
-            <h5 class="font-bold text-neutral-title mb-2">认证时间</h5>
-            <p class="text-sm text-neutral-body">
-              {{ selectedCertification?.date }} 14:30
-            </p>
-          </div>
-          <div class="p-4 bg-neutral-bg rounded-[20px]">
-            <h5 class="font-bold text-neutral-title mb-2">认证等级</h5>
-            <p class="text-sm text-neutral-body">
-              等级 {{ selectedCertification?.level }}
-            </p>
-          </div>
-          <div class="p-4 bg-neutral-bg rounded-[20px]">
-            <h5 class="font-bold text-neutral-title mb-2">认证技能</h5>
-            <div class="flex flex-wrap gap-2">
-              <span
-                v-for="(skill, index) in selectedCertification?.skills"
-                :key="index"
-                class="px-3 py-1 bg-primary/10 rounded-full text-xs font-bold text-primary"
-              >
-                {{ skill }}
-              </span>
-            </div>
-          </div>
-          <div class="p-4 bg-neutral-bg rounded-[20px]">
-            <h5 class="font-bold text-neutral-title mb-2">获取条件</h5>
-            <p class="text-sm text-neutral-body">
-              {{ selectedCertification?.condition }}
-            </p>
-          </div>
-          <div class="p-4 bg-neutral-bg rounded-[20px]">
-            <h5 class="font-bold text-neutral-title mb-2">进度</h5>
-            <div
-              class="w-full h-2 bg-neutral-border rounded-full overflow-hidden"
-            >
-              <div
-                class="h-full bg-primary transition-all duration-1000"
-                :style="{ width: selectedCertification?.progress + '%' }"
-              ></div>
-            </div>
-            <div class="flex justify-between mt-1">
-              <span class="text-xs text-neutral-helper">0%</span>
-              <span class="text-xs text-neutral-helper"
-                >{{ selectedCertification?.progress }}%</span
-              >
-              <span class="text-xs text-neutral-helper">100%</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
   </div>
 </template>
 

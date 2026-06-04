@@ -28,9 +28,40 @@ import {
   X,
 } from "lucide-vue-next";
 import { useKnowledgeStore } from "@/stores/knowledge";
+import type { SkillTreeNode } from "@/api/types/job.types";
 
 const knowledgeStore = useKnowledgeStore();
-const { courses, jobPositions, loading } = storeToRefs(knowledgeStore);
+const { courses, jobPositions, skillTrees, loading } = storeToRefs(knowledgeStore);
+
+// 岗位与技能树相关状态
+const selectedJobId = ref<number | null>(null);
+const skillTreeLoading = ref(false);
+
+const selectJob = async (jobId: number) => {
+  if (selectedJobId.value === jobId) {
+    selectedJobId.value = null;
+    return;
+  }
+  selectedJobId.value = jobId;
+  if (!skillTrees.value[jobId]) {
+    skillTreeLoading.value = true;
+    try {
+      await knowledgeStore.fetchSkillTree(jobId);
+    } finally {
+      skillTreeLoading.value = false;
+    }
+  }
+};
+
+const closeSkillTree = () => {
+  selectedJobId.value = null;
+};
+
+const getSkillTreeNodes = (jobId: number): SkillTreeNode[] => {
+  const tree = skillTrees.value[jobId];
+  if (!tree || Object.keys(tree).length === 0) return [];
+  return (tree as SkillTreeNode).children ?? [];
+};
 
 const categories = [
   {
@@ -1243,6 +1274,191 @@ onMounted(async () => {
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+
+          <!-- 岗位与技能树 -->
+          <div
+            class="bg-white rounded-[32px] p-8 shadow-sm border border-neutral-border"
+          >
+            <div class="flex items-center justify-between mb-8">
+              <h2
+                class="text-xl font-bold text-neutral-title flex items-center gap-3"
+              >
+                <div class="w-2 h-6 gradient-primary rounded-full"></div>
+                岗位与技能树
+              </h2>
+            </div>
+
+            <!-- 岗位列表 -->
+            <div v-if="jobPositions.length > 0" class="space-y-4">
+              <div
+                v-for="job in jobPositions"
+                :key="job.id"
+                class="rounded-[24px] border transition-all"
+                :class="
+                  selectedJobId === job.id
+                    ? 'border-primary bg-primary/5 shadow-sm'
+                    : 'border-neutral-border bg-neutral-bg hover:border-primary/50'
+                "
+              >
+                <!-- 岗位卡片 -->
+                <div
+                  class="p-5 cursor-pointer flex items-center justify-between"
+                  @click="selectJob(job.id)"
+                >
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2 mb-2">
+                      <h3
+                        class="text-sm font-bold text-neutral-title truncate"
+                      >
+                        {{ job.title }}
+                      </h3>
+                      <span
+                        v-if="job.level"
+                        class="text-xs font-bold text-primary bg-primary/10 px-2.5 py-0.5 rounded-full"
+                      >
+                        {{ job.level }}
+                      </span>
+                      <span
+                        v-if="job.industry"
+                        class="text-xs font-bold text-auxiliary-orange bg-auxiliary-orange/10 px-2.5 py-0.5 rounded-full"
+                      >
+                        {{ job.industry }}
+                      </span>
+                    </div>
+                    <div class="flex items-center gap-4 text-xs text-neutral-helper">
+                      <span v-if="job.company">{{ job.company }}</span>
+                      <span v-if="job.location">{{ job.location }}</span>
+                      <span v-if="job.salary_range">{{
+                        job.salary_range
+                      }}</span>
+                    </div>
+                    <p
+                      v-if="job.description"
+                      class="text-xs text-neutral-body mt-2 line-clamp-2"
+                    >
+                      {{ job.description }}
+                    </p>
+                  </div>
+                  <ChevronRight
+                    :size="18"
+                    class="text-neutral-helper transition-transform flex-shrink-0 ml-3"
+                    :class="selectedJobId === job.id ? 'rotate-90' : ''"
+                  />
+                </div>
+
+                <!-- 技能树展开区域 -->
+                <div
+                  v-if="selectedJobId === job.id"
+                  class="px-5 pb-5 border-t border-neutral-border"
+                >
+                  <div class="pt-4">
+                    <div class="flex items-center justify-between mb-4">
+                      <h4 class="text-sm font-bold text-neutral-title">
+                        技能树
+                      </h4>
+                      <button
+                        class="text-xs text-neutral-helper hover:text-primary transition-colors"
+                        @click.stop="closeSkillTree"
+                      >
+                        收起
+                      </button>
+                    </div>
+
+                    <!-- 加载中 -->
+                    <div
+                      v-if="skillTreeLoading"
+                      class="flex items-center justify-center py-8"
+                    >
+                      <div
+                        class="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin"
+                      ></div>
+                      <span class="ml-2 text-sm text-neutral-helper"
+                        >加载技能树...</span
+                      >
+                    </div>
+
+                    <!-- 技能树内容 -->
+                    <div v-else-if="getSkillTreeNodes(job.id).length > 0">
+                      <div class="space-y-2">
+                        <div
+                          v-for="node in getSkillTreeNodes(job.id)"
+                          :key="node.id"
+                          class="flex items-center gap-3 p-3 rounded-xl"
+                          :class="
+                            node.is_required
+                              ? 'bg-primary/10 border border-primary/30'
+                              : 'bg-neutral-bg border border-transparent'
+                          "
+                        >
+                          <div
+                            class="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold"
+                            :class="
+                              node.is_required
+                                ? 'gradient-primary text-white'
+                                : 'bg-white text-neutral-helper'
+                            "
+                          >
+                            {{ node.level ?? '-' }}
+                          </div>
+                          <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2">
+                              <span class="text-xs font-bold text-neutral-title">
+                                {{ node.name }}
+                              </span>
+                              <span
+                                v-if="node.is_required"
+                                class="text-[10px] font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded"
+                              >
+                                必需
+                              </span>
+                              <span
+                                v-if="node.has_required_child"
+                                class="text-[10px] font-bold text-auxiliary-orange bg-auxiliary-orange/10 px-1.5 py-0.5 rounded"
+                              >
+                                含必需子项
+                              </span>
+                            </div>
+                            <span
+                              v-if="node.category"
+                              class="text-[10px] text-neutral-helper"
+                            >
+                              {{ node.category }}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- 空状态 -->
+                    <div v-else class="text-center py-8">
+                      <Sparkles
+                        :size="32"
+                        class="text-neutral-helper mx-auto mb-3 opacity-50"
+                      />
+                      <p class="text-sm text-neutral-helper">
+                        暂无技能树数据
+                      </p>
+                      <p class="text-xs text-neutral-helper/70 mt-1">
+                        后端技能树接口待完善
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 空状态 -->
+            <div v-else class="text-center py-12">
+              <Briefcase
+                :size="40"
+                class="text-neutral-helper mx-auto mb-4 opacity-50"
+              />
+              <p class="text-sm text-neutral-helper">暂无岗位数据</p>
+              <p class="text-xs text-neutral-helper/70 mt-1">
+                请先在后台添加岗位信息
+              </p>
             </div>
           </div>
 
