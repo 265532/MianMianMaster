@@ -2,7 +2,7 @@
 
 > **项目**: MianMianMaster 前后端 API 契约漂移修复  
 > **契约基准文档**: [api-contract-summary.md](./api-contract-summary.md)（从 `openapi.json` 自动提取，共 94 个端点）  
-> **最后更新**: 2026-06-04  
+> **最后更新**: 2026-06-17  
 > **总模块数**: 11  
 > **总端点数**: 按 OpenAPI 规范共 94 个端点，修复范围覆盖 72 个核心端点（按优先级分 4 个阶段）  
 > **修复策略**: 按优先级顺序(P0 → P1 → P2 → P3)，每阶段完成后在浏览器逐页验证
@@ -49,7 +49,7 @@
 |------|------|------|--------|--------|------------|------|
 | Week 1 | 第1周 | Auth + User + Job | P0 | 18 | [week1-auth-user-job.md](./week1-auth-user-job.md) | 🟡 进行中 |
 | Week 2 | 第2周 | Assessment + Learning + Interview + Notification | P1 | 28 | [week2-assessment-learning-interview-notification.md](./week2-assessment-learning-interview-notification.md) | 🟡 进行中 |
-| Week 3 | 第3周 | Community | P2 | 9 | [week3-community.md](./week3-community.md) | 🔴 待启动 |
+| Week 3 | 第3周 | Community | P2 | 9 | [week3-community.md](./week3-community.md) | 🟡 进行中 |
 | Week 4 | 第4周 | Business + Role + System | P3 | 17 | [week4-business-role-system.md](./week4-business-role-system.md) | 🔴 待启动 |
 
 > **说明**: 端点计数以 `api-contract-summary.md` 中的实际接口数量为准。P0 为所有功能的前置依赖，必须最先完成。
@@ -69,7 +69,7 @@
 | 5 | Learning（学习） | P1 | Week 2 | 14 | - | ~85% | [x] | 🟡 进行中 |
 | 6 | Interview（面试） | P1 | Week 2 | 11 | - | ~80% | [x] | 🟡 进行中 |
 | 7 | Notification（通知） | P1 | Week 2 | 8 | - | ~90% | [x] | 🟡 进行中 |
-| 8 | Community（社区） | P2 | Week 3 | 12 | - | 0% | [ ] | 🔴 待启动 |
+| 8 | Community（社区） | P2 | Week 3 | 12 | - | ~65% | [ ] | 🟡 进行中 |
 | 9 | Business（业务配置） | P3 | Week 4 | 9 | - | 0% | [ ] | 🔴 待启动 |
 | 10 | Role（权限管理） | P3 | Week 4 | 5 | - | 0% | [ ] | 🔴 待启动 |
 | 11 | System（系统管理） | P3 | Week 4 | 5 | - | 0% | [ ] | 🔴 待启动 |
@@ -82,7 +82,7 @@
 |------|----------|----------|----------|----------|--------|------|
 | Week 1: P0 核心基建 | 2026-06-03 | - | 2026-06-03 | - | ~85% | 🟡 |
 | Week 2: P1 主业务流程 | 2026-06-04 | - | 2026-06-04 | - | ~65% | 🟡 |
-| Week 3: P2 增值功能 | - | - | - | - | 0% | 🔴 |
+| Week 3: P2 增值功能 | 2026-06-17 | - | 2026-06-17 | - | ~65% | 🟡 |
 | Week 4: P3 管理后台 | - | - | - | - | 0% | 🔴 |
 
 ### 3.3 总体质量指标
@@ -90,10 +90,10 @@
 | 指标 | 目标 | 当前值 | 状态 |
 |------|------|--------|------|
 | TypeScript 编译零错误 (`vue-tsc --noEmit`) | 0 errors | ✅ 零错误 | [x] |
-| Vite 构建成功 (`vite build`) | 通过 | ✅ 构建成功 (52.48s) | [x] |
-| 契约对齐率 | 100% | ~75% (Week 1+2) | [ ] |
+| Vite 构建成功 (`vite build`) | 通过 | ✅ 构建成功 (19.32s) | [x] |
+| 契约对齐率 | 100% | ~80% (Week 1+2+3) | [ ] |
 | 浏览器逐页验证通过率 | 100% | 0% | [ ] |
-| Mock 模式可用 | 所有模块 | Week 1+2 已验证 | [x] |
+| Mock 模式可用 | 所有模块 | Week 1+2+3 已验证 | [x] |
 
 ---
 
@@ -106,16 +106,16 @@
 - [x] **TypeScript 类型检查**: `vue-tsc --noEmit` 零错误 ✅
 - [x] **构建验证**: `vite build` 构建成功 ✅
 - [x] **单元测试**: `vitest run` 9 个测试文件 78 个测试全部通过 ✅
-- [x] **类型定义准确性**: Week 1+2 所有接口类型字段与 `api-contract-summary.md` 一致 ✅
+- [x] **类型定义准确性**: Week 1+2+3 所有接口类型字段与 `api-contract-summary.md` 一致 ✅
 - [x] **命名规范**: 字段名使用 `snake_case` 与后端对齐 ✅
 - [x] **导入路径**: 使用 `@/` 别名 ✅
 - [x] **any 使用审查**: 仅在 `catch` 子句中使用 `any`，其余使用 `Record<string, unknown>` ✅
 
 ### 4.2 功能完整性
 
-- [x] **API 函数签名**: Week 1+2 所有 API 函数参数/返回值类型与契约一致 ✅
-- [x] **Mock 数据**: Week 1+2 所有端点均有 Mock handler 覆盖 ✅
-- [x] **Store 层对接**: Week 1+2 所有 View 层通过 Store 访问数据 ✅
+- [x] **API 函数签名**: Week 1+2+3 所有 API 函数参数/返回值类型与契约一致 ✅
+- [x] **Mock 数据**: Week 1+2+3 所有端点均有 Mock handler 覆盖 ✅
+- [x] **Store 层对接**: Week 1+2+3 所有 View 层通过 Store 访问数据 ✅
 - [ ] **错误处理**: 网络错误/超时/401/业务错误均有友好提示
 - [x] **路由守卫**: 受保护页面的认证拦截正常 ✅
 
@@ -199,6 +199,7 @@ Auth (认证) ─────── 所有功能的前置依赖
 
 | 日期 | 变更 | 作者 |
 |------|------|------|
+| 2026-06-17 | Week 3 Community 模块: 类型/API/Store/Mock 全部修复完成 (C-1~C-3, C-5)；视图核心功能适配 (C-4.1/4.5/4.6/4.7)；质量门禁全部通过 | AI |
 | 2026-06-04 | Week 2 四模块 (Assessment/Learning/Interview/Notification) 类型+API+Mock+Store 全部修复完成；Week 1 Auth 视图+路由守卫验证完成；质量门禁全部通过 | AI |
 | 2026-06-04 | 根据 Week 1 交接文档更新进度：Auth/User/Job 类型+API+Mock+Store 完成，质量指标更新 | AI |
 | 2026-06-03 | 初始化契约漂移修复总体进度文档 | AI |

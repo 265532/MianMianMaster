@@ -18,31 +18,18 @@ import {
   Share2,
   Bookmark,
   Clock,
-  Users,
   X,
   GraduationCap,
   BookOpen,
 } from "lucide-vue-next";
 import { useCommunityStore } from "@/stores/community";
 import { useLearningStore } from "@/stores/learning";
-import type { Post } from "@/api/types/community.types";
+import type {
+  Post,
+  HotTopic,
+  ActiveUser,
+} from "@/api/types/community.types";
 import type { Course } from "@/api/types/learning.types";
-
-interface Topic {
-  id: number;
-  title: string;
-  posts: number;
-  participants: number;
-}
-
-interface User {
-  name: string;
-  posts: number;
-  avatar: string;
-  followers: number;
-  joined: string;
-  bio: string;
-}
 
 const communityStore = useCommunityStore();
 const learningStore = useLearningStore();
@@ -52,6 +39,7 @@ const {
   hotTopics,
   activeUsers,
   loading,
+  hasMore,
 } = storeToRefs(communityStore);
 const { courses } = storeToRefs(learningStore);
 
@@ -59,9 +47,9 @@ const showAllPosts = ref(false);
 const isPostDetailOpen = ref(false);
 const selectedPost = ref<Post | null>(null);
 const isTopicDetailOpen = ref(false);
-const selectedTopic = ref<Topic | null>(null);
+const selectedTopic = ref<HotTopic | null>(null);
 const isUserDetailOpen = ref(false);
-const selectedUser = ref<User | null>(null);
+const selectedUser = ref<ActiveUser | null>(null);
 const isWisdomCourseOpen = ref(false);
 const selectedCategory = ref("全部课程");
 const isCourseDetailOpen = ref(false);
@@ -74,7 +62,6 @@ const isShareReportOpen = ref(false);
 const isArchiveDetailOpen = ref(false);
 const selectedArchive = ref<Record<string, unknown> | null>(null);
 const bookmarkedPosts = ref<Set<number>>(new Set());
-const followedUsers = ref<Set<string>>(new Set());
 const selectedFile = ref<File | null>(null);
 const fileInputRef = ref<HTMLInputElement | null>(null);
 
@@ -152,12 +139,8 @@ const viewAllTopics = () => {
   isAllTopicsOpen.value = true;
 };
 
-const handleToggleFollow = async (userName: string) => {
-  if (followedUsers.value.has(userName)) {
-    followedUsers.value.delete(userName);
-  } else {
-    followedUsers.value.add(userName);
-  }
+const handleToggleFollow = async (userId: number) => {
+  await communityStore.toggleFollow(userId);
 };
 
 const viewArchiveDetail = (archive: Record<string, unknown>) => {
@@ -283,10 +266,10 @@ onMounted(async () => {
                 "
               >
                 <div class="flex items-center gap-4 mb-4 relative z-10">
-                  <div class="text-2xl">{{ post.author_avatar }}</div>
+                  <div class="text-2xl">👤</div>
                   <div>
                     <h4 class="text-sm font-bold text-neutral-title">
-                      {{ post.author_name }}
+                      匿名用户
                     </h4>
                     <div class="flex items-center gap-4">
                       <span
@@ -317,7 +300,7 @@ onMounted(async () => {
                     >
                       <div class="flex items-center justify-between mb-1">
                         <h5 class="text-xs font-bold text-neutral-title">
-                          {{ comment.author_name }}
+                          匿名用户
                         </h5>
                         <span class="text-[10px] text-neutral-helper">{{
                           formatTime(comment.created_at)
@@ -331,7 +314,7 @@ onMounted(async () => {
                   <button
                     class="text-xs text-primary font-bold hover:underline mt-2"
                   >
-                    查看全部 {{ post.comments_count }} 条评论
+                    查看全部 {{ post.comments_count ?? 0 }} 条评论
                   </button>
                 </div>
 
@@ -341,7 +324,7 @@ onMounted(async () => {
                   <button
                     class="flex items-center gap-2 text-xs transition-colors"
                     :class="
-                      post.is_liked
+                      communityStore.isPostLiked(post.id)
                         ? 'text-auxiliary-orange'
                         : 'text-neutral-helper hover:text-primary'
                     "
@@ -349,15 +332,19 @@ onMounted(async () => {
                   >
                     <Heart
                       :size="16"
-                      :class="post.is_liked ? 'fill-auxiliary-orange' : ''"
+                      :class="
+                        communityStore.isPostLiked(post.id)
+                          ? 'fill-auxiliary-orange'
+                          : ''
+                      "
                     />
-                    <span class="font-bold">{{ post.likes_count }}</span>
+                    <span class="font-bold">{{ post.likes_count ?? 0 }}</span>
                   </button>
                   <button
                     class="flex items-center gap-2 text-xs text-neutral-helper hover:text-primary transition-colors"
                   >
                     <MessageSquare :size="16" />
-                    <span class="font-bold">{{ post.comments_count }}</span>
+                    <span class="font-bold">{{ post.comments_count ?? 0 }}</span>
                   </button>
                   <button
                     class="flex items-center gap-2 text-xs text-neutral-helper hover:text-primary transition-colors"
@@ -504,10 +491,10 @@ onMounted(async () => {
           </div>
           <div class="p-8">
             <div class="flex items-center gap-4 mb-6">
-              <div class="text-3xl">{{ selectedPost.author_avatar }}</div>
+              <div class="text-3xl">👤</div>
               <div>
                 <h4 class="text-lg font-bold text-neutral-title">
-                  {{ selectedPost.author_name }}
+                  匿名用户
                 </h4>
                 <div class="flex items-center gap-4">
                   <span class="text-xs text-primary font-bold">{{
@@ -528,7 +515,7 @@ onMounted(async () => {
             <!-- 评论展示 -->
             <div v-if="comments[selectedPost.id]" class="mb-8">
               <h5 class="font-bold text-neutral-title mb-4">
-                评论 ({{ selectedPost.comments_count }})
+                评论 ({{ selectedPost.comments_count ?? 0 }})
               </h5>
               <div class="space-y-4">
                 <div
@@ -538,7 +525,7 @@ onMounted(async () => {
                 >
                   <div class="flex items-center justify-between mb-2">
                     <h6 class="text-sm font-bold text-neutral-title">
-                      {{ comment.author_name }}
+                      匿名用户
                     </h6>
                     <span class="text-xs text-neutral-helper">{{
                       formatTime(comment.created_at)
@@ -561,7 +548,7 @@ onMounted(async () => {
               <button
                 class="flex items-center gap-2 text-sm transition-colors"
                 :class="
-                  selectedPost.is_liked
+                  communityStore.isPostLiked(selectedPost.id)
                     ? 'text-auxiliary-orange'
                     : 'text-neutral-helper hover:text-primary'
                 "
@@ -569,15 +556,21 @@ onMounted(async () => {
               >
                 <Heart
                   :size="18"
-                  :class="selectedPost.is_liked ? 'fill-auxiliary-orange' : ''"
+                  :class="
+                    communityStore.isPostLiked(selectedPost.id)
+                      ? 'fill-auxiliary-orange'
+                      : ''
+                  "
                 />
-                <span class="font-bold">{{ selectedPost.likes_count }}</span>
+                <span class="font-bold">{{ selectedPost.likes_count ?? 0 }}</span>
               </button>
               <button
                 class="flex items-center gap-2 text-sm text-neutral-helper hover:text-primary transition-colors"
               >
                 <MessageSquare :size="18" />
-                <span class="font-bold">{{ selectedPost.comments_count }}</span>
+                <span class="font-bold">{{
+                  selectedPost.comments_count ?? 0
+                }}</span>
               </button>
               <button
                 class="flex items-center gap-2 text-sm text-neutral-helper hover:text-primary transition-colors"
@@ -643,13 +636,7 @@ onMounted(async () => {
                 class="px-4 py-2 bg-neutral-bg rounded-full text-sm font-bold text-neutral-title flex items-center gap-2"
               >
                 <MessageSquare :size="16" />
-                {{ selectedTopic.posts }} 帖子
-              </span>
-              <span
-                class="px-4 py-2 bg-neutral-bg rounded-full text-sm font-bold text-neutral-title flex items-center gap-2"
-              >
-                <Users :size="16" />
-                {{ selectedTopic.participants }} 参与者
+                {{ selectedTopic.posts_count ?? 0 }} 帖子
               </span>
             </div>
 
@@ -667,10 +654,10 @@ onMounted(async () => {
                 class="p-4 bg-neutral-bg rounded-xl border border-neutral-border"
               >
                 <div class="flex items-center gap-3 mb-2">
-                  <div class="text-2xl">{{ post.author_avatar }}</div>
+                  <div class="text-2xl">👤</div>
                   <div>
                     <h6 class="text-sm font-bold text-neutral-title">
-                      {{ post.author_name }}
+                      匿名用户
                     </h6>
                     <span class="text-xs text-neutral-helper">{{
                       formatTime(post.created_at)
@@ -683,12 +670,12 @@ onMounted(async () => {
                 <div class="flex items-center gap-4 mt-3">
                   <span
                     class="text-xs text-neutral-helper flex items-center gap-1"
-                    ><Heart :size="12" /> {{ post.likes_count }}</span
+                    ><Heart :size="12" /> {{ post.likes_count ?? 0 }}</span
                   >
                   <span
                     class="text-xs text-neutral-helper flex items-center gap-1"
                     ><MessageSquare :size="12" />
-                    {{ post.comments_count }}</span
+                    {{ post.comments_count ?? 0 }}</span
                   >
                 </div>
               </div>
@@ -732,23 +719,22 @@ onMounted(async () => {
           </div>
           <div class="p-8">
             <div class="flex flex-col items-center mb-8">
-              <div class="text-5xl mb-4">{{ selectedUser.avatar }}</div>
+              <div class="text-5xl mb-4">
+                {{ selectedUser.avatar_url ?? "👤" }}
+              </div>
               <h4 class="text-2xl font-bold text-neutral-title mb-2">
-                {{ selectedUser.name }}
+                {{ selectedUser.username }}
               </h4>
-              <p class="text-sm text-neutral-helper mb-4">
-                {{ selectedUser.bio }}
-              </p>
               <div class="flex items-center gap-6 mb-4">
                 <span class="text-center">
                   <div class="font-bold text-neutral-title">
-                    {{ selectedUser.posts }}
+                    {{ selectedUser.posts_count ?? 0 }}
                   </div>
                   <div class="text-xs text-neutral-helper">帖子</div>
                 </span>
                 <span class="text-center">
                   <div class="font-bold text-neutral-title">
-                    {{ selectedUser.followers }}
+                    {{ selectedUser.followers_count ?? 0 }}
                   </div>
                   <div class="text-xs text-neutral-helper">关注者</div>
                 </span>
@@ -760,13 +746,17 @@ onMounted(async () => {
               <button
                 class="px-8 py-2 font-bold rounded-xl transition-all"
                 :class="
-                  followedUsers.has(selectedUser.name)
+                  communityStore.isUserFollowed(selectedUser.id)
                     ? 'bg-neutral-bg text-neutral-title hover:bg-neutral-border/50'
                     : 'bg-primary text-white hover:bg-primary/90'
                 "
-                @click="handleToggleFollow(selectedUser.name)"
+                @click="handleToggleFollow(selectedUser.id)"
               >
-                {{ followedUsers.has(selectedUser.name) ? "已关注" : "关注" }}
+                {{
+                  communityStore.isUserFollowed(selectedUser.id)
+                    ? "已关注"
+                    : "关注"
+                }}
               </button>
             </div>
 
@@ -775,7 +765,7 @@ onMounted(async () => {
             <div class="space-y-4">
               <div
                 v-for="(post, index) in communityPosts.filter(
-                  (p) => selectedUser && p.author === selectedUser.name,
+                  (p) => selectedUser && p.user_id === selectedUser.id,
                 )"
                 :key="index"
                 class="p-4 bg-neutral-bg rounded-xl border border-neutral-border"
@@ -783,21 +773,22 @@ onMounted(async () => {
                 <div class="flex items-center gap-4 mb-2">
                   <span
                     class="px-3 py-1 bg-primary/10 text-primary text-xs font-bold rounded-full"
-                    >{{ post.type }}</span
+                    >{{ post.category }}</span
                   >
                   <span class="text-xs text-neutral-helper">{{
-                    post.time
+                    formatTime(post.created_at)
                   }}</span>
                 </div>
                 <p class="text-sm text-neutral-body mb-3">{{ post.content }}</p>
                 <div class="flex items-center gap-4">
                   <span
                     class="text-xs text-neutral-helper flex items-center gap-1"
-                    ><Heart :size="12" /> {{ post.likes }}</span
+                    ><Heart :size="12" /> {{ post.likes_count ?? 0 }}</span
                   >
                   <span
                     class="text-xs text-neutral-helper flex items-center gap-1"
-                    ><MessageSquare :size="12" /> {{ post.comments }}</span
+                    ><MessageSquare :size="12" />
+                    {{ post.comments_count ?? 0 }}</span
                   >
                 </div>
               </div>
@@ -1608,57 +1599,8 @@ onMounted(async () => {
           <div class="p-8">
             <div class="space-y-4">
               <div
-                v-for="(topic, index) in [
-                  {
-                    id: 1,
-                    title: '如何准备大厂面试',
-                    posts: 128,
-                    participants: 356,
-                  },
-                  {
-                    id: 2,
-                    title: '前端框架对比',
-                    posts: 96,
-                    participants: 289,
-                  },
-                  {
-                    id: 3,
-                    title: '系统设计面试指南',
-                    posts: 84,
-                    participants: 245,
-                  },
-                  {
-                    id: 4,
-                    title: '简历优化技巧',
-                    posts: 72,
-                    participants: 210,
-                  },
-                  {
-                    id: 5,
-                    title: '行为问题回答技巧',
-                    posts: 68,
-                    participants: 195,
-                  },
-                  {
-                    id: 6,
-                    title: '技术面试常见问题',
-                    posts: 64,
-                    participants: 180,
-                  },
-                  {
-                    id: 7,
-                    title: '薪资谈判策略',
-                    posts: 56,
-                    participants: 165,
-                  },
-                  {
-                    id: 8,
-                    title: '远程面试技巧',
-                    posts: 48,
-                    participants: 145,
-                  },
-                ]"
-                :key="index"
+                v-for="topic in hotTopics"
+                :key="topic.id"
                 class="p-4 bg-neutral-bg rounded-[20px] hover:bg-white hover:shadow-md transition-all border border-transparent hover:border-neutral-border cursor-pointer"
                 @click="
                   selectedTopic = topic;
@@ -1672,11 +1614,8 @@ onMounted(async () => {
                 <div class="flex items-center gap-4">
                   <span
                     class="text-xs text-neutral-helper flex items-center gap-1"
-                    ><MessageSquare :size="12" /> {{ topic.posts }} 帖子</span
-                  >
-                  <span
-                    class="text-xs text-neutral-helper flex items-center gap-1"
-                    ><Users :size="12" /> {{ topic.participants }} 参与者</span
+                    ><MessageSquare :size="12" />
+                    {{ topic.posts_count ?? 0 }} 帖子</span
                   >
                 </div>
               </div>
@@ -1770,11 +1709,8 @@ onMounted(async () => {
               <div class="flex items-center gap-4">
                 <span
                   class="text-xs text-neutral-helper flex items-center gap-1"
-                  ><MessageSquare :size="12" /> {{ topic.posts }} 帖子</span
-                >
-                <span
-                  class="text-xs text-neutral-helper flex items-center gap-1"
-                  ><Users :size="12" /> {{ topic.participants }} 参与者</span
+                  ><MessageSquare :size="12" />
+                  {{ topic.posts_count ?? 0 }} 帖子</span
                 >
               </div>
             </div>
@@ -1809,25 +1745,25 @@ onMounted(async () => {
                 isUserDetailOpen = true;
               "
             >
-              <div class="text-2xl">{{ user.avatar }}</div>
+              <div class="text-2xl">{{ user.avatar_url ?? "👤" }}</div>
               <div class="flex-1">
                 <h3 class="text-sm font-bold text-neutral-title">
-                  {{ user.name }}
+                  {{ user.username }}
                 </h3>
                 <p class="text-xs text-neutral-helper">
-                  {{ user.posts }} 篇帖子
+                  {{ user.posts_count ?? 0 }} 篇帖子
                 </p>
               </div>
               <button
                 class="px-3 py-1 font-bold rounded-full text-xs transition-all"
                 :class="
-                  followedUsers.has(user.name)
+                  communityStore.isUserFollowed(user.id)
                     ? 'bg-neutral-bg text-neutral-title hover:bg-neutral-border/50'
                     : 'bg-primary/10 text-primary hover:bg-primary hover:text-white'
                 "
-                @click.stop="handleToggleFollow(user.name)"
+                @click.stop="handleToggleFollow(user.id)"
               >
-                {{ followedUsers.has(user.name) ? "已关注" : "关注" }}
+                {{ communityStore.isUserFollowed(user.id) ? "已关注" : "关注" }}
               </button>
             </div>
           </div>
