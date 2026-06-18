@@ -1,97 +1,318 @@
-import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { defineStore } from "pinia";
+import { ref, computed } from "vue";
+import { interviewApi } from "@/api/modules/interview.api";
+import type {
+  InterviewSession,
+  InterviewSessionCreate,
+  InterviewStartResponse,
+  InterviewReport,
+  SseEvent,
+  InterviewQuestion,
+  GameLevel,
+  GameStats,
+  GameAchievement,
+  LeaderboardEntry,
+} from "@/api/types/interview.types";
 
-interface Question {
-  id: string
-  content: string
-  type: 'technical' | 'behavioral' | 'case'
-  difficulty: 'easy' | 'medium' | 'hard'
-  answered: boolean
-  answer?: string
-  score?: number
+const DEBUG = import.meta.env.VITE_ENABLE_DEBUG_LOG === "true";
+
+function log(...args: unknown[]): void {
+  if (DEBUG) {
+    console.debug("[InterviewStore]", ...args);
+  }
 }
 
-interface InterviewSession {
-  id: string
-  jobTitle: string
-  company: string
-  questions: Question[]
-  startTime: Date
-  endTime?: Date
-  totalScore?: number
-  status: 'pending' | 'in_progress' | 'completed'
-}
+export const useInterviewStore = defineStore("interview", () => {
+  const sessions = ref<InterviewSession[]>([]);
+  const currentSession = ref<InterviewSession | null>(null);
+  const currentReport = ref<InterviewReport | null>(null);
+  const loading = ref(false);
+  const error = ref<string | null>(null);
+  const chatAbortController = ref<AbortController | null>(null);
 
-export const useInterviewStore = defineStore('interview', () => {
-  // 状态
-  const sessions = ref<InterviewSession[]>([])
-  const currentSession = ref<InterviewSession | null>(null)
-  const loading = ref(false)
-  
-  // 计算属性
-  const activeSessions = computed(() => 
-    sessions.value.filter(session => 
-      session.status === 'in_progress' || session.status === 'pending'
-    )
-  )
-  
-  const completedSessions = computed(() => 
-    sessions.value.filter(session => session.status === 'completed')
-  )
-  
-  // 方法
-  function startInterview(jobTitle: string, company: string, questions: Question[]) {
-    const newSession: InterviewSession = {
-      id: Date.now().toString(),
-      jobTitle,
-      company,
-      questions,
-      startTime: new Date(),
-      status: 'in_progress'
-    }
-    
-    sessions.value.push(newSession)
-    currentSession.value = newSession
-    return newSession
-  }
-  
-  function answerQuestion(questionId: string, answer: string, score: number) {
-    if (!currentSession.value) return
-    
-    const question = currentSession.value.questions.find(q => q.id === questionId)
-    if (question) {
-      question.answered = true
-      question.answer = answer
-      question.score = score
+  const questions = ref<InterviewQuestion[]>([]);
+  const gameLevels = ref<GameLevel[]>([]);
+  const gameStats = ref<GameStats | null>(null);
+  const gameAchievements = ref<GameAchievement[]>([]);
+  const leaderboard = ref<LeaderboardEntry[]>([]);
+
+  const activeSessions = computed(() =>
+    sessions.value.filter(
+      (s) => s.status === "in_progress" || s.status === "scheduled",
+    ),
+  );
+
+  const completedSessions = computed(() =>
+    sessions.value.filter((s) => s.status === "completed"),
+  );
+
+  async function fetchSessions(params?: {
+    status?: string;
+    offset?: number;
+    limit?: number;
+  }): Promise<void> {
+    log("fetchSessions →", params);
+    loading.value = true;
+    error.value = null;
+    try {
+      const response = await interviewApi.getSessions(params);
+      sessions.value = response.data;
+      log("fetchSessions ✓ received", response.data.length, "sessions");
+    } catch (err: any) {
+      error.value = err?.response?.data?.message || err?.message || "获取面试记录失败";
+      log("fetchSessions ✗ error:", error.value);
+    } finally {
+      loading.value = false;
     }
   }
-  
-  function completeInterview() {
-    if (!currentSession.value) return
-    
-    currentSession.value.status = 'completed'
-    currentSession.value.endTime = new Date()
-    
-    // 计算总分
-    const totalScore = currentSession.value.questions
-      .reduce((sum, q) => sum + (q.score || 0), 0)
-    
-    currentSession.value.totalScore = totalScore
+
+  async function fetchQuestions(): Promise<void> {
+    log("fetchQuestions →");
+    try {
+      const response = await interviewApi.getQuestions();
+      questions.value = response.data;
+      log("fetchQuestions ✓ received", response.data.length, "questions");
+    } catch (err: any) {
+      log("fetchQuestions ✗ error:", err?.message);
+    }
   }
-  
-  function getSessionById(id: string) {
-    return sessions.value.find(session => session.id === id)
+
+  async function createSession(data: InterviewSessionCreate): Promise<InterviewSession | null> {
+    log("createSession →", data);
+    loading.value = true;
+    error.value = null;
+    try {
+      const response = await interviewApi.createSession(data);
+      const session = response.data;
+      sessions.value.unshift(session);
+      currentSession.value = session;
+      log("createSession ✓ session created:", session.id, "status:", session.status);
+      return session;
+    } catch (err: any) {
+      error.value = err?.response?.data?.message || err?.message || "创建面试失败";
+      log("createSession ✗ error:", error.value);
+      throw err;
+    } finally {
+      loading.value = false;
+    }
   }
-  
+
+  async function startInterview(sessionId: number): Promise<InterviewStartResponse | null> {
+    log("startInterview →", sessionId);
+    try {
+      const response = await interviewApi.startSession(sessionId);
+      // Update session status in local list
+      const idx = sessions.value.findIndex((s) => s.id === sessionId);
+      if (idx !== -1) {
+        sessions.value[idx] = { ...sessions.value[idx], status: "in_progress", start_time: new Date().toISOString() };
+      }
+      if (currentSession.value?.id === sessionId) {
+        currentSession.value = { ...currentSession.value, status: "in_progress", start_time: new Date().toISOString() };
+      }
+      log("startInterview ✓ session:", sessionId, "opening_message:", response.data.opening_message);
+      return response.data;
+    } catch (err: any) {
+      error.value = err?.response?.data?.message || err?.message || "开始面试失败";
+      log("startInterview ✗ error:", error.value);
+      throw err;
+    }
+  }
+
+  function sendChatMessage(
+    sessionId: number,
+    message: string,
+    onEvent: (event: SseEvent) => void,
+    onError?: (error: Error) => void,
+  ): void {
+    log("sendChatMessage →", { sessionId, message });
+
+    if (chatAbortController.value) {
+      log("sendChatMessage: aborting previous chat connection");
+      chatAbortController.value.abort();
+    }
+
+    let tokenBuffer = "";
+    const wrappedOnEvent = (event: SseEvent) => {
+      log("sendChatMessage: SSE event received:", event.type, event.data);
+
+      if (event.type === "token") {
+        tokenBuffer += event.data;
+      } else if (event.type === "done") {
+        log("sendChatMessage: stream complete, full response:", tokenBuffer);
+      } else if (event.type === "error") {
+        log("sendChatMessage: SSE error event:", event.data);
+      } else if (event.type === "round_limit") {
+        log("sendChatMessage: round limit reached:", event.data);
+      }
+
+      onEvent(event);
+    };
+
+    const wrappedOnError = (err: Error) => {
+      log("sendChatMessage: SSE connection error:", err.message);
+      onError?.(err);
+    };
+
+    chatAbortController.value = interviewApi.chatSSE(
+      sessionId,
+      message,
+      wrappedOnEvent,
+      wrappedOnError,
+    );
+    log("sendChatMessage: SSE connection initiated, abort controller set");
+  }
+
+  function stopChat(): void {
+    log("stopChat → abortController:", chatAbortController.value ? "active" : "null");
+    if (chatAbortController.value) {
+      chatAbortController.value.abort();
+      chatAbortController.value = null;
+      log("stopChat ✓ chat aborted");
+    }
+  }
+
+  async function endInterview(sessionId: number): Promise<void> {
+    log("endInterview →", sessionId);
+    try {
+      stopChat();
+      const response = await interviewApi.endSession(sessionId);
+      const session = response.data;
+      if (currentSession.value?.id === sessionId) {
+        currentSession.value = session;
+      }
+      const idx = sessions.value.findIndex((s) => s.id === sessionId);
+      if (idx !== -1) {
+        sessions.value[idx] = session;
+      }
+      log("endInterview ✓ session:", sessionId, "status:", session.status, "score:", session.score);
+    } catch (err: any) {
+      log("endInterview ✗ error:", err?.message);
+    }
+  }
+
+  async function cancelInterview(sessionId: number): Promise<void> {
+    log("cancelInterview →", sessionId);
+    try {
+      stopChat();
+      const response = await interviewApi.cancelSession(sessionId);
+      const session = response.data;
+      if (currentSession.value?.id === sessionId) {
+        currentSession.value = session;
+      }
+      const idx = sessions.value.findIndex((s) => s.id === sessionId);
+      if (idx !== -1) {
+        sessions.value[idx] = session;
+      }
+      log("cancelInterview ✓ session:", sessionId, "status:", session.status);
+    } catch (err: any) {
+      log("cancelInterview ✗ error:", err?.message);
+    }
+  }
+
+  async function fetchReport(sessionId: number): Promise<InterviewReport | null> {
+    log("fetchReport →", sessionId);
+    try {
+      const response = await interviewApi.getReport(sessionId);
+      currentReport.value = response.data;
+      log("fetchReport ✓ report status:", response.data.status, "score:", response.data.overall_score);
+      return response.data;
+    } catch (err: any) {
+      log("fetchReport ✗ error:", err?.message);
+      return null;
+    }
+  }
+
+  function getSessionById(id: number) {
+    return sessions.value.find((s) => s.id === id);
+  }
+
+  async function fetchGameLevels(): Promise<void> {
+    log("fetchGameLevels →");
+    try {
+      const response = await interviewApi.getGameLevels();
+      gameLevels.value = response.data;
+      log("fetchGameLevels ✓", response.data.length, "levels");
+    } catch (err: any) {
+      log("fetchGameLevels ✗ error:", err?.message);
+    }
+  }
+
+  async function fetchGameStats(): Promise<void> {
+    log("fetchGameStats →");
+    try {
+      const response = await interviewApi.getGameStats();
+      gameStats.value = response.data;
+      log("fetchGameStats ✓", response.data);
+    } catch (err: any) {
+      log("fetchGameStats ✗ error:", err?.message);
+    }
+  }
+
+  async function fetchGameAchievements(): Promise<void> {
+    log("fetchGameAchievements →");
+    try {
+      const response = await interviewApi.getGameAchievements();
+      gameAchievements.value = response.data;
+      log("fetchGameAchievements ✓", response.data.length, "achievements");
+    } catch (err: any) {
+      log("fetchGameAchievements ✗ error:", err?.message);
+    }
+  }
+
+  async function fetchLeaderboard(): Promise<void> {
+    log("fetchLeaderboard →");
+    try {
+      const response = await interviewApi.getLeaderboard();
+      leaderboard.value = response.data;
+      log("fetchLeaderboard ✓", response.data.length, "entries");
+    } catch (err: any) {
+      log("fetchLeaderboard ✗ error:", err?.message);
+    }
+  }
+
+  async function fetchAllGameData(): Promise<void> {
+    log("fetchAllGameData →");
+    loading.value = true;
+    try {
+      await Promise.all([
+        fetchGameLevels(),
+        fetchGameStats(),
+        fetchGameAchievements(),
+        fetchLeaderboard(),
+      ]);
+      log("fetchAllGameData ✓ all game data loaded");
+    } finally {
+      loading.value = false;
+    }
+  }
+
   return {
     sessions,
     currentSession,
+    currentReport,
     loading,
+    error,
+    questions,
+    gameLevels,
+    gameStats,
+    gameAchievements,
+    leaderboard,
     activeSessions,
     completedSessions,
+    fetchSessions,
+    fetchQuestions,
+    createSession,
     startInterview,
-    answerQuestion,
-    completeInterview,
-    getSessionById
-  }
-})
+    sendChatMessage,
+    stopChat,
+    endInterview,
+    cancelInterview,
+    fetchReport,
+    getSessionById,
+    fetchGameLevels,
+    fetchGameStats,
+    fetchGameAchievements,
+    fetchLeaderboard,
+    fetchAllGameData,
+  };
+});

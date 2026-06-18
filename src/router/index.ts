@@ -1,12 +1,25 @@
 import { createRouter, createWebHistory } from "vue-router";
-import Home from "../views/Home.vue";
-import Interview from "../views/Interview.vue";
-import Profile from "../views/Profile.vue";
-import Matching from "../views/Matching.vue";
-import Growth from "../views/Growth.vue";
-import Community from "../views/Community.vue";
-import Knowledge from "../views/Knowledge.vue";
-import { useUserStore } from "../stores/user";
+import { useUserStore } from "@/stores/user";
+import { isLoggedIn as checkTokenExists } from "@/utils/auth";
+
+const Home = () => import("@/views/Home.vue");
+const Login = () => import("@/views/Login.vue");
+const Interview = () => import("@/views/Interview.vue");
+const Profile = () => import("@/views/Profile.vue");
+const Matching = () => import("@/views/Matching.vue");
+const Growth = () => import("@/views/Growth.vue");
+const Community = () => import("@/views/Community.vue");
+const Knowledge = () => import("@/views/Knowledge.vue");
+const GameInterview = () => import("@/views/GameInterview.vue");
+const LevelDetail = () => import("@/views/LevelDetail.vue");
+const LevelChallenge = () => import("@/views/LevelChallenge.vue");
+const Report = () => import("@/views/Report.vue");
+const JobSpecificQuestionBank = () =>
+  import("@/views/JobSpecificQuestionBank.vue");
+const Practice = () => import("@/views/Practice.vue");
+const PathPractice = () => import("@/views/PathPractice.vue");
+
+const WHITE_LIST = ["/", "/login", "/matching"];
 
 const routes = [
   {
@@ -16,10 +29,40 @@ const routes = [
     meta: { title: "首页", hideSidebar: true },
   },
   {
+    path: "/login",
+    name: "Login",
+    component: Login,
+    meta: { title: "登录", hideSidebar: true, requiresAuth: false },
+  },
+  {
     path: "/interview",
     name: "Interview",
     component: Interview,
-    meta: { title: "面试实战" },
+    meta: { title: "面试实战", requiresAuth: true },
+  },
+  {
+    path: "/job-specific-question-bank",
+    name: "JobSpecificQuestionBank",
+    component: JobSpecificQuestionBank,
+    meta: { title: "岗位专属题库", requiresAuth: true },
+  },
+  {
+    path: "/game-interview",
+    name: "GameInterview",
+    component: GameInterview,
+    meta: { title: "游戏式面试", requiresAuth: true },
+  },
+  {
+    path: "/game-interview/level/:id/detail",
+    name: "LevelDetail",
+    component: LevelDetail,
+    meta: { title: "关卡详情", requiresAuth: true },
+  },
+  {
+    path: "/game-interview/level/:id",
+    name: "LevelChallenge",
+    component: LevelChallenge,
+    meta: { title: "关卡挑战", requiresAuth: true },
   },
   {
     path: "/matching",
@@ -31,7 +74,7 @@ const routes = [
     path: "/growth",
     name: "Growth",
     component: Growth,
-    meta: { title: "能力提升" },
+    meta: { title: "能力提升", requiresAuth: true },
   },
   {
     path: "/community",
@@ -49,7 +92,25 @@ const routes = [
     path: "/profile",
     name: "Profile",
     component: Profile,
-    meta: { title: "个人中心" },
+    meta: { title: "个人中心", requiresAuth: true },
+  },
+  {
+    path: "/report",
+    name: "Report",
+    component: Report,
+    meta: { title: "面试报告", requiresAuth: true },
+  },
+  {
+    path: "/practice/:id",
+    name: "Practice",
+    component: Practice,
+    meta: { title: "练习", requiresAuth: true },
+  },
+  {
+    path: "/path-practice",
+    name: "PathPractice",
+    component: PathPractice,
+    meta: { title: "专项通关路径", requiresAuth: true },
   },
 ];
 
@@ -58,16 +119,39 @@ const router = createRouter({
   routes,
 });
 
-router.beforeEach((to, from, next) => {
-  const userStore = useUserStore();
-  
-  const requiresAuth = to.meta.requiresAuth || false;
+router.beforeEach(async (to, _from, next) => {
+  document.title = `${to.meta.title || ""} | 面面俱到`;
 
-  if (requiresAuth && !userStore.isLoggedIn) {
-    next("/login");
-  } else {
-    document.title = `${to.meta.title} | 面面俱到`;
+  const hasToken = checkTokenExists();
+
+  if (hasToken) {
+    if (to.path === "/login") {
+      next({ path: "/" });
+      return;
+    }
+
+    const userStore = useUserStore();
+    if (!userStore.user.isAuthenticated) {
+      try {
+        await userStore.initialize();
+      } catch {
+        await userStore.logout();
+        next({ path: "/login", query: { redirect: to.fullPath } });
+        return;
+      }
+    }
+
     next();
+  } else {
+    const requiresAuth =
+      to.meta.requiresAuth !== false && !WHITE_LIST.includes(to.path);
+
+    if (requiresAuth) {
+      next({ path: "/login", query: { redirect: to.fullPath } });
+    } else {
+      next();
+    }
   }
 });
+
 export default router;

@@ -1,0 +1,695 @@
+{
+  "paths": {
+    "/community/posts": {
+      "post": {
+        "tags": ["community"],
+        "summary": "发布帖子",
+        "description": "前端: Community.vue 发帖编辑器",
+        "operationId": "create_post_community_posts_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PostCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel_Post_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "OAuth2PasswordBearer": [] }]
+      }
+    },
+    "/community/posts/feed": {
+      "get": {
+        "tags": ["community"],
+        "summary": "获取帖子流",
+        "description": "前端: Community.vue 首页信息流",
+        "operationId": "get_feed_community_posts_feed_get",
+        "parameters": [
+          {
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "minimum": 0, "default": 0, "title": "Skip" }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "maximum": 100, "minimum": 1, "default": 10, "title": "Limit" }
+          },
+          {
+            "name": "keyword",
+            "in": "query",
+            "required": false,
+            "schema": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Keyword" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ResponseModel_List_Post_" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/community/posts/{post_id}": {
+      "get": {
+        "tags": ["community"],
+        "summary": "获取帖子详情",
+        "description": "前端: 帖子详情页",
+        "operationId": "get_post_community_posts_post_id_get",
+        "parameters": [
+          {
+            "name": "post_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "title": "Post Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ResponseModel_Post_" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["community"],
+        "summary": "编辑帖子",
+        "description": "前端: 帖子编辑页面",
+        "operationId": "update_post_community_posts_post_id_put",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "post_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "title": "Post Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/PostUpdate" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ResponseModel_Post_" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["community"],
+        "summary": "删除帖子",
+        "description": "前端: 帖子操作菜单",
+        "operationId": "delete_post_community_posts_post_id_delete",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "post_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "title": "Post Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ResponseModel_str_" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/community/posts/{post_id}/comments": {
+      "get": {
+        "tags": ["community"],
+        "summary": "获取帖子评论列表",
+        "description": "前端: 帖子详情页评论区",
+        "operationId": "get_comments_community_posts_post_id_comments_get",
+        "parameters": [
+          {
+            "name": "post_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "title": "Post Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ResponseModel_List_Comment_" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        },
+        "security": [{ "OAuth2PasswordBearer": [] }]
+      },
+      "post": {
+        "tags": ["community"],
+        "summary": "发表评论",
+        "description": "前端: 帖子评论区提交评论（支持楼中楼 parent_id）",
+        "operationId": "create_comment_community_posts_post_id_comments_post",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "post_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "title": "Post Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CommentCreate" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ResponseModel_Comment_" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/community/posts/{post_id}/like": {
+      "post": {
+        "tags": ["community"],
+        "summary": "切换点赞状态",
+        "description": "前端: 帖子详情页点赞按钮",
+        "operationId": "toggle_like_community_posts_post_id_like_post",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "post_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "title": "Post Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ResponseModel_LikeResult_" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/community/users/{user_id}/follow": {
+      "post": {
+        "tags": ["community"],
+        "summary": "切换关注状态",
+        "description": "前端: 用户主页关注按钮",
+        "operationId": "toggle_follow_community_users_user_id_follow_post",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "title": "User Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ResponseModel_FollowResult_" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/community/posts/{post_id}/ai-review": {
+      "post": {
+        "tags": ["community"],
+        "summary": "触发 AI 点评",
+        "description": "前端: 帖子详情页 AI 点评按钮（异步任务）",
+        "operationId": "trigger_ai_review_community_posts_post_id_ai_review_post",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "post_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "title": "Post Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ResponseModel_AiReviewResult_" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/community/hot-topics": {
+      "get": {
+        "tags": ["community"],
+        "summary": "获取热门话题",
+        "description": "前端: Community.vue 热门话题侧栏",
+        "operationId": "get_hot_topics_community_hot_topics_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ResponseModel_List_HotTopic_" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/community/active-users": {
+      "get": {
+        "tags": ["community"],
+        "summary": "获取活跃用户",
+        "description": "前端: Community.vue 活跃用户侧栏",
+        "operationId": "get_active_users_community_active_users_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ResponseModel_List_ActiveUser_" }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "PostCreate": {
+        "properties": {
+          "title": { "type": "string", "title": "Title" },
+          "content": { "type": "string", "title": "Content" },
+          "category": {
+            "type": "string",
+            "enum": ["interview_review", "real_questions", "experience"],
+            "title": "Category"
+          }
+        },
+        "type": "object",
+        "required": ["title", "content", "category"],
+        "title": "PostCreate"
+      },
+      "PostUpdate": {
+        "properties": {
+          "title": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Title" },
+          "content": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Content" },
+          "category": {
+            "anyOf": [
+              { "type": "string", "enum": ["interview_review", "real_questions", "experience"] },
+              { "type": "null" }
+            ],
+            "title": "Category"
+          }
+        },
+        "type": "object",
+        "title": "PostUpdate"
+      },
+      "Post": {
+        "properties": {
+          "id": { "type": "integer", "title": "Id" },
+          "title": { "type": "string", "title": "Title" },
+          "content": { "type": "string", "title": "Content" },
+          "category": {
+            "type": "string",
+            "enum": ["interview_review", "real_questions", "experience"],
+            "title": "Category"
+          },
+          "author_id": { "type": "integer", "title": "Author Id" },
+          "author_name": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Author Name" },
+          "author_avatar": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Author Avatar" },
+          "likes_count": { "type": "integer", "title": "Likes Count", "default": 0 },
+          "comments_count": { "type": "integer", "title": "Comments Count", "default": 0 },
+          "is_liked": { "type": "boolean", "title": "Is Liked", "default": false },
+          "ai_review_content": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "AI Review Content" },
+          "created_at": { "type": "string", "format": "date-time", "title": "Created At" },
+          "updated_at": { "type": "string", "format": "date-time", "title": "Updated At" }
+        },
+        "type": "object",
+        "required": ["id", "title", "content", "category", "author_id", "created_at", "updated_at"],
+        "title": "Post"
+      },
+      "CommentCreate": {
+        "properties": {
+          "content": { "type": "string", "title": "Content" },
+          "parent_id": { "anyOf": [{ "type": "integer" }, { "type": "null" }], "title": "Parent Id", "description": "楼中楼回复目标评论ID" }
+        },
+        "type": "object",
+        "required": ["content"],
+        "title": "CommentCreate"
+      },
+      "Comment": {
+        "properties": {
+          "id": { "type": "integer", "title": "Id" },
+          "post_id": { "type": "integer", "title": "Post Id" },
+          "author_id": { "type": "integer", "title": "Author Id" },
+          "author_name": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Author Name" },
+          "content": { "type": "string", "title": "Content" },
+          "parent_id": { "anyOf": [{ "type": "integer" }, { "type": "null" }], "title": "Parent Id" },
+          "replies": {
+            "items": { "$ref": "#/components/schemas/Comment" },
+            "type": "array",
+            "title": "Replies",
+            "default": []
+          },
+          "created_at": { "type": "string", "format": "date-time", "title": "Created At" }
+        },
+        "type": "object",
+        "required": ["id", "post_id", "author_id", "content", "created_at"],
+        "title": "Comment"
+      },
+      "LikeResult": {
+        "properties": {
+          "liked": { "type": "boolean", "title": "Liked" },
+          "likes_count": { "type": "integer", "title": "Likes Count" }
+        },
+        "type": "object",
+        "required": ["liked", "likes_count"],
+        "title": "LikeResult"
+      },
+      "FollowResult": {
+        "properties": {
+          "following": { "type": "boolean", "title": "Following" }
+        },
+        "type": "object",
+        "required": ["following"],
+        "title": "FollowResult"
+      },
+      "AiReviewResult": {
+        "properties": {
+          "task_id": { "type": "string", "title": "Task Id" },
+          "status": { "type": "string", "title": "Status" },
+          "ai_review_content": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "AI Review Content" }
+        },
+        "type": "object",
+        "required": ["task_id", "status"],
+        "title": "AiReviewResult"
+      },
+      "HotTopic": {
+        "properties": {
+          "id": { "type": "integer", "title": "Id" },
+          "title": { "type": "string", "title": "Title" },
+          "posts": { "type": "integer", "title": "Posts" },
+          "participants": { "type": "integer", "title": "Participants" }
+        },
+        "type": "object",
+        "required": ["id", "title", "posts", "participants"],
+        "title": "HotTopic"
+      },
+      "ActiveUser": {
+        "properties": {
+          "id": { "type": "integer", "title": "Id" },
+          "name": { "type": "string", "title": "Name" },
+          "avatar": { "type": "string", "title": "Avatar" },
+          "posts": { "type": "integer", "title": "Posts" },
+          "followers": { "type": "integer", "title": "Followers" },
+          "bio": { "type": "string", "title": "Bio" }
+        },
+        "type": "object",
+        "required": ["id", "name", "avatar", "posts", "followers", "bio"],
+        "title": "ActiveUser"
+      },
+
+      "ResponseModel_Post_": {
+        "properties": {
+          "code": { "type": "integer", "title": "Code", "default": 200 },
+          "message": { "type": "string", "title": "Message", "default": "success" },
+          "data": { "anyOf": [{ "$ref": "#/components/schemas/Post" }, { "type": "null" }] }
+        },
+        "type": "object",
+        "title": "ResponseModel[Post]"
+      },
+      "ResponseModel_List_Post_": {
+        "properties": {
+          "code": { "type": "integer", "title": "Code", "default": 200 },
+          "message": { "type": "string", "title": "Message", "default": "success" },
+          "data": {
+            "anyOf": [
+              { "items": { "$ref": "#/components/schemas/Post" }, "type": "array" },
+              { "type": "null" }
+            ],
+            "title": "Data"
+          }
+        },
+        "type": "object",
+        "title": "ResponseModel[List[Post]]"
+      },
+      "ResponseModel_Comment_": {
+        "properties": {
+          "code": { "type": "integer", "title": "Code", "default": 200 },
+          "message": { "type": "string", "title": "Message", "default": "success" },
+          "data": { "anyOf": [{ "$ref": "#/components/schemas/Comment" }, { "type": "null" }] }
+        },
+        "type": "object",
+        "title": "ResponseModel[Comment]"
+      },
+      "ResponseModel_List_Comment_": {
+        "properties": {
+          "code": { "type": "integer", "title": "Code", "default": 200 },
+          "message": { "type": "string", "title": "Message", "default": "success" },
+          "data": {
+            "anyOf": [
+              { "items": { "$ref": "#/components/schemas/Comment" }, "type": "array" },
+              { "type": "null" }
+            ],
+            "title": "Data"
+          }
+        },
+        "type": "object",
+        "title": "ResponseModel[List[Comment]]"
+      },
+      "ResponseModel_LikeResult_": {
+        "properties": {
+          "code": { "type": "integer", "title": "Code", "default": 200 },
+          "message": { "type": "string", "title": "Message", "default": "success" },
+          "data": { "anyOf": [{ "$ref": "#/components/schemas/LikeResult" }, { "type": "null" }] }
+        },
+        "type": "object",
+        "title": "ResponseModel[LikeResult]"
+      },
+      "ResponseModel_FollowResult_": {
+        "properties": {
+          "code": { "type": "integer", "title": "Code", "default": 200 },
+          "message": { "type": "string", "title": "Message", "default": "success" },
+          "data": { "anyOf": [{ "$ref": "#/components/schemas/FollowResult" }, { "type": "null" }] }
+        },
+        "type": "object",
+        "title": "ResponseModel[FollowResult]"
+      },
+      "ResponseModel_AiReviewResult_": {
+        "properties": {
+          "code": { "type": "integer", "title": "Code", "default": 200 },
+          "message": { "type": "string", "title": "Message", "default": "success" },
+          "data": { "anyOf": [{ "$ref": "#/components/schemas/AiReviewResult" }, { "type": "null" }] }
+        },
+        "type": "object",
+        "title": "ResponseModel[AiReviewResult]"
+      },
+      "ResponseModel_List_HotTopic_": {
+        "properties": {
+          "code": { "type": "integer", "title": "Code", "default": 200 },
+          "message": { "type": "string", "title": "Message", "default": "success" },
+          "data": {
+            "anyOf": [
+              { "items": { "$ref": "#/components/schemas/HotTopic" }, "type": "array" },
+              { "type": "null" }
+            ],
+            "title": "Data"
+          }
+        },
+        "type": "object",
+        "title": "ResponseModel[List[HotTopic]]"
+      },
+      "ResponseModel_List_ActiveUser_": {
+        "properties": {
+          "code": { "type": "integer", "title": "Code", "default": 200 },
+          "message": { "type": "string", "title": "Message", "default": "success" },
+          "data": {
+            "anyOf": [
+              { "items": { "$ref": "#/components/schemas/ActiveUser" }, "type": "array" },
+              { "type": "null" }
+            ],
+            "title": "Data"
+          }
+        },
+        "type": "object",
+        "title": "ResponseModel[List[ActiveUser]]"
+      },
+      "ResponseModel_str_": {
+        "properties": {
+          "code": { "type": "integer", "title": "Code", "default": 200 },
+          "message": { "type": "string", "title": "Message", "default": "success" },
+          "data": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Data" }
+        },
+        "type": "object",
+        "title": "ResponseModel[str]"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": { "$ref": "#/components/schemas/ValidationError" },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": { "anyOf": [{ "type": "string" }, { "type": "integer" }] },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": { "type": "string", "title": "Message" },
+          "type": { "type": "string", "title": "Error Type" },
+          "input": { "title": "Input" },
+          "ctx": { "type": "object", "title": "Context" }
+        },
+        "type": "object",
+        "required": ["loc", "msg", "type"],
+        "title": "ValidationError"
+      }
+    }
+  }
+}

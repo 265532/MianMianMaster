@@ -1,0 +1,320 @@
+{
+  "paths": {
+    "/system/config": {
+      "get": {
+        "tags": ["system"],
+        "summary": "获取系统配置列表",
+        "description": "前端: 管理后台系统配置",
+        "operationId": "get_config_system_config_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel_List_SystemConfig_"
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "OAuth2PasswordBearer": [] }]
+      },
+      "post": {
+        "tags": ["system"],
+        "summary": "创建系统配置项",
+        "description": "前端: 管理后台添加系统配置",
+        "operationId": "create_config_system_config_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SystemConfigCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel_SystemConfig_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "OAuth2PasswordBearer": [] }]
+      }
+    },
+    "/system/health": {
+      "get": {
+        "tags": ["system"],
+        "summary": "获取系统健康状态",
+        "description": "前端: 管理后台仪表盘 / 运维监控",
+        "operationId": "get_health_system_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel_SystemHealth_"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/system/announcements": {
+      "get": {
+        "tags": ["system"],
+        "summary": "获取系统公告列表",
+        "description": "前端: 首页公告栏 / 管理后台公告管理",
+        "operationId": "get_announcements_system_announcements_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel_List_SystemAnnouncement_"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/system/audit-log": {
+      "get": {
+        "tags": ["system"],
+        "summary": "获取审计日志（分页）",
+        "description": "前端: 管理后台审计日志",
+        "operationId": "get_audit_log_system_audit_log_get",
+        "parameters": [
+          {
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Skip"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel_List_AuditLog_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "OAuth2PasswordBearer": [] }]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "SystemConfigCreate": {
+        "properties": {
+          "key": { "type": "string", "title": "Key" },
+          "value": { "type": "string", "title": "Value" },
+          "description": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Description" }
+        },
+        "type": "object",
+        "required": ["key", "value"],
+        "title": "SystemConfigCreate"
+      },
+      "SystemConfig": {
+        "properties": {
+          "key": { "type": "string", "title": "Key" },
+          "value": { "type": "string", "title": "Value" },
+          "description": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Description" }
+        },
+        "type": "object",
+        "required": ["key", "value"],
+        "title": "SystemConfig"
+      },
+      "SystemHealth": {
+        "properties": {
+          "status": { "type": "string", "title": "Status" },
+          "version": { "type": "string", "title": "Version" },
+          "uptime": { "type": "number", "title": "Uptime" },
+          "database": { "type": "string", "title": "Database" },
+          "redis": { "type": "string", "title": "Redis" }
+        },
+        "type": "object",
+        "required": ["status", "version", "uptime", "database", "redis"],
+        "title": "SystemHealth"
+      },
+      "SystemAnnouncement": {
+        "properties": {
+          "id": { "type": "integer", "title": "Id" },
+          "title": { "type": "string", "title": "Title" },
+          "content": { "type": "string", "title": "Content" },
+          "type": {
+            "type": "string",
+            "enum": ["info", "warning", "maintenance"],
+            "title": "Type"
+          },
+          "start_time": { "type": "string", "format": "date-time", "title": "Start Time" },
+          "end_time": { "anyOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }], "title": "End Time" },
+          "is_active": { "type": "boolean", "title": "Is Active" }
+        },
+        "type": "object",
+        "required": ["id", "title", "content", "type", "start_time", "is_active"],
+        "title": "SystemAnnouncement"
+      },
+      "AuditLog": {
+        "properties": {
+          "id": { "type": "integer", "title": "Id" },
+          "user_id": { "type": "integer", "title": "User Id" },
+          "username": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Username" },
+          "action": { "type": "string", "title": "Action" },
+          "resource": { "type": "string", "title": "Resource" },
+          "detail": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Detail" },
+          "ip_address": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Ip Address" },
+          "created_at": { "type": "string", "format": "date-time", "title": "Created At" }
+        },
+        "type": "object",
+        "required": ["id", "user_id", "action", "resource", "created_at"],
+        "title": "AuditLog"
+      },
+
+      "ResponseModel_List_SystemConfig_": {
+        "properties": {
+          "code": { "type": "integer", "title": "Code", "default": 200 },
+          "message": { "type": "string", "title": "Message", "default": "success" },
+          "data": {
+            "anyOf": [
+              { "items": { "$ref": "#/components/schemas/SystemConfig" }, "type": "array" },
+              { "type": "null" }
+            ],
+            "title": "Data"
+          }
+        },
+        "type": "object",
+        "title": "ResponseModel[List[SystemConfig]]"
+      },
+      "ResponseModel_SystemConfig_": {
+        "properties": {
+          "code": { "type": "integer", "title": "Code", "default": 200 },
+          "message": { "type": "string", "title": "Message", "default": "success" },
+          "data": { "anyOf": [{ "$ref": "#/components/schemas/SystemConfig" }, { "type": "null" }] }
+        },
+        "type": "object",
+        "title": "ResponseModel[SystemConfig]"
+      },
+      "ResponseModel_SystemHealth_": {
+        "properties": {
+          "code": { "type": "integer", "title": "Code", "default": 200 },
+          "message": { "type": "string", "title": "Message", "default": "success" },
+          "data": { "anyOf": [{ "$ref": "#/components/schemas/SystemHealth" }, { "type": "null" }] }
+        },
+        "type": "object",
+        "title": "ResponseModel[SystemHealth]"
+      },
+      "ResponseModel_List_SystemAnnouncement_": {
+        "properties": {
+          "code": { "type": "integer", "title": "Code", "default": 200 },
+          "message": { "type": "string", "title": "Message", "default": "success" },
+          "data": {
+            "anyOf": [
+              { "items": { "$ref": "#/components/schemas/SystemAnnouncement" }, "type": "array" },
+              { "type": "null" }
+            ],
+            "title": "Data"
+          }
+        },
+        "type": "object",
+        "title": "ResponseModel[List[SystemAnnouncement]]"
+      },
+      "ResponseModel_List_AuditLog_": {
+        "properties": {
+          "code": { "type": "integer", "title": "Code", "default": 200 },
+          "message": { "type": "string", "title": "Message", "default": "success" },
+          "data": {
+            "anyOf": [
+              { "items": { "$ref": "#/components/schemas/AuditLog" }, "type": "array" },
+              { "type": "null" }
+            ],
+            "title": "Data"
+          }
+        },
+        "type": "object",
+        "title": "ResponseModel[List[AuditLog]]"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": { "$ref": "#/components/schemas/ValidationError" },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": { "anyOf": [{ "type": "string" }, { "type": "integer" }] },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": { "type": "string", "title": "Message" },
+          "type": { "type": "string", "title": "Error Type" },
+          "input": { "title": "Input" },
+          "ctx": { "type": "object", "title": "Context" }
+        },
+        "type": "object",
+        "required": ["loc", "msg", "type"],
+        "title": "ValidationError"
+      }
+    }
+  }
+}

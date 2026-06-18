@@ -1,0 +1,316 @@
+{
+  "paths": {
+    "/assessments": {
+      "get": {
+        "tags": ["assessment"],
+        "summary": "获取测评列表",
+        "description": "前端: Assessment 相关页面获取可选测评",
+        "operationId": "list_assessments_assessments_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel_List_Assessment_"
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "OAuth2PasswordBearer": [] }]
+      },
+      "post": {
+        "tags": ["assessment"],
+        "summary": "创建测评",
+        "description": "前端: 管理后台创建测评",
+        "operationId": "create_assessment_assessments_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssessmentCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel_Assessment_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "OAuth2PasswordBearer": [] }]
+      }
+    },
+    "/assessments/submit": {
+      "post": {
+        "tags": ["assessment"],
+        "summary": "提交测评答案",
+        "description": "前端: 测评页面提交答案 → LLM 异步判卷",
+        "operationId": "submit_assessment_assessments_submit_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssessmentSubmit"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel_AssessmentResult_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "OAuth2PasswordBearer": [] }]
+      }
+    },
+    "/assessments/{assessment_id}/result": {
+      "get": {
+        "tags": ["assessment"],
+        "summary": "获取测评结果",
+        "description": "前端: 查看已完成测评的结果",
+        "operationId": "get_assessment_result_assessments_assessment_id_result_get",
+        "parameters": [
+          {
+            "name": "assessment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Assessment Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel_AssessmentResult_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "OAuth2PasswordBearer": [] }]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Assessment": {
+        "properties": {
+          "id": { "type": "integer", "title": "Id" },
+          "title": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Title" },
+          "type": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Type" },
+          "created_at": { "type": "string", "format": "date-time", "title": "Created At" }
+        },
+        "type": "object",
+        "required": ["id", "created_at"],
+        "title": "Assessment"
+      },
+      "AssessmentQuestion": {
+        "properties": {
+          "id": { "type": "integer", "title": "Id" },
+          "type": {
+            "type": "string",
+            "enum": ["single_choice", "multiple_choice", "text"],
+            "title": "Type"
+          },
+          "content": { "type": "string", "title": "Content" },
+          "options": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Options",
+            "default": []
+          },
+          "correct_answer": {
+            "anyOf": [
+              { "type": "string" },
+              { "items": { "type": "string" }, "type": "array" },
+              { "type": "null" }
+            ],
+            "title": "Correct Answer"
+          },
+          "points": { "type": "integer", "title": "Points" }
+        },
+        "type": "object",
+        "required": ["id", "type", "content", "points"],
+        "title": "AssessmentQuestion"
+      },
+      "AssessmentCreate": {
+        "properties": {
+          "type": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Type" },
+          "questions": {
+            "items": { "$ref": "#/components/schemas/AssessmentQuestion" },
+            "type": "array",
+            "title": "Questions"
+          }
+        },
+        "type": "object",
+        "required": ["questions"],
+        "title": "AssessmentCreate"
+      },
+      "AssessmentAnswerItem": {
+        "properties": {
+          "question_id": { "type": "integer", "title": "Question Id" },
+          "answer": {
+            "anyOf": [
+              { "type": "string" },
+              { "items": { "type": "string" }, "type": "array" }
+            ],
+            "title": "Answer"
+          }
+        },
+        "type": "object",
+        "required": ["question_id", "answer"],
+        "title": "AssessmentAnswerItem"
+      },
+      "AssessmentSubmit": {
+        "properties": {
+          "assessment_id": { "type": "integer", "title": "Assessment Id" },
+          "answers": {
+            "items": { "$ref": "#/components/schemas/AssessmentAnswerItem" },
+            "type": "array",
+            "title": "Answers"
+          }
+        },
+        "type": "object",
+        "required": ["assessment_id", "answers"],
+        "title": "AssessmentSubmit"
+      },
+      "AssessmentResult": {
+        "properties": {
+          "id": { "type": "integer", "title": "Id" },
+          "assessment_id": { "type": "integer", "title": "Assessment Id" },
+          "score": { "anyOf": [{ "type": "number" }, { "type": "null" }], "title": "Score" },
+          "details": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Details"
+          },
+          "created_at": { "type": "string", "format": "date-time", "title": "Created At" }
+        },
+        "type": "object",
+        "required": ["id", "assessment_id", "created_at"],
+        "title": "AssessmentResult"
+      },
+
+      "ResponseModel_List_Assessment_": {
+        "properties": {
+          "code": { "type": "integer", "title": "Code", "default": 200 },
+          "message": { "type": "string", "title": "Message", "default": "success" },
+          "data": {
+            "anyOf": [
+              {
+                "items": { "$ref": "#/components/schemas/Assessment" },
+                "type": "array"
+              },
+              { "type": "null" }
+            ],
+            "title": "Data"
+          }
+        },
+        "type": "object",
+        "title": "ResponseModel[List[Assessment]]"
+      },
+      "ResponseModel_Assessment_": {
+        "properties": {
+          "code": { "type": "integer", "title": "Code", "default": 200 },
+          "message": { "type": "string", "title": "Message", "default": "success" },
+          "data": {
+            "anyOf": [{ "$ref": "#/components/schemas/Assessment" }, { "type": "null" }]
+          }
+        },
+        "type": "object",
+        "title": "ResponseModel[Assessment]"
+      },
+      "ResponseModel_AssessmentResult_": {
+        "properties": {
+          "code": { "type": "integer", "title": "Code", "default": 200 },
+          "message": { "type": "string", "title": "Message", "default": "success" },
+          "data": {
+            "anyOf": [{ "$ref": "#/components/schemas/AssessmentResult" }, { "type": "null" }]
+          }
+        },
+        "type": "object",
+        "title": "ResponseModel[AssessmentResult]"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": { "$ref": "#/components/schemas/ValidationError" },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": { "anyOf": [{ "type": "string" }, { "type": "integer" }] },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": { "type": "string", "title": "Message" },
+          "type": { "type": "string", "title": "Error Type" },
+          "input": { "title": "Input" },
+          "ctx": { "type": "object", "title": "Context" }
+        },
+        "type": "object",
+        "required": ["loc", "msg", "type"],
+        "title": "ValidationError"
+      }
+    }
+  }
+}

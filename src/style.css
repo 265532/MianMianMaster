@@ -21,9 +21,7 @@
   --background-gradient-primary: linear-gradient(135deg, #18C5C7 0%, #95E0E1 100%);
   --background-gradient-cyan-yellow: linear-gradient(135deg, #95E0E1 0%, #FFEAC2 100%);
   --background-gradient-yellow-orange: linear-gradient(135deg, #FFEAC2 0%, #FFC585 100%);
-  /* 圆心位置：中心，渐变半径：默认 */
-  --background-gradient-yellow-orange: radial-gradient(circle at center, #FFEAC2 0%, #FFC585 100%);
-  /* 圆心位置：中心，渐变半径：默认 */
+--background-gradient-yellow-orange-radial: radial-gradient(circle at center, #FFEAC2 0%, #FFC585 100%);
 }
 
 :root {
@@ -42,6 +40,22 @@ h4,
 h5,
 h6 {
   @apply text-neutral-title;
+}
+
+/* 确保深色背景上的标题显示为白色 */
+.bg-neutral-title h2,
+.bg-neutral-title h3 {
+  color: white !important;
+}
+
+.gradient-primary h2,
+.gradient-primary h3 {
+  color: white !important;
+}
+
+.gradient-yellow-orange h2,
+.gradient-yellow-orange h3 {
+  color: white !important;
 }
 
 /* Custom UI Utility Classes */

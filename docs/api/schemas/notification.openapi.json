@@ -1,0 +1,380 @@
+{
+  "paths": {
+    "/notifications": {
+      "get": {
+        "tags": ["notification"],
+        "summary": "获取通知列表",
+        "description": "前端: 导航栏通知下拉、通知页面",
+        "operationId": "list_notifications_notifications_get",
+        "parameters": [
+          {
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Skip"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel_List_Notification_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "OAuth2PasswordBearer": [] }]
+      }
+    },
+    "/notifications/unread-count": {
+      "get": {
+        "tags": ["notification"],
+        "summary": "获取未读通知数量",
+        "description": "前端: 导航栏红点角标、30s 轮询",
+        "operationId": "get_unread_count_notifications_unread_count_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel_int_"
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "OAuth2PasswordBearer": [] }]
+      }
+    },
+    "/notifications/{notification_id}/read": {
+      "put": {
+        "tags": ["notification"],
+        "summary": "标记单条通知已读",
+        "description": "前端: 通知列表点击某条通知",
+        "operationId": "mark_as_read_notifications_notification_id_read_put",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "notification_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Notification Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel_str_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/notifications/read-all": {
+      "put": {
+        "tags": ["notification"],
+        "summary": "全部标记已读",
+        "description": "前端: 通知面板「全部已读」按钮",
+        "operationId": "mark_all_read_notifications_read_all_put",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel_str_"
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "OAuth2PasswordBearer": [] }]
+      }
+    },
+    "/notifications/preferences": {
+      "get": {
+        "tags": ["notification"],
+        "summary": "获取通知偏好设置",
+        "description": "前端: 设置页面通知偏好面板",
+        "operationId": "get_preferences_notifications_preferences_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel_NotificationPreferences_"
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "OAuth2PasswordBearer": [] }]
+      },
+      "put": {
+        "tags": ["notification"],
+        "summary": "更新通知偏好设置",
+        "description": "前端: 设置页面切换偏好开关",
+        "operationId": "update_preferences_notifications_preferences_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NotificationPreferencesUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel_NotificationPreferences_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "OAuth2PasswordBearer": [] }]
+      }
+    },
+    "/notifications/device-token": {
+      "post": {
+        "tags": ["notification"],
+        "summary": "注册设备推送令牌",
+        "description": "前端: App 端推送注册",
+        "operationId": "register_device_token_notifications_device_token_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeviceTokenRegisterRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel_str_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "OAuth2PasswordBearer": [] }]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Notification": {
+        "properties": {
+          "id": { "type": "integer", "title": "Id" },
+          "title": { "type": "string", "title": "Title" },
+          "content": { "type": "string", "title": "Content" },
+          "type": {
+            "type": "string",
+            "enum": ["system", "interview_result", "community", "learning"],
+            "title": "Type"
+          },
+          "is_read": { "type": "boolean", "title": "Is Read" },
+          "created_at": { "type": "string", "format": "date-time", "title": "Created At" },
+          "link": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Link" }
+        },
+        "type": "object",
+        "required": ["id", "title", "content", "type", "is_read", "created_at"],
+        "title": "Notification"
+      },
+      "NotificationPreferences": {
+        "properties": {
+          "email_notifications": { "type": "boolean", "title": "Email Notifications" },
+          "push_notifications": { "type": "boolean", "title": "Push Notifications" },
+          "interview_reminders": { "type": "boolean", "title": "Interview Reminders" },
+          "community_updates": { "type": "boolean", "title": "Community Updates" },
+          "learning_reminders": { "type": "boolean", "title": "Learning Reminders" }
+        },
+        "type": "object",
+        "required": ["email_notifications", "push_notifications", "interview_reminders", "community_updates", "learning_reminders"],
+        "title": "NotificationPreferences"
+      },
+      "NotificationPreferencesUpdate": {
+        "properties": {
+          "email_notifications": { "type": "boolean", "title": "Email Notifications" },
+          "push_notifications": { "type": "boolean", "title": "Push Notifications" },
+          "interview_reminders": { "type": "boolean", "title": "Interview Reminders" },
+          "community_updates": { "type": "boolean", "title": "Community Updates" },
+          "learning_reminders": { "type": "boolean", "title": "Learning Reminders" }
+        },
+        "type": "object",
+        "title": "NotificationPreferencesUpdate"
+      },
+      "DeviceTokenRegisterRequest": {
+        "properties": {
+          "token": { "type": "string", "title": "Token" },
+          "platform": { "type": "string", "title": "Platform" }
+        },
+        "type": "object",
+        "required": ["token", "platform"],
+        "title": "DeviceTokenRegisterRequest"
+      },
+
+      "ResponseModel_List_Notification_": {
+        "properties": {
+          "code": { "type": "integer", "title": "Code", "default": 200 },
+          "message": { "type": "string", "title": "Message", "default": "success" },
+          "data": {
+            "anyOf": [
+              {
+                "items": { "$ref": "#/components/schemas/Notification" },
+                "type": "array"
+              },
+              { "type": "null" }
+            ],
+            "title": "Data"
+          }
+        },
+        "type": "object",
+        "title": "ResponseModel[List[Notification]]"
+      },
+      "ResponseModel_int_": {
+        "properties": {
+          "code": { "type": "integer", "title": "Code", "default": 200 },
+          "message": { "type": "string", "title": "Message", "default": "success" },
+          "data": {
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
+            "title": "Data"
+          }
+        },
+        "type": "object",
+        "title": "ResponseModel[int]"
+      },
+      "ResponseModel_str_": {
+        "properties": {
+          "code": { "type": "integer", "title": "Code", "default": 200 },
+          "message": { "type": "string", "title": "Message", "default": "success" },
+          "data": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Data"
+          }
+        },
+        "type": "object",
+        "title": "ResponseModel[str]"
+      },
+      "ResponseModel_NotificationPreferences_": {
+        "properties": {
+          "code": { "type": "integer", "title": "Code", "default": 200 },
+          "message": { "type": "string", "title": "Message", "default": "success" },
+          "data": {
+            "anyOf": [{ "$ref": "#/components/schemas/NotificationPreferences" }, { "type": "null" }]
+          }
+        },
+        "type": "object",
+        "title": "ResponseModel[NotificationPreferences]"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": { "$ref": "#/components/schemas/ValidationError" },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": { "anyOf": [{ "type": "string" }, { "type": "integer" }] },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": { "type": "string", "title": "Message" },
+          "type": { "type": "string", "title": "Error Type" },
+          "input": { "title": "Input" },
+          "ctx": { "type": "object", "title": "Context" }
+        },
+        "type": "object",
+        "required": ["loc", "msg", "type"],
+        "title": "ValidationError"
+      }
+    }
+  }
+}

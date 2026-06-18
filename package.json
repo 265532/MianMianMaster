@@ -4,14 +4,25 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vue-tsc -b && vite build",
-    "preview": "vite preview"
+    "dev": "vite --host",
+    "build": "npm run schema:generate && vue-tsc -b && vite build",
+    "preview": "vite preview --host",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "schema:merge": "node scripts/merge-openapi.mjs",
+    "schema:types": "npx openapi-typescript docs/api/openapi.json -o src/api/generated/api-schema.d.ts",
+    "schema:generate": "npm run schema:merge && npm run schema:types",
+    "schema:validate": "node scripts/validate-schemas.mjs",
+    "schema:check": "node scripts/check-coverage.mjs",
+    "test:integration": "npx tsx scripts/test-auth-integration.ts",
+    "test:integration:verbose": "set VERBOSE=true && npx tsx scripts/test-auth-integration.ts"
   },
   "dependencies": {
+    "axios": "^1.16.0",
+    "chart.js": "^4.5.1",
     "echarts": "^6.0.0",
     "lucide-vue-next": "^0.575.0",
-    "mockjs": "^1.1.0",
     "pinia": "^3.0.4",
     "vue": "^3.5.25",
     "vue-router": "^4.6.4"
@@ -23,14 +34,22 @@
     "@vitejs/plugin-vue": "^6.0.2",
     "@vue/eslint-config-prettier": "^10.2.0",
     "@vue/eslint-config-typescript": "^14.7.0",
+    "@vue/test-utils": "^2.4.10",
     "@vue/tsconfig": "^0.8.1",
     "autoprefixer": "^10.4.27",
+    "axios-mock-adapter": "^2.1.0",
     "eslint": "^10.0.3",
+    "eslint-plugin-vue": "^10.9.1",
+    "happy-dom": "^20.9.0",
+    "jsdom": "^29.1.1",
+    "mockjs": "^1.1.0",
+    "openapi-typescript": "^7.13.0",
     "postcss": "^8.5.6",
     "prettier": "^3.8.1",
     "tailwindcss": "^4.2.1",
     "typescript": "~5.9.3",
     "vite": "^7.3.1",
+    "vitest": "^4.1.6",
     "vue-tsc": "^3.1.5"
   }
 }

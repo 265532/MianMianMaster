@@ -1,0 +1,343 @@
+{
+  "paths": {
+    "/jobs": {
+      "post": {
+        "tags": ["job"],
+        "summary": "创建岗位",
+        "description": "前端: 管理后台添加新岗位",
+        "operationId": "create_job_position_jobs_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JobPositionCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel_JobPosition_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "OAuth2PasswordBearer": [] }]
+      },
+      "get": {
+        "tags": ["job"],
+        "summary": "获取岗位列表",
+        "description": "前端: Home.vue 岗位列表、岗位选择器等",
+        "operationId": "list_job_positions_jobs_get",
+        "parameters": [
+          {
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Skip"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel_List_JobPosition_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/jobs/{job_id}/skill-tree": {
+      "get": {
+        "tags": ["job"],
+        "summary": "获取岗位技能树",
+        "description": "前端: Knowledge.vue 技能树渲染",
+        "operationId": "get_skill_tree_jobs_job_id_skill_tree_get",
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Job Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel_SkillTreeNode_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/jobs/{job_id}/match": {
+      "get": {
+        "tags": ["job"],
+        "summary": "获取岗位匹配度",
+        "description": "前端: Home.vue 岗位匹配展示",
+        "operationId": "get_job_match_jobs_job_id_match_get",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Job Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel_JobMatchResult_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "JobPositionCreate": {
+        "properties": {
+          "title": { "type": "string", "title": "Title" },
+          "description": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Description" },
+          "company": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Company" },
+          "location": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Location" },
+          "salary_range": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Salary Range" },
+          "requirements": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Requirements",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": ["title"],
+        "title": "JobPositionCreate"
+      },
+      "JobPosition": {
+        "properties": {
+          "id": { "type": "integer", "title": "Id" },
+          "title": { "type": "string", "title": "Title" },
+          "description": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Description" },
+          "company": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Company" },
+          "location": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Location" },
+          "salary_range": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Salary Range" },
+          "requirements": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Requirements",
+            "default": []
+          },
+          "created_at": { "type": "string", "format": "date-time", "title": "Created At" },
+          "updated_at": { "type": "string", "format": "date-time", "title": "Updated At" }
+        },
+        "type": "object",
+        "required": ["id", "title", "created_at", "updated_at"],
+        "title": "JobPosition"
+      },
+      "SkillTreeNode": {
+        "properties": {
+          "id": { "type": "integer", "title": "Id" },
+          "name": { "type": "string", "title": "Name" },
+          "category": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Category" },
+          "level": { "anyOf": [{ "type": "integer" }, { "type": "null" }], "title": "Level" },
+          "is_required": { "type": "boolean", "title": "Is Required" },
+          "has_required_child": { "type": "boolean", "title": "Has Required Child" },
+          "children": {
+            "items": { "$ref": "#/components/schemas/SkillTreeNode" },
+            "type": "array",
+            "title": "Children",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": ["id", "name", "is_required", "has_required_child"],
+        "title": "SkillTreeNode"
+      },
+      "JobMatchResult": {
+        "properties": {
+          "job_id": { "type": "integer", "title": "Job Id" },
+          "match_score": { "type": "number", "title": "Match Score" },
+          "matched_skills": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Matched Skills",
+            "default": []
+          },
+          "missing_skills": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Missing Skills",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": ["job_id", "match_score"],
+        "title": "JobMatchResult"
+      },
+
+      "ResponseModel_JobPosition_": {
+        "properties": {
+          "code": { "type": "integer", "title": "Code", "default": 200 },
+          "message": { "type": "string", "title": "Message", "default": "success" },
+          "data": {
+            "anyOf": [{ "$ref": "#/components/schemas/JobPosition" }, { "type": "null" }]
+          }
+        },
+        "type": "object",
+        "title": "ResponseModel[JobPosition]"
+      },
+      "ResponseModel_List_JobPosition_": {
+        "properties": {
+          "code": { "type": "integer", "title": "Code", "default": 200 },
+          "message": { "type": "string", "title": "Message", "default": "success" },
+          "data": {
+            "anyOf": [
+              {
+                "items": { "$ref": "#/components/schemas/JobPosition" },
+                "type": "array"
+              },
+              { "type": "null" }
+            ],
+            "title": "Data"
+          }
+        },
+        "type": "object",
+        "title": "ResponseModel[List[JobPosition]]"
+      },
+      "ResponseModel_SkillTreeNode_": {
+        "properties": {
+          "code": { "type": "integer", "title": "Code", "default": 200 },
+          "message": { "type": "string", "title": "Message", "default": "success" },
+          "data": {
+            "anyOf": [{ "$ref": "#/components/schemas/SkillTreeNode" }, { "type": "null" }]
+          }
+        },
+        "type": "object",
+        "title": "ResponseModel[SkillTreeNode]"
+      },
+      "ResponseModel_JobMatchResult_": {
+        "properties": {
+          "code": { "type": "integer", "title": "Code", "default": 200 },
+          "message": { "type": "string", "title": "Message", "default": "success" },
+          "data": {
+            "anyOf": [{ "$ref": "#/components/schemas/JobMatchResult" }, { "type": "null" }]
+          }
+        },
+        "type": "object",
+        "title": "ResponseModel[JobMatchResult]"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": { "$ref": "#/components/schemas/ValidationError" },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": { "anyOf": [{ "type": "string" }, { "type": "integer" }] },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": { "type": "string", "title": "Message" },
+          "type": { "type": "string", "title": "Error Type" },
+          "input": { "title": "Input" },
+          "ctx": { "type": "object", "title": "Context" }
+        },
+        "type": "object",
+        "required": ["loc", "msg", "type"],
+        "title": "ValidationError"
+      }
+    }
+  }
+}

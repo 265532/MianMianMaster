@@ -1,0 +1,842 @@
+{
+  "paths": {
+    "/user/profile": {
+      "get": {
+        "tags": ["user"],
+        "summary": "获取当前用户画像",
+        "description": "前端: Profile.vue 页面初始化调用",
+        "operationId": "get_profile_user_profile_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel_User_"
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "OAuth2PasswordBearer": [] }]
+      },
+      "put": {
+        "tags": ["user"],
+        "summary": "更新当前用户画像",
+        "description": "前端: Profile.vue 编辑资料弹窗提交",
+        "operationId": "update_profile_user_profile_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserProfileUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel_UserProfile_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "OAuth2PasswordBearer": [] }]
+      }
+    },
+    "/user/security/change-password": {
+      "post": {
+        "tags": ["user"],
+        "summary": "修改密码",
+        "description": "前端: Profile.vue 安全设置",
+        "operationId": "change_password_user_security_change_password_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangePasswordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel_str_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "OAuth2PasswordBearer": [] }]
+      }
+    },
+    "/user/security/change-phone": {
+      "post": {
+        "tags": ["user"],
+        "summary": "修改手机号",
+        "description": "前端: Profile.vue 安全设置",
+        "operationId": "change_phone_user_security_change_phone_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangePhoneRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel_str_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "OAuth2PasswordBearer": [] }]
+      }
+    },
+    "/user/interview-history": {
+      "get": {
+        "tags": ["user"],
+        "summary": "获取模拟面试历史记录（分页）",
+        "description": "前端: Profile.vue「面试记录」Tab",
+        "operationId": "get_interview_history_user_interview_history_get",
+        "parameters": [
+          {
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Skip"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 10,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel_InterviewHistoryResponse_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "OAuth2PasswordBearer": [] }]
+      }
+    },
+    "/user/ability-data": {
+      "get": {
+        "tags": ["user"],
+        "summary": "获取当前用户能力评估数据（按岗位分组）",
+        "description": "前端: Profile.vue「能力评估」Tab 雷达图",
+        "operationId": "get_ability_data_user_ability_data_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel_AbilityDataMap_"
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "OAuth2PasswordBearer": [] }]
+      }
+    },
+    "/user/game-interview-data": {
+      "get": {
+        "tags": ["user"],
+        "summary": "获取游戏化面试数据（统计/关卡/成就/排行榜）",
+        "description": "前端: GameInterview.vue 页面初始化",
+        "operationId": "get_game_interview_data_user_game_interview_data_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel_GameInterviewDataResponse_"
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "OAuth2PasswordBearer": [] }]
+      }
+    },
+    "/user/resume": {
+      "get": {
+        "tags": ["user"],
+        "summary": "获取当前用户简历数据",
+        "description": "前端: Profile.vue「简历」Tab",
+        "operationId": "get_resume_user_resume_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel_ResumeData_"
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "OAuth2PasswordBearer": [] }]
+      }
+    },
+    "/user/resume/diagnose": {
+      "post": {
+        "tags": ["user"],
+        "summary": "诊断当前用户简历",
+        "description": "前端: Profile.vue「简历」Tab AI 诊断按钮",
+        "operationId": "diagnose_resume_user_resume_diagnose_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel_ResumeDiagnosisResult_"
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "OAuth2PasswordBearer": [] }]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "UserProfileUpdate": {
+        "properties": {
+          "avatar_url": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Avatar Url"
+          },
+          "education": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Education"
+          },
+          "target_position": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Target Position"
+          },
+          "work_years": {
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
+            "title": "Work Years"
+          }
+        },
+        "type": "object",
+        "title": "UserProfileUpdate"
+      },
+      "ChangePasswordRequest": {
+        "properties": {
+          "old_password": { "type": "string", "title": "Old Password" },
+          "new_password": { "type": "string", "title": "New Password" }
+        },
+        "type": "object",
+        "required": ["old_password", "new_password"],
+        "title": "ChangePasswordRequest"
+      },
+      "ChangePhoneRequest": {
+        "properties": {
+          "new_phone": { "type": "string", "title": "New Phone" },
+          "code": { "type": "string", "title": "Code" }
+        },
+        "type": "object",
+        "required": ["new_phone", "code"],
+        "title": "ChangePhoneRequest"
+      },
+      "User": {
+        "properties": {
+          "username": { "type": "string", "title": "Username" },
+          "email": { "type": "string", "format": "email", "title": "Email" },
+          "phone": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Phone" },
+          "is_active": { "type": "boolean", "title": "Is Active", "default": true },
+          "id": { "type": "integer", "title": "Id" },
+          "created_at": { "type": "string", "format": "date-time", "title": "Created At" },
+          "updated_at": { "type": "string", "format": "date-time", "title": "Updated At" },
+          "roles": {
+            "items": { "$ref": "#/components/schemas/Role" },
+            "type": "array",
+            "title": "Roles",
+            "default": []
+          },
+          "profile": {
+            "anyOf": [{ "$ref": "#/components/schemas/UserProfile" }, { "type": "null" }]
+          }
+        },
+        "type": "object",
+        "required": ["username", "email", "id", "created_at", "updated_at"],
+        "title": "User"
+      },
+      "UserProfile": {
+        "properties": {
+          "avatar_url": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Avatar Url" },
+          "education": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Education" },
+          "target_position": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Target Position" },
+          "work_years": { "anyOf": [{ "type": "integer" }, { "type": "null" }], "title": "Work Years" },
+          "id": { "type": "integer", "title": "Id" },
+          "user_id": { "type": "integer", "title": "User Id" },
+          "created_at": { "type": "string", "format": "date-time", "title": "Created At" },
+          "updated_at": { "type": "string", "format": "date-time", "title": "Updated At" }
+        },
+        "type": "object",
+        "required": ["id", "user_id", "created_at", "updated_at"],
+        "title": "UserProfile"
+      },
+      "Role": {
+        "properties": {
+          "name": { "type": "string", "title": "Name" },
+          "description": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Description" },
+          "parent_id": { "anyOf": [{ "type": "integer" }, { "type": "null" }], "title": "Parent Id" },
+          "id": { "type": "integer", "title": "Id" },
+          "created_at": { "type": "string", "format": "date-time", "title": "Created At" },
+          "updated_at": { "type": "string", "format": "date-time", "title": "Updated At" },
+          "permissions": {
+            "items": { "$ref": "#/components/schemas/Permission" },
+            "type": "array",
+            "title": "Permissions",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": ["name", "id", "created_at", "updated_at"],
+        "title": "Role"
+      },
+      "Permission": {
+        "properties": {
+          "name": { "type": "string", "title": "Name" },
+          "description": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Description" },
+          "resource": { "type": "string", "title": "Resource" },
+          "action": { "type": "string", "title": "Action" },
+          "id": { "type": "integer", "title": "Id" },
+          "created_at": { "type": "string", "format": "date-time", "title": "Created At" },
+          "updated_at": { "type": "string", "format": "date-time", "title": "Updated At" }
+        },
+        "type": "object",
+        "required": ["name", "resource", "action", "id", "created_at", "updated_at"],
+        "title": "Permission"
+      },
+
+      "InterviewHistoryItem": {
+        "properties": {
+          "id": { "type": "integer", "title": "Id" },
+          "date": { "type": "string", "title": "Date", "description": "YYYY-MM-DD" },
+          "company": { "type": "string", "title": "Company" },
+          "position": { "type": "string", "title": "Position" },
+          "round": { "type": "string", "title": "Round", "description": "一面/二面/三面/HR面" },
+          "type": { "type": "string", "title": "Type", "description": "技术面/产品面/设计面/HR面" },
+          "score": { "type": "integer", "title": "Score", "minimum": 0, "maximum": 100 },
+          "status": { "type": "string", "title": "Status", "description": "passed/failed/pending" },
+          "tags": { "items": { "type": "string" }, "type": "array", "title": "Tags", "default": [] },
+          "feedback": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Feedback" },
+          "details": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/InterviewDetails" },
+              { "type": "null" }
+            ]
+          }
+        },
+        "type": "object",
+        "required": ["id", "date", "company", "position", "round", "type", "score", "status"],
+        "title": "InterviewHistoryItem"
+      },
+      "InterviewDetails": {
+        "properties": {
+          "technical": { "type": "integer", "title": "Technical" },
+          "communication": { "type": "integer", "title": "Communication" },
+          "logic": { "type": "integer", "title": "Logic" },
+          "problem_solving": { "type": "integer", "title": "Problem Solving" }
+        },
+        "type": "object",
+        "required": ["technical", "communication", "logic", "problem_solving"],
+        "title": "InterviewDetails"
+      },
+      "InterviewHistoryResponse": {
+        "properties": {
+          "items": {
+            "items": { "$ref": "#/components/schemas/InterviewHistoryItem" },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": { "type": "integer", "title": "Total" },
+          "page": { "type": "integer", "title": "Page" },
+          "page_size": { "type": "integer", "title": "Page Size" }
+        },
+        "type": "object",
+        "required": ["items", "total", "page", "page_size"],
+        "title": "InterviewHistoryResponse"
+      },
+
+      "AbilityDataIndicator": {
+        "properties": {
+          "name": { "type": "string", "title": "Name" },
+          "max": { "type": "integer", "title": "Max" }
+        },
+        "type": "object",
+        "required": ["name", "max"],
+        "title": "AbilityDataIndicator"
+      },
+      "AbilityDataGapSkill": {
+        "properties": {
+          "name": { "type": "string", "title": "Name" },
+          "gap": { "type": "integer", "title": "Gap" },
+          "level": { "type": "string", "title": "Level", "description": "low/medium/high" }
+        },
+        "type": "object",
+        "required": ["name", "gap", "level"],
+        "title": "AbilityDataGapSkill"
+      },
+      "AbilityDataStrength": {
+        "properties": {
+          "name": { "type": "string", "title": "Name" },
+          "score": { "type": "integer", "title": "Score" }
+        },
+        "type": "object",
+        "required": ["name", "score"],
+        "title": "AbilityDataStrength"
+      },
+      "AbilityDataItem": {
+        "properties": {
+          "current": { "items": { "type": "integer" }, "type": "array", "title": "Current" },
+          "required": { "items": { "type": "integer" }, "type": "array", "title": "Required" },
+          "indicators": {
+            "items": { "$ref": "#/components/schemas/AbilityDataIndicator" },
+            "type": "array",
+            "title": "Indicators"
+          },
+          "gap_skills": {
+            "items": { "$ref": "#/components/schemas/AbilityDataGapSkill" },
+            "type": "array",
+            "title": "Gap Skills"
+          },
+          "strengths": {
+            "items": { "$ref": "#/components/schemas/AbilityDataStrength" },
+            "type": "array",
+            "title": "Strengths"
+          }
+        },
+        "type": "object",
+        "required": ["current", "required", "indicators", "gap_skills", "strengths"],
+        "title": "AbilityDataItem"
+      },
+
+      "GameStatItem": {
+        "properties": {
+          "label": { "type": "string", "title": "Label" },
+          "value": {
+            "anyOf": [{ "type": "string" }, { "type": "integer" }],
+            "title": "Value"
+          }
+        },
+        "type": "object",
+        "required": ["label", "value"],
+        "title": "GameStatItem"
+      },
+      "GameLevel": {
+        "properties": {
+          "id": { "type": "integer", "title": "Id" },
+          "name": { "type": "string", "title": "Name" },
+          "title": { "type": "string", "title": "Title" },
+          "status": { "type": "string", "title": "Status" },
+          "progress": { "type": "integer", "title": "Progress", "minimum": 0, "maximum": 100 },
+          "description": { "type": "string", "title": "Description" },
+          "interviews": { "type": "integer", "title": "Interviews" },
+          "completed": { "type": "integer", "title": "Completed" },
+          "timeSpent": { "type": "string", "title": "Time Spent" },
+          "successRate": { "type": "string", "title": "Success Rate" },
+          "skills": { "items": { "type": "string" }, "type": "array", "title": "Skills" },
+          "unlockRequirements": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Unlock Requirements" },
+          "icon": { "type": "string", "title": "Icon" },
+          "background": { "type": "string", "title": "Background" },
+          "difficulty": { "type": "string", "title": "Difficulty" },
+          "reward": { "type": "string", "title": "Reward" },
+          "questionCount": { "type": "integer", "title": "Question Count" },
+          "timeLimit": { "type": "integer", "title": "Time Limit" }
+        },
+        "type": "object",
+        "required": ["id", "name", "title", "status", "progress", "description", "difficulty"],
+        "title": "GameLevel"
+      },
+      "GameAchievement": {
+        "properties": {
+          "id": { "type": "integer", "title": "Id" },
+          "name": { "type": "string", "title": "Name" },
+          "description": { "type": "string", "title": "Description" },
+          "unlocked": { "type": "boolean", "title": "Unlocked" },
+          "unlockedAt": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Unlocked At" },
+          "progress": { "anyOf": [{ "type": "integer" }, { "type": "null" }], "title": "Progress" },
+          "icon": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Icon" }
+        },
+        "type": "object",
+        "required": ["id", "name", "description", "unlocked"],
+        "title": "GameAchievement"
+      },
+      "GameStats": {
+        "properties": {
+          "completedLevels": { "type": "integer", "title": "Completed Levels" },
+          "totalQuestions": { "type": "integer", "title": "Total Questions" },
+          "correctRate": { "type": "string", "title": "Correct Rate" },
+          "certifications": { "type": "integer", "title": "Certifications" },
+          "streak": { "type": "string", "title": "Streak" },
+          "totalScore": { "type": "string", "title": "Total Score" }
+        },
+        "type": "object",
+        "required": ["completedLevels", "totalQuestions", "correctRate", "certifications", "streak", "totalScore"],
+        "title": "GameStats"
+      },
+      "LeaderboardEntry": {
+        "properties": {
+          "rank": { "type": "integer", "title": "Rank" },
+          "name": { "type": "string", "title": "Name" },
+          "score": { "type": "integer", "title": "Score" },
+          "avatar": { "type": "string", "title": "Avatar" },
+          "isCurrentUser": { "type": "boolean", "title": "Is Current User", "default": false }
+        },
+        "type": "object",
+        "required": ["rank", "name", "score", "avatar"],
+        "title": "LeaderboardEntry"
+      },
+      "GameInterviewDataResponse": {
+        "properties": {
+          "stats": {
+            "items": { "$ref": "#/components/schemas/GameStatItem" },
+            "type": "array",
+            "title": "Stats"
+          },
+          "levels": {
+            "items": { "$ref": "#/components/schemas/GameLevel" },
+            "type": "array",
+            "title": "Levels"
+          },
+          "achievements": {
+            "items": { "$ref": "#/components/schemas/GameAchievement" },
+            "type": "array",
+            "title": "Achievements"
+          },
+          "leaderboard": {
+            "items": { "$ref": "#/components/schemas/LeaderboardEntry" },
+            "type": "array",
+            "title": "Leaderboard"
+          }
+        },
+        "type": "object",
+        "required": ["stats", "levels", "achievements", "leaderboard"],
+        "title": "GameInterviewDataResponse"
+      },
+
+      "ResumeBasicInfo": {
+        "properties": {
+          "name": { "type": "string", "title": "Name" },
+          "major": { "type": "string", "title": "Major" },
+          "grade": { "type": "string", "title": "Grade" },
+          "school": { "type": "string", "title": "School" }
+        },
+        "type": "object",
+        "required": ["name", "major", "grade", "school"],
+        "title": "ResumeBasicInfo"
+      },
+      "ResumeEducation": {
+        "properties": {
+          "school": { "type": "string", "title": "School" },
+          "degree": { "type": "string", "title": "Degree" },
+          "major": { "type": "string", "title": "Major" },
+          "period": { "type": "string", "title": "Period" }
+        },
+        "type": "object",
+        "required": ["school", "degree", "major", "period"],
+        "title": "ResumeEducation"
+      },
+      "ResumeExperience": {
+        "properties": {
+          "company": { "type": "string", "title": "Company" },
+          "position": { "type": "string", "title": "Position" },
+          "period": { "type": "string", "title": "Period" },
+          "description": { "type": "string", "title": "Description" }
+        },
+        "type": "object",
+        "required": ["company", "position", "period", "description"],
+        "title": "ResumeExperience"
+      },
+      "ResumeProject": {
+        "properties": {
+          "name": { "type": "string", "title": "Name" },
+          "role": { "type": "string", "title": "Role" },
+          "period": { "type": "string", "title": "Period" },
+          "description": { "type": "string", "title": "Description" }
+        },
+        "type": "object",
+        "required": ["name", "role", "period", "description"],
+        "title": "ResumeProject"
+      },
+      "ResumeData": {
+        "properties": {
+          "basic_info": { "$ref": "#/components/schemas/ResumeBasicInfo" },
+          "education": {
+            "items": { "$ref": "#/components/schemas/ResumeEducation" },
+            "type": "array",
+            "title": "Education"
+          },
+          "experience": {
+            "items": { "$ref": "#/components/schemas/ResumeExperience" },
+            "type": "array",
+            "title": "Experience"
+          },
+          "skills": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Skills"
+          },
+          "projects": {
+            "items": { "$ref": "#/components/schemas/ResumeProject" },
+            "type": "array",
+            "title": "Projects"
+          }
+        },
+        "type": "object",
+        "required": ["basic_info", "education", "experience", "skills", "projects"],
+        "title": "ResumeData"
+      },
+      "MatchRateItem": {
+        "properties": {
+          "position": { "type": "string", "title": "Position" },
+          "rate": { "type": "number", "title": "Rate" }
+        },
+        "type": "object",
+        "required": ["position", "rate"],
+        "title": "MatchRateItem"
+      },
+      "ResumeDiagnosisResult": {
+        "properties": {
+          "overall_score": { "type": "number", "title": "Overall Score" },
+          "strengths": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Strengths"
+          },
+          "weaknesses": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Weaknesses"
+          },
+          "match_rate": {
+            "items": { "$ref": "#/components/schemas/MatchRateItem" },
+            "type": "array",
+            "title": "Match Rate"
+          },
+          "suggestions": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Suggestions"
+          }
+        },
+        "type": "object",
+        "required": ["overall_score", "strengths", "weaknesses", "match_rate", "suggestions"],
+        "title": "ResumeDiagnosisResult"
+      },
+
+      "ResponseModel_User_": {
+        "properties": {
+          "code": { "type": "integer", "title": "Code", "default": 200 },
+          "message": { "type": "string", "title": "Message", "default": "success" },
+          "data": {
+            "anyOf": [{ "$ref": "#/components/schemas/User" }, { "type": "null" }]
+          }
+        },
+        "type": "object",
+        "title": "ResponseModel[User]"
+      },
+      "ResponseModel_UserProfile_": {
+        "properties": {
+          "code": { "type": "integer", "title": "Code", "default": 200 },
+          "message": { "type": "string", "title": "Message", "default": "success" },
+          "data": {
+            "anyOf": [{ "$ref": "#/components/schemas/UserProfile" }, { "type": "null" }]
+          }
+        },
+        "type": "object",
+        "title": "ResponseModel[UserProfile]"
+      },
+      "ResponseModel_str_": {
+        "properties": {
+          "code": { "type": "integer", "title": "Code", "default": 200 },
+          "message": { "type": "string", "title": "Message", "default": "success" },
+          "data": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Data"
+          }
+        },
+        "type": "object",
+        "title": "ResponseModel[str]"
+      },
+      "ResponseModel_InterviewHistoryResponse_": {
+        "properties": {
+          "code": { "type": "integer", "title": "Code", "default": 200 },
+          "message": { "type": "string", "title": "Message", "default": "success" },
+          "data": {
+            "anyOf": [{ "$ref": "#/components/schemas/InterviewHistoryResponse" }, { "type": "null" }]
+          }
+        },
+        "type": "object",
+        "title": "ResponseModel[InterviewHistoryResponse]"
+      },
+      "ResponseModel_AbilityDataMap_": {
+        "properties": {
+          "code": { "type": "integer", "title": "Code", "default": 200 },
+          "message": { "type": "string", "title": "Message", "default": "success" },
+          "data": {
+            "anyOf": [
+              {
+                "additionalProperties": { "$ref": "#/components/schemas/AbilityDataItem" },
+                "type": "object"
+              },
+              { "type": "null" }
+            ],
+            "title": "Data"
+          }
+        },
+        "type": "object",
+        "title": "ResponseModel[Dict[str, AbilityDataItem]]"
+      },
+      "ResponseModel_GameInterviewDataResponse_": {
+        "properties": {
+          "code": { "type": "integer", "title": "Code", "default": 200 },
+          "message": { "type": "string", "title": "Message", "default": "success" },
+          "data": {
+            "anyOf": [{ "$ref": "#/components/schemas/GameInterviewDataResponse" }, { "type": "null" }]
+          }
+        },
+        "type": "object",
+        "title": "ResponseModel[GameInterviewDataResponse]"
+      },
+      "ResponseModel_ResumeData_": {
+        "properties": {
+          "code": { "type": "integer", "title": "Code", "default": 200 },
+          "message": { "type": "string", "title": "Message", "default": "success" },
+          "data": {
+            "anyOf": [{ "$ref": "#/components/schemas/ResumeData" }, { "type": "null" }]
+          }
+        },
+        "type": "object",
+        "title": "ResponseModel[ResumeData]"
+      },
+      "ResponseModel_ResumeDiagnosisResult_": {
+        "properties": {
+          "code": { "type": "integer", "title": "Code", "default": 200 },
+          "message": { "type": "string", "title": "Message", "default": "success" },
+          "data": {
+            "anyOf": [{ "$ref": "#/components/schemas/ResumeDiagnosisResult" }, { "type": "null" }]
+          }
+        },
+        "type": "object",
+        "title": "ResponseModel[ResumeDiagnosisResult]"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": { "$ref": "#/components/schemas/ValidationError" },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": { "anyOf": [{ "type": "string" }, { "type": "integer" }] },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": { "type": "string", "title": "Message" },
+          "type": { "type": "string", "title": "Error Type" },
+          "input": { "title": "Input" },
+          "ctx": { "type": "object", "title": "Context" }
+        },
+        "type": "object",
+        "required": ["loc", "msg", "type"],
+        "title": "ValidationError"
+      }
+    }
+  }
+}
